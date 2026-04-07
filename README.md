@@ -370,7 +370,7 @@ This pulls the latest code, updates dependencies, migrates config, and restarts 
 
 ## Why Migrate
 
-Hermes is the successor to OpenClaw. If you've spent weeks or months building up skills, memory files, and configuration in OpenClaw, the migration tool brings all of it over automatically.
+If you've been using OpenClaw and want to give Hermes a spin, you don't have to start from scratch. The migration tool copies your skills, memory files, and configuration over automatically so you can try Hermes with all your existing data intact.
 
 **What transfers:**
 
