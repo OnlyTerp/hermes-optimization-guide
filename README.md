@@ -614,20 +614,32 @@ Create `~/.hermes/lightrag/.env`:
 ```bash
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
-LLM_MODEL=gpt-4.1-mini
-LLM_BINDING_API_KEY=sk-...
+LLM_MODEL=kimi-2.5                    # What we actually use — great quality/cost ratio
+LLM_BINDING_API_KEY=***
 
 # Embedding model (for vector storage)
 EMBEDDING_BINDING=fireworks
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
-EMBEDDING_API_KEY=fw_...
+EMBEDDING_API_KEY=***
 
 # Or use local Ollama (free, no API key needed):
 # EMBEDDING_BINDING=ollama
 # EMBEDDING_MODEL=nomic-embed-text
 ```
 
-> **Tip:** Use `gpt-4.1-mini` or `claude-sonnet-4-20250514` for entity extraction. It doesn't need to be your smartest model — it just needs to reliably identify entities and relationships. Cheaper models save money on ingestion.
+### Entity Extraction Model — What to Use
+
+This is the LLM that reads your documents and pulls out entities and relationships during ingestion. Quality here directly determines how good your knowledge graph is.
+
+| Model | Speed | Quality | Cost | Recommendation |
+|-------|-------|---------|------|----------------|
+| **Kimi 2.5** | Fast | Excellent | Cheap | **What we use.** Great balance of quality, speed, and cost for entity extraction |
+| **Cerebras + Qwen 3** | Blazing fast | Very good | Very cheap | **Fastest option in the world.** Cerebras inference at 2000+ tok/s makes bulk ingestion fly |
+| GPT-4.1-mini | Fast | Good | Cheap | Solid fallback, well-tested |
+| Claude Sonnet 4 | Medium | Excellent | Mid-range | Overkill for ingestion but works great |
+| **Ollama local** | Depends on GPU | Unpredictable | Free | Untested for this use case — might mess up entity extraction quality. Use at your own risk |
+
+> **Our recommendation:** Kimi 2.5 for quality, Cerebras + Qwen 3 if you're ingesting a lot of documents and speed matters. Both are cheap and reliable. We haven't tested local Ollama for entity extraction — it's free but the extraction quality is unverified and you might get a messy graph.
 
 > **Embedding quality matters.** If you have a GPU with 8GB+ VRAM, run `nomic-embed-text` locally via Ollama for free. If you want the best quality, use Fireworks' Qwen3-Embedding-8B (4096 dimensions) — the search accuracy difference is dramatic.
 
@@ -914,6 +926,12 @@ Once the server is running, open `http://localhost:9623/webui` in your browser. 
 - **Browse** all entities and their connections
 - **Inspect** raw chunks and their source documents
 
+Here's what a populated LightRAG knowledge graph looks like in the Web UI (screenshot from the [LightRAG project](https://github.com/HKUDS/LightRAG)):
+
+![LightRAG Knowledge Graph Web UI](./screenshots/lightrag_webui.png)
+
+*The Web UI showing entity extraction, graph relationships, and document indexing. Once you ingest your own data, your graph fills up with your specific entities — people, projects, decisions, hardware, configs — all connected by the relationships LightRAG extracts automatically.*
+
 ---
 
 ## Troubleshooting
@@ -928,7 +946,7 @@ cd ~/.hermes/lightrag/LightRAG && lightrag-server --port 9623
 ### Slow ingestion
 
 Entity extraction is LLM-bound. Speed it up:
-- Use a faster model for ingestion (GPT-4.1-mini, Claude Haiku)
+- Use a faster model for ingestion (Cerebras + Qwen 3 is the fastest option, or Kimi 2.5)
 - Process documents in parallel batches
 - Use a local model if you have GPU capacity
 
