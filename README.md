@@ -138,17 +138,33 @@ The setup wizard (`hermes setup`) walks you through:
 hermes model
 ```
 
-Supported providers:
+Supported providers and recommended models:
 
-| Provider | Best For | Env Variable |
-|----------|----------|-------------|
-| Anthropic (Claude) | Highest quality, best at complex tasks | `ANTHROPIC_API_KEY` |
-| OpenAI (GPT-4.1/o3) | Strong tool use, fast | `OPENAI_API_KEY` |
-| OpenRouter | Access 100+ models from one key | `OPENROUTER_API_KEY` |
-| Cerebras | Fast inference, good for simple tasks | `CEREBRAS_API_KEY` |
-| Groq | Very fast, limited context | `GROQ_API_KEY` |
-| xAI (Grok) | Good balance of speed/quality | `XAI_API_KEY` |
-| Google (Gemini) | Huge context, cheap | `GEMINI_API_KEY` |
+| Provider | Top Models | Best For | Env Variable |
+|----------|-----------|----------|-------------|
+| **Anthropic** | Opus 4.6, Sonnet 4 | Best reasoning, complex tasks, coding | `ANTHROPIC_API_KEY` |
+| **OpenAI** | GPT-5.4 Pro, o3, GPT-4.1 | Strong tool use, fast inference, huge context | `OPENAI_API_KEY` |
+| **Xiaomi** | MiMo V2 Pro | Fast, cheap, great for orchestration and routing | `OPENROUTER_API_KEY` |
+| **Google** | Gemini 3.1 Pro | Massive context (2M tokens), multimodal, cheap | `GEMINI_API_KEY` |
+| **MiniMax** | M2.7 | Good balance of speed and quality | `OPENROUTER_API_KEY` |
+| **xAI** | Grok 3, Grok 3 Mini | Fast, good reasoning, real-time X/Twitter access | `XAI_API_KEY` |
+| **Cerebras** | Llama 4 Scout, Qwen 3 32B | Blazing fast inference (2000+ tok/s), cheap | `CEREBRAS_API_KEY` |
+| **Groq** | Llama 4, Qwen 3 | Very fast inference, limited context | `GROQ_API_KEY` |
+| **OpenRouter** | All of the above + 100 more | Access every model from one key, auto-fallback | `OPENROUTER_API_KEY` |
+| **Ollama** (local) | Qwen 3.5 Opus Distilled V3, Gemma 4, Nemotron | Free, private, runs on your GPU — great for embeddings and simple tasks | None needed |
+
+### Local Models (Ollama)
+
+Run models on your own hardware for free. Recommended local models:
+
+| Model | Size | Best For | Min VRAM |
+|-------|------|----------|----------|
+| Qwen 3.5 Opus Distilled V3 | 32B | Best local reasoning, coding | 16GB |
+| Gemma 4 | 27B | Google's latest, fast, 1M context | 16GB |
+| Nemotron 30B | 30B | Fine-tunable, good general purpose | 16GB |
+| nomic-embed-text | 274M | Free embeddings for memory search | 2GB |
+
+> **Recommendation:** Use a cloud frontier model (Opus 4.6, GPT-5.4 Pro, Gemini 3.1 Pro) as your primary and a local Ollama model (Qwen 3.5, Gemma 4) for embeddings, fallback, and simple tasks. Best of both worlds.
 
 You can configure **multiple providers** with automatic fallback. If one goes down, Hermes switches to the next.
 
@@ -193,10 +209,10 @@ After initial setup, fine-tune with `hermes config set`:
 
 ```bash
 # Set primary model
-hermes config set model anthropic/claude-sonnet-4-20250514
+hermes config set model anthropic/claude-opus-4-6
 
 # Set fallback model (used when primary is rate-limited)
-hermes config set fallback_models '["openrouter/anthropic/claude-sonnet-4-20250514"]'
+hermes config set fallback_models '["openrouter/xiaomi/mimo-v2-pro"]'
 ```
 
 ### Agent Behavior
