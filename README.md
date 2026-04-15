@@ -1,9 +1,9 @@
 # Hermes Optimization Guide
 
-> **Tested on Hermes Agent (latest) — April 2026** · 5 parts · Battle-tested on a live production deployment
+> **Tested on Hermes Agent (latest) — April 2026** · 11 parts · Battle-tested on a live production deployment
 
-### Make Your Hermes Agent Actually Work — Setup, Migration, Knowledge Graphs, Telegram, and Self-Improving Skills
-#### Full setup walkthrough, OpenClaw migration, LightRAG graph RAG, Telegram bot integration, and on-the-fly skill creation
+### Make Your Hermes Agent Actually Work — Setup, Migration, Knowledge Graphs, Telegram, Skills, Memory, Models, and Recovery
+#### Full setup walkthrough, OpenClaw migration, LightRAG graph RAG, Telegram bot integration, on-the-fly skill creation, memory architecture, custom models, and crash recovery
 
 *By Terp - [Terp AI Labs](https://x.com/OnlyTerp)*
 
@@ -17,6 +17,12 @@
 4. [LightRAG — Graph RAG](#part-3-lightrag--graph-rag-that-actually-works) — Set up a knowledge graph that actually understands relationships, not just text similarity
 5. [Telegram Bot](#part-4-telegram-setup-chat-from-anywhere) — Connect Hermes to Telegram for mobile access, voice memos, and group chats
 6. [On-the-Fly Skills](#part-5-on-the-fly-skills-let-hermes-build-its-own-playbook) — Ask Hermes to create new skills that optimize your workflow automatically
+7. [Context Compression](./part6-context-compression.md) — Fix the silent context loss bug, configure compression thresholds, survive long sessions
+8. [Memory System](./part7-memory-system.md) — The three-tier memory architecture: persistent facts, conversation recall, procedural memory
+9. [Subagent Patterns](./part8-subagent-patterns.md) — Orchestrator/worker delegation, ACP subagents, parallel task execution
+10. [Custom Model Providers](./part9-custom-models.md) — Cerebras, Fireworks, Ollama, model aliases, fallback chains
+11. [SOUL.md Anti-Patterns](./part10-soul-antipatterns.md) — What makes an agent annoying vs useful, the formula that works
+12. [Gateway Recovery](./part11-gateway-recovery.md) — Crash detection, auto-recovery, common failure modes, health checks
 
 ---
 
