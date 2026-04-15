@@ -140,6 +140,60 @@ embedding:
 /model                            # Show current model
 ```
 
+## Auxiliary Models (Task-Specific Models)
+
+Hermes supports dedicated models for eight task types. Each can have its own provider, model, base_url, api_key, and timeout.
+
+| Task Type | What It Does | Default |
+|-----------|-------------|---------|
+| `vision` | Image analysis, screenshot understanding | auto |
+| `web_extract` | Summarizing scraped web pages | auto |
+| `compression` | Context compression (summarizing old messages) | auto |
+| `session_search` | Searching past conversation transcripts | auto |
+| `approval` | Deciding whether to auto-approve tool calls | auto |
+| `skills_hub` | Skill discovery and matching | auto |
+| `mcp` | MCP tool routing | auto |
+| `flush_memories` | Memory consolidation and cleanup | auto |
+
+When set to `"auto"` (default), Hermes walks a provider resolution chain: OpenRouter → Nous Portal → Custom endpoint → etc.
+
+**Configure in `~/.hermes/config.yaml`:**
+
+```yaml
+auxiliary_models:
+  # Use a fast cheap model for compression — it's just summarizing
+  compression:
+    provider: cerebras
+    model: llama-3.3-70b
+    timeout: 30
+
+  # Use a vision-capable model for image analysis
+  vision:
+    provider: openrouter
+    model: google/gemini-2.5-flash
+    timeout: 60
+
+  # Use local model for session search (free, frequent calls)
+  session_search:
+    provider: local
+    model: nemotron:latest
+    base_url: http://localhost:11434/v1
+    api_key: ollama
+
+  # Everything else stays on auto
+  web_extract: auto
+  approval: auto
+  skills_hub: auto
+  mcp: auto
+  flush_memories: auto
+```
+
+**Why bother:**
+- **Compression** runs on every long session. Using a cheap/fast model saves money without affecting quality (summarization doesn't need Opus).
+- **Vision** needs a multimodal model. If your main model doesn't do images, set this to one that does.
+- **Session search** is called frequently. A local model makes it free.
+- **Approval** controls auto-execution. A fast model here means less latency on every tool call.
+
 ## Fallback Chain
 
 Configure automatic fallback if the primary model fails:
