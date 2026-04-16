@@ -46,8 +46,8 @@ LightRAG does vector DB + knowledge graph **in parallel** during ingestion. One 
 ### Prerequisites
 
 - Python 3.11+
-- An LLM API key (for entity extraction during ingestion — OpenAI, Anthropic, or any OpenAI-compatible provider)
-- An embedding API key (Fireworks recommended for high-quality 4096-dim embeddings, or use local Ollama)
+- An LLM API key for entity extraction during ingestion — we recommend **Kimi 2.5** (Moonshot AI) for quality or **Cerebras + Qwen 3** for speed. Any OpenAI-compatible provider works (OpenAI, Anthropic, OpenRouter, etc.)
+- An embedding API key — **Fireworks + Qwen3-Embedding-8B** recommended for high-quality 4096-dim embeddings, or use **Ollama + nomic-embed-text** locally for free
 
 ### Install LightRAG
 
@@ -68,27 +68,70 @@ pip install -e ".[api]"
 
 Create `~/.hermes/lightrag/.env`:
 
-```bash
-# LLM for entity extraction (during ingestion)
-LLM_BINDING=openai
-LLM_MODEL=gpt-4.1-mini
-LLM_BINDING_API_KEY=<your-openai-api-key>
+**Option A — Kimi 2.5 + Fireworks (recommended):**
 
-# Embedding model (for vector storage)
+```bash
+# --- LLM for entity extraction (during ingestion) ---
+LLM_BINDING=openai
+LLM_MODEL=kimi-2.5                    # Best quality/cost ratio for entity extraction
+LLM_BINDING_HOST=https://api.moonshot.cn/v1   # Kimi uses an OpenAI-compatible API
+LLM_BINDING_API_KEY=<your-moonshot-api-key>   # Get one at https://platform.moonshot.cn
+
+# --- Embedding model (for vector storage) ---
+EMBEDDING_BINDING=fireworks
+EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b   # 4096-dim, excellent quality
+EMBEDDING_API_KEY=<your-fireworks-api-key>   # Get one at https://fireworks.ai
+```
+
+**Option B — Cerebras + Qwen 3 (fastest ingestion):**
+
+```bash
+# --- LLM for entity extraction (during ingestion) ---
+LLM_BINDING=openai
+LLM_MODEL=qwen-3-32b                  # Cerebras runs Qwen 3 at 2000+ tok/s
+LLM_BINDING_HOST=https://api.cerebras.ai/v1
+LLM_BINDING_API_KEY=<your-cerebras-api-key>   # Get one at https://cloud.cerebras.ai
+
+# --- Embedding model (for vector storage) ---
 EMBEDDING_BINDING=fireworks
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
 EMBEDDING_API_KEY=<your-fireworks-api-key>
-
-# Or use local Ollama (free, no API key needed):
-# EMBEDDING_BINDING=ollama
-# EMBEDDING_MODEL=nomic-embed-text
 ```
 
-> **Security tip:** Set restrictive permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
+**Option C — Free local setup (Ollama):**
 
-> **Tip:** Use `gpt-4.1-mini` or `claude-sonnet-4-20250514` for entity extraction. It doesn't need to be your smartest model — it just needs to reliably identify entities and relationships. Cheaper models save money on ingestion.
+```bash
+# --- LLM for entity extraction (local, free, quality may vary) ---
+LLM_BINDING=ollama
+LLM_MODEL=qwen3:32b                   # Or any capable local model
+# No API key needed
 
-> **Embedding quality matters.** If you have a GPU with 8GB+ VRAM, run `nomic-embed-text` locally via Ollama for free. If you want the best quality, use Fireworks' Qwen3-Embedding-8B (4096 dimensions) — the search accuracy difference is dramatic.
+# --- Embedding model (local, free) ---
+EMBEDDING_BINDING=ollama
+EMBEDDING_MODEL=nomic-embed-text       # 768-dim, good quality, 2GB VRAM
+# No API key needed
+```
+
+> **Where to get API keys:**
+> - **Kimi / Moonshot:** [platform.moonshot.cn](https://platform.moonshot.cn) — sign up, create an API key
+> - **Cerebras:** [cloud.cerebras.ai](https://cloud.cerebras.ai) — free tier available, very generous limits
+> - **Fireworks:** [fireworks.ai](https://fireworks.ai) — sign up for an API key
+
+### Entity Extraction Model — What to Use
+
+This is the LLM that reads your documents and pulls out entities and relationships during ingestion. Quality here directly determines how good your knowledge graph is.
+
+| Model | Speed | Quality | Cost | Recommendation |
+|-------|-------|---------|------|----------------|
+| **Kimi 2.5** | Fast | Excellent | Cheap | **What we use.** Great balance of quality, speed, and cost for entity extraction |
+| **Cerebras + Qwen 3** | Blazing fast | Very good | Very cheap | **Fastest option in the world.** Cerebras inference at 2000+ tok/s makes bulk ingestion fly |
+| GPT-4.1-mini | Fast | Good | Cheap | Solid fallback, well-tested |
+| Claude Sonnet 4 | Medium | Excellent | Mid-range | Overkill for ingestion but works great |
+| **Ollama local** | Depends on GPU | Unpredictable | Free | Untested for this use case — might mess up entity extraction quality. Use at your own risk |
+
+> **Our recommendation:** Use **Kimi 2.5** for the best quality-to-cost ratio — it produces clean, accurate entity graphs. Switch to **Cerebras + Qwen 3** if you're doing bulk ingestion and speed is the priority (2000+ tokens/sec means you can ingest hundreds of documents in minutes). Both are cheap and reliable. We haven't tested local Ollama for entity extraction — it's free but the extraction quality is unverified and you might get a messy graph.
+
+> **Embedding quality matters.** If you have a GPU with 8GB+ VRAM, run `nomic-embed-text` locally via Ollama for free. If you want the best quality, use **Fireworks' Qwen3-Embedding-8B** (4096 dimensions) — the search accuracy difference is dramatic. This is the embedding model we recommend regardless of which LLM you choose for entity extraction.
 
 ---
 
@@ -389,7 +432,7 @@ cd ~/.hermes/lightrag/LightRAG && lightrag-server --port 9623
 ### Slow ingestion
 
 Entity extraction is LLM-bound. Speed it up:
-- Use a faster model for ingestion (GPT-4.1-mini, Claude Haiku)
+- Use a faster model for ingestion (Cerebras + Qwen 3 is the fastest option, or Kimi 2.5)
 - Process documents in parallel batches
 - Use a local model if you have GPU capacity
 
