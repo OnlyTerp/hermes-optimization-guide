@@ -194,8 +194,14 @@ Add to `~/.hermes/.env`:
 
 ```bash
 TELEGRAM_WEBHOOK_URL=https://your-app.fly.dev
-TELEGRAM_WEBHOOK_SECRET=your-random-secret-here
+TELEGRAM_WEBHOOK_SECRET=   # Generate with: openssl rand -hex 32
 ```
+
+> **Important:** Use a cryptographically strong random secret. Generate one with:
+> ```bash
+> openssl rand -hex 32
+> ```
+> Do not use a weak or predictable value — the webhook secret is the only thing preventing forged requests to your bot.
 
 | | Polling (default) | Webhook |
 |---|---|---|
@@ -222,7 +228,7 @@ Each user gets their own conversation session. The bot tracks sessions per user 
 
 ### Bot not responding
 
-1. Check the token is correct: `echo $TELEGRAM_BOT_TOKEN`
+1. Check the token is set (without printing it in full): `echo ${TELEGRAM_BOT_TOKEN:0:10}...`
 2. Verify the gateway is running: `hermes gateway status`
 3. Check logs: `hermes gateway logs`
 

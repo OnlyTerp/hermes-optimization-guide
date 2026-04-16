@@ -183,10 +183,13 @@ hermes auth
 
 This opens an interactive menu to add API keys for each provider. Keys are stored in `~/.hermes/.env` — never committed to git.
 
-> **Tip:** You can also set keys manually:
+> **Tip:** You can also set keys manually using a text editor:
 > ```bash
-> echo "ANTHROPIC_API_KEY=sk-ant-..." >> ~/.hermes/.env
+> nano ~/.hermes/.env    # Add: ANTHROPIC_API_KEY=sk-ant-...
+> chmod 600 ~/.hermes/.env   # Restrict permissions to owner only
 > ```
+>
+> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead.
 
 ### 3. Configure Toolsets
 
@@ -336,6 +339,11 @@ Everything lives under `~/.hermes/`:
 ```
 
 > **Important:** `SOUL.md` is injected into every message. Keep it under 1 KB. Every byte costs latency and tokens.
+
+> **Security:** The `.env` file contains your API keys. Restrict its permissions so only you can read it:
+> ```bash
+> chmod 600 ~/.hermes/.env
+> ```
 
 ---
 
@@ -621,17 +629,19 @@ Create `~/.hermes/lightrag/.env`:
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
 LLM_MODEL=kimi-2.5                    # What we actually use — great quality/cost ratio
-LLM_BINDING_API_KEY=***
+LLM_BINDING_API_KEY=       # Paste your API key here
 
 # Embedding model (for vector storage)
 EMBEDDING_BINDING=fireworks
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
-EMBEDDING_API_KEY=***
+EMBEDDING_API_KEY=         # Paste your Fireworks key here
 
 # Or use local Ollama (free, no API key needed):
 # EMBEDDING_BINDING=ollama
 # EMBEDDING_MODEL=nomic-embed-text
 ```
+
+> **Security:** Restrict permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
 
 ### Entity Extraction Model — What to Use
 
@@ -666,6 +676,8 @@ The server starts on `http://localhost:9623` with:
 - **REST API** for ingestion and querying
 - **Web UI** at `http://localhost:9623/webui` for browsing the knowledge graph
 - **Health check** at `http://localhost:9623/health`
+
+> **Security warning:** The LightRAG API has **no built-in authentication**. By default it binds to `localhost`, which is safe for local use. **Never expose port 9623 to the public internet** (e.g., via port forwarding, `0.0.0.0` binding, or cloud deployment without a reverse proxy). Anyone with access to this port can read, modify, and delete your entire knowledge graph. If you need remote access, put it behind a reverse proxy with authentication (e.g., nginx + basic auth, or Tailscale/WireGuard).
 
 ### Run as a Background Service
 
@@ -1173,8 +1185,14 @@ Add to `~/.hermes/.env`:
 
 ```bash
 TELEGRAM_WEBHOOK_URL=https://your-app.fly.dev
-TELEGRAM_WEBHOOK_SECRET=your-random-secret-here
+TELEGRAM_WEBHOOK_SECRET=   # Generate with: openssl rand -hex 32
 ```
+
+> **Important:** Use a cryptographically strong random secret. Generate one with:
+> ```bash
+> openssl rand -hex 32
+> ```
+> Do not use a weak or predictable value — the webhook secret is the only thing preventing forged requests to your bot.
 
 | | Polling (default) | Webhook |
 |---|---|---|
@@ -1201,7 +1219,7 @@ Each user gets their own conversation session. The bot tracks sessions per user 
 
 ### Bot not responding
 
-1. Check the token is correct: `echo $TELEGRAM_BOT_TOKEN`
+1. Check the token is set (without printing it in full): `echo ${TELEGRAM_BOT_TOKEN:0:10}...`
 2. Verify the gateway is running: `hermes gateway status`
 3. Check logs: `hermes gateway logs`
 

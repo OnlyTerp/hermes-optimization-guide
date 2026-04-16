@@ -8,30 +8,35 @@
 
 Models are configured in `~/.hermes/config.yaml`:
 
+> **Security note:** Never hardcode real API keys in `config.yaml` — this file may be committed to git. Store keys in `~/.hermes/.env` (which should be gitignored) and reference them as environment variables, or use `hermes auth` to set them securely.
+
 ```yaml
 # Default model
 model: claude-sonnet-4-20250514
 provider: anthropic
 
 # Provider configurations
+# API keys are loaded from ~/.hermes/.env automatically.
+# Set them with: hermes auth
+# Or add to ~/.hermes/.env:
+#   ANTHROPIC_API_KEY=sk-ant-...
+#   OPENAI_API_KEY=sk-...
+#   CEREBRAS_API_KEY=csk-...
+#   FIREWORKS_API_KEY=fw_...
 providers:
-  anthropic:
-    api_key: sk-ant-...
+  anthropic: {}
     
-  openai:
-    api_key: sk-...
+  openai: {}
     
   cerebras:
-    api_key: csk-...
     base_url: https://api.cerebras.ai/v1
     
   fireworks:
-    api_key: fw_...
     base_url: https://api.fireworks.ai/inference/v1
     
   local:
     base_url: http://localhost:11434/v1
-    api_key: ollama
+    api_key: ollama   # Not a real secret — Ollama uses this as a placeholder
 ```
 
 ## Adding a Custom Provider
@@ -39,9 +44,10 @@ providers:
 Any provider that implements the OpenAI chat completions API works:
 
 ```yaml
+# Add your API key to ~/.hermes/.env:
+#   MY_CUSTOM_API_KEY=your-key-here
 providers:
   my-custom:
-    api_key: your-key-here
     base_url: https://api.your-provider.com/v1
 ```
 
@@ -100,9 +106,9 @@ Cerebras is fast but has quirks:
 Config:
 
 ```yaml
+# Set CEREBRAS_API_KEY in ~/.hermes/.env
 providers:
   cerebras:
-    api_key: csk-your-key
     base_url: https://api.cerebras.ai/v1
     # Models: llama-3.3-70b, llama-4-scout-17b-16e-instruct, qwen-3-32b
 ```

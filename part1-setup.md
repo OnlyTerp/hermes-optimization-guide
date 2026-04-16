@@ -72,10 +72,13 @@ hermes auth
 
 This opens an interactive menu to add API keys for each provider. Keys are stored in `~/.hermes/.env` — never committed to git.
 
-> **Tip:** You can also set keys manually:
+> **Tip:** You can also set keys manually using a text editor:
 > ```bash
-> echo "ANTHROPIC_API_KEY=sk-ant-..." >> ~/.hermes/.env
+> nano ~/.hermes/.env    # Add: ANTHROPIC_API_KEY=sk-ant-...
+> chmod 600 ~/.hermes/.env   # Restrict permissions to owner only
 > ```
+>
+> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead.
 
 ### 3. Configure Toolsets
 
@@ -154,6 +157,11 @@ Everything lives under `~/.hermes/`:
 ```
 
 > **Important:** `SOUL.md` is injected into every message. Keep it under 1 KB. Every byte costs latency and tokens.
+
+> **Security:** The `.env` file contains your API keys. Restrict its permissions so only you can read it:
+> ```bash
+> chmod 600 ~/.hermes/.env
+> ```
 
 ---
 
