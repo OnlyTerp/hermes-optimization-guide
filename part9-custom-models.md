@@ -8,6 +8,8 @@
 
 Models are configured in `~/.hermes/config.yaml`:
 
+> **Security note:** Never put real API keys directly in `config.yaml`. Use environment variable references so keys stay in `~/.hermes/.env` (which should be `chmod 600` and never committed to git).
+
 ```yaml
 # Default model
 model: claude-sonnet-4-20250514
@@ -16,22 +18,22 @@ provider: anthropic
 # Provider configurations
 providers:
   anthropic:
-    api_key: sk-ant-...
+    api_key: ${ANTHROPIC_API_KEY}
     
   openai:
-    api_key: sk-...
+    api_key: ${OPENAI_API_KEY}
     
   cerebras:
-    api_key: csk-...
+    api_key: ${CEREBRAS_API_KEY}
     base_url: https://api.cerebras.ai/v1
     
   fireworks:
-    api_key: fw_...
+    api_key: ${FIREWORKS_API_KEY}
     base_url: https://api.fireworks.ai/inference/v1
     
   local:
     base_url: http://localhost:11434/v1
-    api_key: ollama
+    api_key: ollama  # Ollama doesn't require a real key
 ```
 
 ## Adding a Custom Provider
@@ -41,8 +43,15 @@ Any provider that implements the OpenAI chat completions API works:
 ```yaml
 providers:
   my-custom:
-    api_key: your-key-here
+    api_key: ${MY_CUSTOM_API_KEY}
     base_url: https://api.your-provider.com/v1
+```
+
+Add the actual key to your `.env` file:
+
+```bash
+echo "MY_CUSTOM_API_KEY=<your-key-here>" >> ~/.hermes/.env
+chmod 600 ~/.hermes/.env
 ```
 
 Then use it:
@@ -102,7 +111,7 @@ Config:
 ```yaml
 providers:
   cerebras:
-    api_key: csk-your-key
+    api_key: ${CEREBRAS_API_KEY}
     base_url: https://api.cerebras.ai/v1
     # Models: llama-3.3-70b, llama-4-scout-17b-16e-instruct, qwen-3-32b
 ```
