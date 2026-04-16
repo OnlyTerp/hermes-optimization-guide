@@ -109,9 +109,11 @@ Select **Telegram** when prompted. The wizard asks for your bot token and allowe
 Add the following to `~/.hermes/.env`:
 
 ```bash
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrSTUvwxYZ
-TELEGRAM_ALLOWED_USERS=123456789    # Comma-separated for multiple users
+TELEGRAM_BOT_TOKEN=<your-bot-token-from-botfather>
+TELEGRAM_ALLOWED_USERS=<your-numeric-user-id>    # Comma-separated for multiple users
 ```
+
+> **Security tip:** After editing, run `chmod 600 ~/.hermes/.env` to restrict file access to your user only.
 
 For groups, also add the group chat ID (negative number, like `-1001234567890`):
 
@@ -194,8 +196,18 @@ Add to `~/.hermes/.env`:
 
 ```bash
 TELEGRAM_WEBHOOK_URL=https://your-app.fly.dev
-TELEGRAM_WEBHOOK_SECRET=your-random-secret-here
+TELEGRAM_WEBHOOK_SECRET=<generate-with-command-below>
 ```
+
+Generate a strong secret — never use a guessable value:
+
+```bash
+openssl rand -hex 32
+```
+
+Copy the output and paste it as your `TELEGRAM_WEBHOOK_SECRET` value.
+
+> **Warning:** A weak or default webhook secret lets attackers forge Telegram webhook requests and inject messages into your agent. Always use a cryptographically random value.
 
 | | Polling (default) | Webhook |
 |---|---|---|
