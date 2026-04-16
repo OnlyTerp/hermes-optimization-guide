@@ -12,7 +12,7 @@
 | `session_search` | Search past conversation transcripts | "What did we decide about X?" or "Remember when we..." | Free (local) |
 | `skill_manage` | Procedural memory — reusable workflows | After fixing a bug, building something complex, or discovering a new approach | Free (local) |
 
-All three are **local-first**. No API calls, no embedding costs. They use SQLite and full-text search.
+All three are **local-first**. No embedding costs. They use SQLite and full-text search (query-based `session_search` may use an auxiliary LLM to summarize results — see Part 9).
 
 ## Tier 1: memory (Persistent Facts)
 
