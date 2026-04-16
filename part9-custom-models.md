@@ -8,8 +8,7 @@
 
 Models are configured in `~/.hermes/config.yaml`:
 
-> **Security note:** Never hardcode real API keys in `config.yaml` — this file may be committed to git. Store keys in `~/.hermes/.env` (which should be gitignored) and reference them as environment variables, or use `hermes auth` to set them securely.
-
+> **Security note:** Never put real API keys directly in `config.yaml`. Use environment variable references so keys stay in `~/.hermes/.env` (which should be `chmod 600` and never committed to git). You can also use `hermes auth` to set them securely.
 ```yaml
 # Default model
 model: claude-sonnet-4-20250514
@@ -24,19 +23,23 @@ provider: anthropic
 #   CEREBRAS_API_KEY=csk-...
 #   FIREWORKS_API_KEY=fw_...
 providers:
-  anthropic: {}
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
     
-  openai: {}
+  openai:
+    api_key: ${OPENAI_API_KEY}
     
   cerebras:
+    api_key: ${CEREBRAS_API_KEY}
     base_url: https://api.cerebras.ai/v1
     
   fireworks:
+    api_key: ${FIREWORKS_API_KEY}
     base_url: https://api.fireworks.ai/inference/v1
     
   local:
     base_url: http://localhost:11434/v1
-    api_key: ollama   # Not a real secret — Ollama uses this as a placeholder
+    api_key: ollama  # Ollama doesn't require a real key
 ```
 
 ## Adding a Custom Provider
@@ -48,7 +51,15 @@ Any provider that implements the OpenAI chat completions API works:
 #   MY_CUSTOM_API_KEY=your-key-here
 providers:
   my-custom:
+    api_key: ${MY_CUSTOM_API_KEY}
     base_url: https://api.your-provider.com/v1
+```
+
+Add the actual key to your `.env` file:
+
+```bash
+echo "MY_CUSTOM_API_KEY=<your-key-here>" >> ~/.hermes/.env
+chmod 600 ~/.hermes/.env
 ```
 
 Then use it:
@@ -109,6 +120,7 @@ Config:
 # Set CEREBRAS_API_KEY in ~/.hermes/.env
 providers:
   cerebras:
+    api_key: ${CEREBRAS_API_KEY}
     base_url: https://api.cerebras.ai/v1
     # Models: llama-3.3-70b, llama-4-scout-17b-16e-instruct, qwen-3-32b
 ```

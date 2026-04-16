@@ -109,6 +109,13 @@ One command. That's it.
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
 ```
 
+> **Security tip:** Piping scripts directly from the internet to bash executes them sight-unseen. If you prefer to inspect first:
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh -o install.sh
+> less install.sh   # Review the script
+> bash install.sh
+> ```
+
 > **Windows users:** Native Windows is not supported. Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run the command from inside WSL. It works perfectly.
 
 ### What the Installer Does
@@ -185,11 +192,11 @@ This opens an interactive menu to add API keys for each provider. Keys are store
 
 > **Tip:** You can also set keys manually using a text editor:
 > ```bash
-> nano ~/.hermes/.env    # Add: ANTHROPIC_API_KEY=sk-ant-...
-> chmod 600 ~/.hermes/.env   # Restrict permissions to owner only
+> nano ~/.hermes/.env    # Add: ANTHROPIC_API_KEY=<your-key-here>
+> chmod 600 ~/.hermes/.env   # Restrict access to your user only
 > ```
 >
-> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead.
+> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead. Always run `chmod 600 ~/.hermes/.env` to prevent other users on the system from reading your API keys.
 
 ### 3. Configure Toolsets
 
@@ -629,19 +636,19 @@ Create `~/.hermes/lightrag/.env`:
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
 LLM_MODEL=kimi-2.5                    # What we actually use — great quality/cost ratio
-LLM_BINDING_API_KEY=       # Paste your API key here
+LLM_BINDING_API_KEY=<your-api-key>
 
 # Embedding model (for vector storage)
 EMBEDDING_BINDING=fireworks
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
-EMBEDDING_API_KEY=         # Paste your Fireworks key here
+EMBEDDING_API_KEY=<your-fireworks-api-key>
 
 # Or use local Ollama (free, no API key needed):
 # EMBEDDING_BINDING=ollama
 # EMBEDDING_MODEL=nomic-embed-text
 ```
 
-> **Security:** Restrict permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
+> **Security tip:** Set restrictive permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
 
 ### Entity Extraction Model — What to Use
 
@@ -668,8 +675,8 @@ This is the LLM that reads your documents and pulls out entities and relationshi
 ```bash
 cd ~/.hermes/lightrag/LightRAG
 
-# Start the API server
-lightrag-server --port 9623
+# Start the API server (binds to localhost by default)
+lightrag-server --host 127.0.0.1 --port 9623
 ```
 
 The server starts on `http://localhost:9623` with:
@@ -677,7 +684,7 @@ The server starts on `http://localhost:9623` with:
 - **Web UI** at `http://localhost:9623/webui` for browsing the knowledge graph
 - **Health check** at `http://localhost:9623/health`
 
-> **Security warning:** The LightRAG API has **no built-in authentication**. By default it binds to `localhost`, which is safe for local use. **Never expose port 9623 to the public internet** (e.g., via port forwarding, `0.0.0.0` binding, or cloud deployment without a reverse proxy). Anyone with access to this port can read, modify, and delete your entire knowledge graph. If you need remote access, put it behind a reverse proxy with authentication (e.g., nginx + basic auth, or Tailscale/WireGuard).
+> **Security warning:** The LightRAG REST API has **no built-in authentication**. Always bind to `127.0.0.1` (localhost only) — never `0.0.0.0`. If you need remote access, put it behind a reverse proxy (nginx, Caddy) with authentication, or use SSH tunneling / Tailscale / WireGuard. Anyone who can reach this port can query, ingest, or delete your entire knowledge graph.
 
 ### Run as a Background Service
 
@@ -1100,8 +1107,8 @@ Select **Telegram** when prompted. The wizard asks for your bot token and allowe
 Add the following to `~/.hermes/.env`:
 
 ```bash
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrSTUvwxYZ
-TELEGRAM_ALLOWED_USERS=123456789    # Comma-separated for multiple users
+TELEGRAM_BOT_TOKEN=<your-bot-token-from-botfather>
+TELEGRAM_ALLOWED_USERS=<your-numeric-user-id>    # Comma-separated for multiple users
 ```
 
 For groups, also add the group chat ID (negative number, like `-1001234567890`):
@@ -1185,14 +1192,18 @@ Add to `~/.hermes/.env`:
 
 ```bash
 TELEGRAM_WEBHOOK_URL=https://your-app.fly.dev
-TELEGRAM_WEBHOOK_SECRET=   # Generate with: openssl rand -hex 32
+TELEGRAM_WEBHOOK_SECRET=<generate-with-command-below>
 ```
 
-> **Important:** Use a cryptographically strong random secret. Generate one with:
-> ```bash
-> openssl rand -hex 32
-> ```
-> Do not use a weak or predictable value — the webhook secret is the only thing preventing forged requests to your bot.
+Generate a strong secret — never use a guessable value:
+
+```bash
+openssl rand -hex 32
+```
+
+Copy the output and paste it as your `TELEGRAM_WEBHOOK_SECRET` value.
+
+> **Warning:** A weak or default webhook secret lets attackers forge Telegram webhook requests and inject messages into your agent. Always use a cryptographically random value.
 
 | | Polling (default) | Webhook |
 |---|---|---|

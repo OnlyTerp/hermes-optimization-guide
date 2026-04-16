@@ -14,6 +14,13 @@ One command. That's it.
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
 ```
 
+> **Security tip:** Piping scripts directly from the internet to bash executes them sight-unseen. If you prefer to inspect first:
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh -o install.sh
+> less install.sh   # Review the script
+> bash install.sh
+> ```
+
 > **Windows users:** Native Windows is not supported. Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run the command from inside WSL. It works perfectly.
 
 ### What the Installer Does
@@ -74,11 +81,11 @@ This opens an interactive menu to add API keys for each provider. Keys are store
 
 > **Tip:** You can also set keys manually using a text editor:
 > ```bash
-> nano ~/.hermes/.env    # Add: ANTHROPIC_API_KEY=sk-ant-...
-> chmod 600 ~/.hermes/.env   # Restrict permissions to owner only
+> nano ~/.hermes/.env    # Add: ANTHROPIC_API_KEY=<your-key-here>
+> chmod 600 ~/.hermes/.env   # Restrict access to your user only
 > ```
 >
-> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead.
+> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead. Always run `chmod 600 ~/.hermes/.env` to prevent other users on the system from reading your API keys.
 
 ### 3. Configure Toolsets
 

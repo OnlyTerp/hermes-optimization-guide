@@ -72,19 +72,19 @@ Create `~/.hermes/lightrag/.env`:
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
 LLM_MODEL=gpt-4.1-mini
-LLM_BINDING_API_KEY=       # Paste your OpenAI key here
+LLM_BINDING_API_KEY=<your-openai-api-key>
 
 # Embedding model (for vector storage)
 EMBEDDING_BINDING=fireworks
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
-EMBEDDING_API_KEY=         # Paste your Fireworks key here
+EMBEDDING_API_KEY=<your-fireworks-api-key>
 
 # Or use local Ollama (free, no API key needed):
 # EMBEDDING_BINDING=ollama
 # EMBEDDING_MODEL=nomic-embed-text
 ```
 
-> **Security:** Restrict permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
+> **Security tip:** Set restrictive permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
 
 > **Tip:** Use `gpt-4.1-mini` or `claude-sonnet-4-20250514` for entity extraction. It doesn't need to be your smartest model — it just needs to reliably identify entities and relationships. Cheaper models save money on ingestion.
 
@@ -99,8 +99,8 @@ EMBEDDING_API_KEY=         # Paste your Fireworks key here
 ```bash
 cd ~/.hermes/lightrag/LightRAG
 
-# Start the API server
-lightrag-server --port 9623
+# Start the API server (binds to localhost by default)
+lightrag-server --host 127.0.0.1 --port 9623
 ```
 
 The server starts on `http://localhost:9623` with:
@@ -108,7 +108,7 @@ The server starts on `http://localhost:9623` with:
 - **Web UI** at `http://localhost:9623/webui` for browsing the knowledge graph
 - **Health check** at `http://localhost:9623/health`
 
-> **Security warning:** The LightRAG API has **no built-in authentication**. By default it binds to `localhost`, which is safe for local use. **Never expose port 9623 to the public internet** (e.g., via port forwarding, `0.0.0.0` binding, or cloud deployment without a reverse proxy). Anyone with access to this port can read, modify, and delete your entire knowledge graph. If you need remote access, put it behind a reverse proxy with authentication (e.g., nginx + basic auth, or Tailscale/WireGuard).
+> **Security warning:** The LightRAG REST API has **no built-in authentication**. Always bind to `127.0.0.1` (localhost only) — never `0.0.0.0`. If you need remote access, put it behind a reverse proxy (nginx, Caddy) with authentication, or use SSH tunneling / Tailscale / WireGuard. Anyone who can reach this port can query, ingest, or delete your entire knowledge graph.
 
 ### Run as a Background Service
 
