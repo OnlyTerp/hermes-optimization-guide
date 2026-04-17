@@ -40,7 +40,7 @@ Produce a **one-screen triage report**: what's urgent, what's a decision, what's
    - `decision` — needs a yes/no/pick from me
    - `info` — FYI; noting what they said is enough
    - `noise` — newsletters, generic updates, obvious marketing
-   - `spam` — confident spam (see [spam-trap](../spam-trap/SKILL.md))
+   - `spam` — confident spam (see [spam-trap](../../security/spam-trap/SKILL.md))
 
 3. **Summarize** per item: one line of "who / what / ask". Keep under 80 chars.
 
