@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  markdown-links:
+    name: markdown-link-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: '.github/markdown-link-check.json'
+          folder-path: '.'
+          use-quiet-mode: 'yes'
+          check-modified-files-only: 'yes'
+          base-branch: 'main'
+
+  yaml-lint:
+    name: yamllint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Run yamllint
+        run: yamllint -c .github/yamllint.yml templates/ benchmarks/ skills/
+
+  skill-frontmatter:
+    name: skill frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install pyyaml
+      - name: Validate every SKILL.md frontmatter
+        run: python .github/scripts/validate_skills.py
+
+  prettier-check:
+    name: prettier (soft)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prettier check (advisory only)
+        run: npx -y prettier --check "**/*.md" || echo "::warning::prettier formatting drift (non-blocking)"

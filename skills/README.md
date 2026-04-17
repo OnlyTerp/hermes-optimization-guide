@@ -38,6 +38,10 @@ hermes /reload
 | **ops** | `telegram-triage` | Classifies inbound Telegram DMs, autoreplies low-stakes, escalates high-stakes to you |
 | **dev** | `pr-review` | Delegates a PR review to Claude Code with a scoped read-only GitHub PAT |
 | **dev** | `release-notes` | Builds a human-readable release note from a range of commits or merged PRs |
+| **dev** | `meeting-prep` | Pulls context for an upcoming meeting (calendar + notes + recent threads) into a briefing |
+| **ops** | `daily-inbox-triage` | Morning pass across Telegram/email/Slack DMs — classifies, autoreplies, escalates |
+| **ops** | `hermes-weekly` | Weekly digest of your Hermes activity (skills run, cost, errors, upcoming crons) |
+| **security** | `spam-trap` | Sinks confirmed spam into a quarantine profile with no memory write / no MCP access |
 
 ## Contributing
 
