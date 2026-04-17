@@ -1,0 +1,26 @@
+extends: default
+
+# Goal: catch real syntax errors in template YAMLs, not formatting nits.
+# Templates often align values / use flow-mapping shorthand for cron/approval rules;
+# those are legit, so we relax those rules.
+
+rules:
+  line-length: disable
+  document-start: disable
+  comments: disable
+  comments-indentation: disable
+  colons: disable
+  commas: disable
+  indentation: disable
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+    check-keys: false
+  braces:
+    max-spaces-inside: 2
+  brackets:
+    max-spaces-inside: 2
+
+ignore: |
+  node_modules/
+  .venv/
+  templates/compose/.env.langfuse.example

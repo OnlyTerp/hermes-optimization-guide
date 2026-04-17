@@ -62,7 +62,7 @@ gateways:
     bots:
       admin:
         token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids: [${TELEGRAM_OWNER_ID}]
+        allowed_user_ids: ["${TELEGRAM_OWNER_ID}"]
         trust_label: high
   discord:
     enabled: true
@@ -76,8 +76,14 @@ gateways:
     trust_label: medium
   email:
     enabled: true
-    imap: { host: imap.gmail.com, user: ${EMAIL_USER}, password: ${EMAIL_APP_PASSWORD} }
-    smtp: { host: smtp.gmail.com, user: ${EMAIL_USER}, password: ${EMAIL_APP_PASSWORD} }
+    imap:
+      host: imap.gmail.com
+      user: "${EMAIL_USER}"
+      password: "${EMAIL_APP_PASSWORD}"
+    smtp:
+      host: smtp.gmail.com
+      user: "${EMAIL_USER}"
+      password: "${EMAIL_APP_PASSWORD}"
     trust_label: untrusted
 
 memory:
@@ -118,7 +124,8 @@ mcp_servers:
   cloudflare:
     command: npx
     args: [-y, "@cloudflare/mcp-server-cloudflare"]
-    env: { CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN} }
+    env:
+      CLOUDFLARE_API_TOKEN: "${CLOUDFLARE_API_TOKEN}"
     trust: trusted
     allow_sampling: false
   filesystem:
