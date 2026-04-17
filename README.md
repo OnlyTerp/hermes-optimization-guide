@@ -1,17 +1,44 @@
 # Hermes Optimization Guide
 
-> **Tested on Hermes Agent (latest) — April 2026** · 11 parts · Battle-tested on a live production deployment
+> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** · 16 parts · Battle-tested on a live production deployment
 
-### Make Your Hermes Agent Actually Work — Setup, Migration, Knowledge Graphs, Telegram, Skills, Memory, Models, and Recovery
-#### Full setup walkthrough, OpenClaw migration, LightRAG graph RAG, Telegram bot integration, on-the-fly skill creation, memory architecture, custom models, and crash recovery
+### Make Your Hermes Agent Actually Work — Setup, Migration, Knowledge Graphs, Messaging, Skills, Memory, Models, Dashboard, Tool Gateway, and Recovery
+#### Full setup walkthrough, OpenClaw migration, LightRAG graph RAG, 16 messaging platforms, on-the-fly skill creation, memory architecture, custom models, the new local web dashboard, Nous Tool Gateway, Fast Mode, backup/import, and crash recovery
 
 *By Terp - [Terp AI Labs](https://x.com/OnlyTerp)*
 
 ---
 
+## What's New (April 10–17, 2026)
+
+Two major Hermes releases dropped this week. This guide is current as of both.
+
+### [v0.9.0 — 2026.4.13 — "Everywhere"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.13)
+
+- **Local web dashboard** (`hermes dashboard`) — full browser UI for config, API keys, sessions, logs, analytics, cron, and skills. See [Part 12](./part12-web-dashboard.md).
+- **Fast Mode** (`/fast`) — priority-tier inference on OpenAI & Anthropic, available on every gateway platform, not just the CLI. See [Part 14](./part14-fast-mode-watchers.md).
+- **Three new messaging adapters** — iMessage (via BlueBubbles), WeChat/Weixin, and WeCom (Enterprise WeChat). Brings the total to **16 platforms**. See [Part 15](./part15-new-platforms.md).
+- **Android / Termux** tested install path — run the full Hermes CLI on your phone. See [Part 15](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
+- **Background process monitoring** (`watch_patterns`) — real-time regex event hooks on long-running processes, no more polling. See [Part 14](./part14-fast-mode-watchers.md#background-process-monitoring-watch_patterns).
+- **Pluggable context engine** — swap in a custom engine to filter memory, inject domain context, or pre-summarize tool output. See [Part 14](./part14-fast-mode-watchers.md#pluggable-context-engine).
+- **`hermes backup` / `hermes import`** — first-class portable backups with interactive conflict resolution. See [Part 16](./part16-backup-debug.md).
+- **Dashboard plugins** — third-party tabs that extend the web UI. See [Part 12](./part12-web-dashboard.md#dashboard-plugins-extend-the-ui).
+- **Proxy support, webhook secret validation, SSRF protection, log redaction** — hardening pass across every adapter. See [Part 16](./part16-backup-debug.md#security-hardening-v09--v010-notes).
+
+### [v0.10.0 — 2026.4.16 — "Tool Gateway"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.16)
+
+- **Nous Tool Gateway** — paid [Nous Portal](https://portal.nousresearch.com) subscribers get web search (Firecrawl), image generation (FAL FLUX 2 Pro), TTS (OpenAI), and browser automation (Browser Use) through their subscription — **no extra API keys**. Per-tool `use_gateway: true` with clean precedence over direct keys. See [Part 13](./part13-tool-gateway.md).
+- **Native xAI and Xiaomi MiMo providers** — both now have first-class adapters with provider-specific features (Grok's live-X search, MiMo's reasoning modes), not just OpenRouter pass-through. See [Part 9](./part9-custom-models.md).
+- **`/compress <topic>`** — guided compression that preserves detail relevant to a topic. See [Part 14](./part14-fast-mode-watchers.md#compress-topic--guided-compression).
+- **`/debug` + `hermes debug share`** — single-command diagnostic bundler with upload endpoint for bug reports. See [Part 16](./part16-backup-debug.md#debug-and-hermes-debug-share).
+- **Approval bypass inheritance for subagents** — subagents inherit the parent session's approval posture; override per delegation. See [Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents).
+- `HERMES_ENABLE_NOUS_MANAGED_TOOLS` env flag **removed** — replaced by clean subscription detection + per-tool `use_gateway`. `hermes upgrade` migrates automatically.
+
+---
+
 ## Table of Contents
 
-1. [Setup](#part-1-setup-stop-fumbling-with-installation) — Install Hermes, configure your provider, first-run walkthrough
+1. [Setup](#part-1-setup-stop-fumbling-with-installation) — Install Hermes, configure your provider, first-run walkthrough (with Android/Termux)
 2. [SOUL.md Personality](#soulmd--give-your-agent-a-personality) — The Molty prompt, what good personality rules look like, how to fix a bland agent
 3. [OpenClaw Migration](#part-2-openclaw-migration-dont-leave-your-knowledge-behind) — Move your OpenClaw data, config, skills, and memory into Hermes
 4. [LightRAG — Graph RAG](#part-3-lightrag--graph-rag-that-actually-works) — Set up a knowledge graph that actually understands relationships, not just text similarity
@@ -20,9 +47,14 @@
 7. [Context Compression](./part6-context-compression.md) — Fix the silent context loss bug, configure compression thresholds, survive long sessions
 8. [Memory System](./part7-memory-system.md) — The three-tier memory architecture: persistent facts, conversation recall, procedural memory
 9. [Subagent Patterns](./part8-subagent-patterns.md) — Orchestrator/worker delegation, ACP subagents, parallel task execution
-10. [Custom Model Providers](./part9-custom-models.md) — Cerebras, Fireworks, Ollama, model aliases, fallback chains
+10. [Custom Model Providers](./part9-custom-models.md) — Cerebras, Fireworks, Ollama, native xAI/MiMo/z.ai/Kimi/MiniMax/Arcee, Nous Portal, model aliases, fallback chains
 11. [SOUL.md Anti-Patterns](./part10-soul-antipatterns.md) — What makes an agent annoying vs useful, the formula that works
 12. [Gateway Recovery](./part11-gateway-recovery.md) — Crash detection, auto-recovery, common failure modes, health checks
+13. [Web Dashboard](./part12-web-dashboard.md) — **New.** `hermes dashboard`, the full browser UI — config, keys, sessions, logs, analytics, cron, skills, REST API, plugins
+14. [Nous Tool Gateway](./part13-tool-gateway.md) — **New.** Web search, image gen, TTS, and browser automation through a single Nous Portal subscription
+15. [Fast Mode & Background Watchers](./part14-fast-mode-watchers.md) — **New.** `/fast` priority tier, `watch_patterns` real-time process monitoring, pluggable context engine, `/compress <topic>`
+16. [New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md) — **New.** BlueBubbles/iMessage, Weixin/WeCom, Android via Termux — the full 16-platform lineup
+17. [Backup, Import & `/debug`](./part16-backup-debug.md) — **New.** Portable `hermes backup`/`import`, `/debug` bundler, `hermes debug share`, security hardening
 
 ---
 
@@ -52,10 +84,11 @@ After this guide:
 
 ## Prerequisites
 
-- A Linux/macOS machine (or WSL2 on Windows)
+- A Linux/macOS machine (or WSL2 on Windows, or **Android via Termux** — see [Part 15](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone))
 - Python 3.11+ and Git
-- An API key for at least one LLM provider (Anthropic, OpenAI, OpenRouter, etc.)
+- An API key for at least one LLM provider (Anthropic, OpenAI, OpenRouter, Nous Portal, etc.)
 - Optional: Ollama for local embeddings (free vector search)
+- Optional: A paid [Nous Portal](https://portal.nousresearch.com) subscription to use the [Tool Gateway](./part13-tool-gateway.md) — web search, image gen, TTS, and browser automation with no extra keys
 
 ---
 
@@ -83,15 +116,20 @@ LLM Provider (Claude, GPT, local models)
 ## Quick Start
 
 ```bash
-# 1. Install Hermes
+# 1. Install Hermes (Linux/macOS/WSL2/Android)
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
 
-# 2. Configure
+# 2. Configure providers and tools
 hermes setup
 
-# 3. Start chatting
+# 3a. Start chatting in the terminal
 hermes
+
+# 3b. Or launch the new browser dashboard (v0.9+)
+hermes dashboard
 ```
+
+The dashboard is the fastest way to configure everything without touching YAML. See [Part 12](./part12-web-dashboard.md) for the full tour.
 
 For the full walkthrough including optimization, read each part in order.
 
@@ -117,6 +155,8 @@ curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scri
 > ```
 
 > **Windows users:** Native Windows is not supported. Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run the command from inside WSL. It works perfectly.
+
+> **Android users (new in v0.9):** the same installer detects Termux and installs the tested `[termux]` extra bundle automatically — CLI, cron, PTY/background terminal, Telegram gateway, MCP, Honcho, ACP. See [Part 15 — Android / Termux](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
 
 ### What the Installer Does
 
@@ -156,15 +196,20 @@ Supported providers and recommended models:
 
 | Provider | Top Models | Best For | Env Variable |
 |----------|-----------|----------|-------------|
-| **Anthropic** | Opus 4.6, Sonnet 4 | Best reasoning, complex tasks, coding | `ANTHROPIC_API_KEY` |
-| **OpenAI** | GPT-5.4 Pro, o3, GPT-4.1 | Strong tool use, fast inference, huge context | `OPENAI_API_KEY` |
-| **Xiaomi** | MiMo V2 Pro | Fast, cheap, great for orchestration and routing | `OPENROUTER_API_KEY` |
+| **Nous Portal** | Hermes 5, Hermes 4 405B | Built-in [Tool Gateway](./part13-tool-gateway.md) — web search/image/TTS/browser with no extra keys | Auth via `hermes model` |
+| **Anthropic** | Opus 4.6, Sonnet 4 | Best reasoning, complex tasks, coding, `/fast` priority tier | `ANTHROPIC_API_KEY` |
+| **OpenAI** | GPT-5.4 Pro, o3, GPT-4.1 | Strong tool use, fast inference, huge context, `/fast` priority tier | `OPENAI_API_KEY` |
+| **Xiaomi MiMo** | MiMo V2 Pro *(native adapter)* | Fast, cheap, native reasoning modes, great for orchestration | `XIAOMI_API_KEY` |
+| **xAI** | Grok 3, Grok 3 Mini *(native adapter)* | Fast, good reasoning, native live-X search | `XAI_API_KEY` |
+| **Kimi / Moonshot** | Kimi 2.5 | Big context, excellent for entity extraction / LightRAG ingestion | `MOONSHOT_API_KEY` |
+| **z.ai / GLM** | GLM-5, GLM-5 Air | Strongest open-weights model, great for translation + tools | `ZAI_API_KEY` |
 | **Google** | Gemini 3.1 Pro | Massive context (2M tokens), multimodal, cheap | `GEMINI_API_KEY` |
-| **MiniMax** | M2.7 | Good balance of speed and quality | `OPENROUTER_API_KEY` |
-| **xAI** | Grok 3, Grok 3 Mini | Fast, good reasoning, real-time X/Twitter access | `XAI_API_KEY` |
+| **MiniMax** | M2.7 | Good balance of speed and quality | `MINIMAX_API_KEY` |
 | **Cerebras** | Llama 4 Scout, Qwen 3 32B | Blazing fast inference (2000+ tok/s), cheap | `CEREBRAS_API_KEY` |
 | **Groq** | Llama 4, Qwen 3 | Very fast inference, limited context | `GROQ_API_KEY` |
-| **OpenRouter** | All of the above + 100 more | Access every model from one key, auto-fallback | `OPENROUTER_API_KEY` |
+| **Arcee** | AFM-4.5, Caller | Function-calling specialists, cheap | `ARCEE_API_KEY` |
+| **Hugging Face** | Any TGI/TEI endpoint | Self-hosted and Inference Endpoints | `HF_TOKEN` |
+| **OpenRouter** | All of the above + 200 more | Access every model from one key, auto-fallback | `OPENROUTER_API_KEY` |
 | **Ollama** (local) | Qwen 3.5 Opus Distilled V3, Gemma 4, Nemotron | Free, private, runs on your GPU — great for embeddings and simple tasks | None needed |
 
 ### Local Models (Ollama)
