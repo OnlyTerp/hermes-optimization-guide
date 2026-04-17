@@ -301,16 +301,28 @@ function generate() {
   lines.push(`models:`);
   lines.push(`  default: ${model}`);
   lines.push(`  providers:`);
-  const provider = model.split('/')[0];
-  const providerKey = {
+  const providerKeys = {
     anthropic: 'ANTHROPIC_API_KEY',
-    google: 'GOOGLE_API_KEY',
-    openai: 'OPENAI_API_KEY',
-    moonshot: 'MOONSHOT_API_KEY',
-    zai: 'ZAI_API_KEY',
-  }[provider] || 'API_KEY';
-  lines.push(`    ${provider}:`);
-  lines.push(`      api_key: "$\{${providerKey}\}"`);
+    google:    'GOOGLE_API_KEY',
+    openai:    'OPENAI_API_KEY',
+    moonshot:  'MOONSHOT_API_KEY',
+    zai:       'ZAI_API_KEY',
+    cerebras:  'CEREBRAS_API_KEY',
+  };
+  // Providers required by each persona's routing rules (must be superset of
+  // models referenced in routing blocks later in this function).
+  const EXTRA_PROVIDERS = {
+    'cost-optimized': ['anthropic', 'google', 'moonshot', 'cerebras'],
+    'production':     ['anthropic', 'google'],
+    'security-hardened': ['anthropic'],
+  };
+  const providersToEmit = new Set([model.split('/')[0]]);
+  (EXTRA_PROVIDERS[persona] || []).forEach(p => providersToEmit.add(p));
+  [...providersToEmit].forEach(p => {
+    const envVar = providerKeys[p] || 'API_KEY';
+    lines.push(`    ${p}:`);
+    lines.push(`      api_key: "$\{${envVar}\}"`);
+  });
   lines.push(``);
 
   // Gateways
