@@ -1,0 +1,53 @@
+[Unit]
+Description=Hermes Web Dashboard
+Documentation=https://github.com/OnlyTerp/hermes-optimization-guide/blob/main/part12-web-dashboard.md
+After=network-online.target hermes.service
+Wants=network-online.target
+BindsTo=hermes.service
+
+[Service]
+Type=simple
+User=hermes
+Group=hermes
+WorkingDirectory=/home/hermes
+ExecStart=/usr/local/bin/hermes dashboard --listen 127.0.0.1:8765
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=-/home/hermes/.hermes/.env
+Environment=HOME=/home/hermes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes-dashboard
+
+# Hardening (same as hermes.service; expose only loopback)
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/hermes/.hermes /tmp
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectClock=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @mount @cpu-emulation @debug @reboot @swap
+SystemCallArchitectures=native
+
+MemoryMax=1G
+LimitNOFILE=8192
+TasksMax=512
+
+[Install]
+WantedBy=multi-user.target
