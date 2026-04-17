@@ -188,7 +188,7 @@ function select(name) {
 const PERSONA_PRESETS = {
   'minimum': {
     default_model: 'anthropic/claude-sonnet-4-5',
-    memory: 'none',
+    memory: 'vector',
     gateways: { cli: true, telegram: false, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: false, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
     approval: 'moderate',
@@ -197,7 +197,7 @@ const PERSONA_PRESETS = {
   },
   'telegram-bot': {
     default_model: 'anthropic/claude-sonnet-4-5',
-    memory: 'vector',
+    memory: 'lightrag',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
     approval: 'moderate',
@@ -215,11 +215,11 @@ const PERSONA_PRESETS = {
   },
   'cost-optimized': {
     default_model: 'google/gemini-2.5-flash',
-    memory: 'vector',
+    memory: 'lightrag',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: true, mem0: false },
     approval: 'moderate',
-    obs: 'helicone',
+    obs: 'none',
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'security-hardened': {
