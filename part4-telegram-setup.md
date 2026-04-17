@@ -1,10 +1,29 @@
 # Part 4: Telegram Setup (Chat From Anywhere)
 
-*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery.*
+*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 16 messaging adapters — start here, branch out to the others as needed.*
 
 ---
 
-## Why Telegram
+## The 16-Platform Gateway
+
+As of v0.9.0 (April 2026), the Hermes gateway ships adapters for **16 platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism:
+
+| Flagship | New in v0.9 | Enterprise / regional | Self-hosted / generic |
+|----------|-------------|-----------------------|-----------------------|
+| Telegram (this part) | iMessage (BlueBubbles) | DingTalk | Signal |
+| Discord | WeChat / Weixin | Feishu / Lark | Matrix |
+| Slack | WeCom | Mattermost | SMS (Twilio) |
+| WhatsApp | | | Email (IMAP+SMTP) |
+| | | | Home Assistant |
+| | | | Webhook (generic) |
+
+- For **iMessage, WeChat, and Android/Termux**, see [Part 15](./part15-new-platforms.md).
+- For **gateway crash recovery** and health checks across all 16, see [Part 11](./part11-gateway-recovery.md).
+- For the browser UI that manages every platform's state, see [Part 12](./part12-web-dashboard.md).
+
+---
+
+## Why Telegram First
 
 Your agent is only useful if you can access it. Sitting at a terminal works until you need to:
 
