@@ -136,4 +136,15 @@ subprocess.run([
 
 ---
 
+## What's Next (April 2026 Additions)
+
+The subagent system has grown rapidly. Continue with:
+
+- **[Part 18: Delegating to Coding Agents](./part18-coding-agents.md)** — the OpenClaw pattern (thread-bound Telegram topics → persistent Claude Code / Codex / Gemini CLI runtimes). Print-mode vs interactive, ACP-as-server, git branch isolation, routing rules.
+- **[Part 17: MCP Servers](./part17-mcp-servers.md)** — give subagents tools that stay in sync across Hermes, Claude Code, and Cursor.
+- **[Part 21: Remote Sandboxes](./part21-remote-sandboxes.md)** — run your subagents on Modal/Daytona/SSH so a $5 VPS can drive a beefy workspace.
+- **[Part 20: Observability](./part20-observability.md)** — trace every subagent call in Langfuse, with per-skill cost breakdown.
+
+---
+
 *The orchestrator pattern is how you scale. One brain, many hands.*

@@ -8,6 +8,8 @@
 
 Skills are procedural knowledge — step-by-step instructions that teach Hermes how to handle specific tasks. Unlike memory (which is factual), skills are **how-to guides** the agent follows automatically.
 
+> **See also:** Skills pair naturally with [MCP Servers (Part 17)](./part17-mcp-servers.md) — skills encode *your* workflow, MCP servers add *external tools*. Combine them: a skill that calls a GitHub MCP to open an issue, a Postgres MCP to check data, then a [Claude Code delegation (Part 18)](./part18-coding-agents.md) to implement the fix.
+
 **Skills vs Memory:**
 
 | | Skills | Memory |

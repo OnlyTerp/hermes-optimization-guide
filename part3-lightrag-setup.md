@@ -4,6 +4,8 @@
 
 ---
 
+> **See also:** LightRAG is the *knowledge* layer. Combine with [Part 17: MCP Servers](./part17-mcp-servers.md) (memory-MCP + mem0 for cross-device memory), [Part 18: Coding Agents](./part18-coding-agents.md) (let Gemini's 1M context ingest the whole LightRAG dump for synthesis), and [Part 20: Observability](./part20-observability.md) (trace embedding calls).
+
 ## The Problem With Basic Memory
 
 Hermes ships with vector-based memory search. It finds documents that are textually similar to your query. That works for simple lookups, but it has a fundamental ceiling: **it finds what's similar, not what's connected.**
