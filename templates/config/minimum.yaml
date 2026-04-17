@@ -1,0 +1,31 @@
+# ------------------------------------------------------------
+# Hermes — MINIMUM config
+# ------------------------------------------------------------
+# The smallest possible working setup:
+#   - 1 provider (Anthropic)
+#   - 1 gateway (CLI only; no Telegram/Discord)
+#   - No memory backend (vector only)
+#   - No MCP servers
+# For when you just want to see Hermes work before committing to more.
+# ------------------------------------------------------------
+
+version: 1
+
+models:
+  default: anthropic/claude-sonnet-4-5
+  providers:
+    anthropic:
+      api_key: ${ANTHROPIC_API_KEY}
+
+gateways:
+  cli:
+    enabled: true
+
+memory:
+  backend: vector
+  vector:
+    driver: qdrant
+    path: ~/.hermes/vector
+
+# Everything else uses Hermes defaults. Run `hermes dashboard` later
+# to layer on skills, platforms, MCP servers, etc.

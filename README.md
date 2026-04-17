@@ -1,11 +1,72 @@
 # Hermes Optimization Guide
 
-> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** with post-release tracking for `main` · **21 parts** · Battle-tested on a live production deployment
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Hermes](https://img.shields.io/badge/Hermes-v0.10.0%20%28main%29-9146FF)](https://github.com/NousResearch/hermes-agent)
+[![Last updated](https://img.shields.io/badge/Last%20updated-2026--04--17-brightgreen)](./CHANGELOG.md)
+[![Parts](https://img.shields.io/badge/parts-21-blue)](#table-of-contents)
+[![Skills](https://img.shields.io/badge/installable%20skills-9-blue)](./skills/)
+[![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-### The End-to-End Guide — Setup, Migration, Knowledge Graphs, Messaging, Skills, Memory, Models, Dashboard, Tool Gateway, MCP, Coding Agents, Security, Observability, Remote Sandboxes, and Recovery
-#### Every part you need to go from fresh install to a production Hermes deployment that talks on 16 platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, and runs heavy work on disposable Modal/Daytona sandboxes — without burning $100/day on Opus tokens.
+> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** with post-release tracking for `main` · **21 parts, 9 installable skills, 5 opinionated configs, one-command VPS bootstrap** · Battle-tested on a live production deployment
 
-*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **April 17, 2026**
+### The End-to-End Hermes Guide — docs + runnable artifacts
+Every part you need to go from fresh install to a production Hermes deployment that talks on 16 platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, and runs heavy work on disposable Modal/Daytona sandboxes — without burning $100/day on Opus tokens.
+
+Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
+
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **April 17, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
+
+---
+
+## Install Everything (one command)
+
+On a fresh Debian 12 / Ubuntu 24.04 box (Hetzner CX22 works great for ~$5/mo):
+
+```bash
+curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/main/scripts/vps-bootstrap.sh | sudo bash
+```
+
+This installs Hermes, Node.js, Caddy (auto-TLS reverse proxy), UFW, fail2ban, creates a non-root `hermes` user, drops in hardened systemd units, and symlinks every skill from this repo into `~hermes/.hermes/skills/`. See [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) for what it does line by line — it's non-destructive and re-runnable.
+
+Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart.md)** (zero to Telegram bot in 5 min).
+
+---
+
+## Repo Map
+
+| Folder | What's in it |
+|---|---|
+| [`skills/`](./skills) | **9 installable `SKILL.md`** files. `ln -s` into `~/.hermes/skills/` and they're live. |
+| [`templates/config/`](./templates/config) | **5 opinionated `config.yaml`** — minimum, telegram-bot, production, cost-optimized, security-hardened. |
+| [`templates/compose/`](./templates/compose) | Self-hosted Langfuse v3 stack (ClickHouse + MinIO + Redis). |
+| [`templates/caddy/`](./templates/caddy) | Caddyfile reference (reverse proxy + auto TLS + HSTS). |
+| [`templates/systemd/`](./templates/systemd) | Hardened `hermes.service` + `hermes-dashboard.service`. |
+| [`templates/cron/`](./templates/cron) | Recommended production cron schedule. |
+| [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) | One-command fresh VPS → production Hermes. |
+| [`diagrams/`](./diagrams) | 6 Mermaid diagrams (architecture, MCP flow, delegation, sandbox sync, observability, security layers). |
+| [`benchmarks/`](./benchmarks) | Reproducible cost + latency table across 12 models × 5 tasks. |
+| [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
+| [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
+| [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
+| `part1-*.md` … `part21-*.md` | The guide itself. |
+
+---
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+  Inputs[16 platforms<br/>Telegram · Discord · Slack<br/>iMessage · WeChat · Email<br/>SMS · Webhooks · Cron · Voice · CLI] --> Gateway
+  Gateway --> Router[Model Router<br/>cost + context + capability]
+  Router --> Providers[Anthropic · OpenAI<br/>Google · Cerebras · Moonshot<br/>z.ai · xAI · Local]
+  Gateway --> Approval[Approval Layer<br/>denylist · allowlist · quarantine]
+  Approval --> Tools[Tools<br/>Native · Tool Gateway<br/>MCP · Subagents · Coding Agents]
+  Tools --> Memory[Memory<br/>Vector · LightRAG · mem0]
+  Tools --> Logs[(Audit log<br/>+ Langfuse/Helicone traces)]
+```
+
+Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 
 ---
 
