@@ -1,0 +1,80 @@
+# ------------------------------------------------------------
+# Hermes — TELEGRAM BOT config
+# ------------------------------------------------------------
+# Opinionated setup for a personal Telegram assistant:
+#   - Anthropic primary + Gemini Flash for classification
+#   - Telegram gateway with a private admin DM + (optional) public bot
+#   - LightRAG memory backend
+#   - Sensible approval defaults
+#   - Ready for the telegram-triage skill on public bot
+# ------------------------------------------------------------
+
+version: 1
+
+models:
+  default: anthropic/claude-sonnet-4-5
+  classification: google/gemini-2.5-flash
+  providers:
+    anthropic:
+      api_key: ${ANTHROPIC_API_KEY}
+      prompt_caching: true
+    google:
+      api_key: ${GOOGLE_API_KEY}
+
+gateways:
+  cli:
+    enabled: true
+  telegram:
+    enabled: true
+    bots:
+      # Primary / admin bot — this is YOU
+      admin:
+        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
+        allowed_user_ids: [${TELEGRAM_OWNER_ID}]
+        trust_label: high
+        default_skill: default
+      # Public bot — strangers talk to this one (optional, comment out to skip)
+      # public:
+      #   token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
+      #   trust_label: untrusted
+      #   default_skill: telegram-triage
+
+memory:
+  backend: lightrag
+  lightrag:
+    working_dir: ~/.hermes/lightrag
+    llm_model: google/gemini-2.5-flash
+    embedding_model: openai/text-embedding-3-small
+
+security:
+  approval:
+    bypass_subagents: []               # Start empty; add after review
+    auto_approve_read: true
+    denylist:
+      - 'rm\s+-rf\s+/'
+      - 'curl\s+.+\|\s*(sh|bash)'
+      - '169\.254\.169\.254'           # AWS/GCP metadata IP
+      - 'cat\s+~?/?\.?ssh/'
+    require_approval:
+      - tool: github
+        actions: [create_pr, merge_pr, delete_branch]
+      - tool: terminal
+        actions: [exec]
+      - tool: any_mcp
+        sampling: true
+    approval_channel: telegram_dm       # Always DM, never group
+  secrets:
+    redaction_patterns:
+      - 'sk-[A-Za-z0-9]{40,}'           # OpenAI / Anthropic style
+      - 'xoxb-[A-Za-z0-9-]{40,}'        # Slack bot
+      - 'ghp_[A-Za-z0-9]{36}'           # GitHub PAT
+      - 'AKIA[0-9A-Z]{16}'              # AWS access key id
+
+telemetry:
+  level: info
+  # Uncomment when you add Langfuse (see templates/compose/langfuse-stack.yml)
+  # exporters:
+  #   langfuse:
+  #     public_key: ${LANGFUSE_PUBLIC_KEY}
+  #     secret_key: ${LANGFUSE_SECRET_KEY}
+  #     host: http://localhost:3000

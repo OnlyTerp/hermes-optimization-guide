@@ -1,0 +1,110 @@
+# ------------------------------------------------------------
+# Hermes — SECURITY-HARDENED config
+# ------------------------------------------------------------
+# For operators whose agent reads untrusted content (public bots,
+# webhook-driven flows, email inbox, GitHub PR comments).
+# Every layer from Part 19 enabled + extras:
+#   - Quarantine mode as default
+#   - Strict approval on everything
+#   - No sampling allowed on community/untrusted MCPs
+#   - Memory-write redaction
+#   - Periodic security crons
+# ------------------------------------------------------------
+
+version: 1
+
+profile: quarantine                     # Default to quarantine; explicit /trusted to leave
+
+profiles:
+  quarantine:
+    description: Untrusted-input-facing. Cheap model, approval on everything, no memory writes.
+    models: { default: google/gemini-2.5-flash }
+    tools_allowlist: [classify, reply, escalate]
+    memory: { write: false, read: true }
+    security:
+      approval:
+        bypass_subagents: []
+        auto_approve_read: false        # Even reads require approval here
+        require_approval:
+          - { tool: "*", actions: [exec, write, send, create, update, delete] }
+  trusted:
+    description: Admin-only. Full capability.
+    models: { default: anthropic/claude-sonnet-4-5 }
+
+models:
+  default: anthropic/claude-sonnet-4-5
+  providers:
+    anthropic: { api_key: ${ANTHROPIC_API_KEY} }
+    google:    { api_key: ${GOOGLE_API_KEY} }
+
+gateways:
+  cli: { enabled: true, profile: trusted }        # Local CLI = admin
+  telegram:
+    enabled: true
+    bots:
+      admin:
+        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
+        allowed_user_ids: [${TELEGRAM_OWNER_ID}]
+        profile: trusted
+      public:
+        token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
+        profile: quarantine                       # Public bot locked down
+        default_skill: telegram-triage
+  discord:
+    enabled: true
+    bot_token: ${DISCORD_BOT_TOKEN}
+    profile: quarantine
+
+security:
+  approval:
+    bypass_subagents: []                # Empty by design
+    auto_approve_read: false            # Even directory listings require approval
+    denylist:
+      - 'rm\s+-rf\s+/'
+      - 'curl\s+.+\|\s*(sh|bash)'
+      - '169\.254\.169\.254'
+      - 'cat\s+~?/?\.?ssh/'
+      - 'aws\s+s3\s+sync'
+      - 'scp\s+.+@'
+      - 'nc\s+-l'
+      - 'base64\s+-d.*\|.*bash'
+    require_approval:
+      - { tool: "*", actions: [exec, write, send, create, update, delete, post] }
+    approval_channel: telegram_dm
+    approval_timeout_seconds: 300       # Reject if operator doesn't respond
+  secrets:
+    redaction_patterns:
+      - 'sk-[A-Za-z0-9]{40,}'
+      - 'xoxb-[A-Za-z0-9-]{40,}'
+      - 'ghp_[A-Za-z0-9]{36}'
+      - 'github_pat_[A-Za-z0-9_]{80,}'
+      - 'AKIA[0-9A-Z]{16}'
+      - 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'     # JWT
+    memory_write_redaction: true
+    log_redaction: true
+  webhook:
+    require_signature: true
+    max_body_bytes: 524288
+    ttl_seconds: 300                    # Reject webhooks older than 5 min
+  mcp:
+    default_trust: untrusted            # Must be explicitly elevated per-server
+    require_allowlist: true
+
+telemetry:
+  level: info
+  exporters:
+    langfuse:
+      public_key: ${LANGFUSE_PUBLIC_KEY}
+      secret_key: ${LANGFUSE_SECRET_KEY}
+      host: ${LANGFUSE_HOST}
+  alerts:
+    # Tight budget + any injection-attempt pings operator immediately
+    cost_per_hour_usd: 1.0
+    injection_attempts_per_hour: 1
+    webhook: ${ALERT_WEBHOOK_URL}
+
+cron:
+  - { name: weekly-mcp-audit,    schedule: "0 9 * * 1",   task: "/audit-mcp",                              notify: telegram_dm }
+  - { name: weekly-bypass-audit, schedule: "0 10 * * 1",  task: "/audit-approval-bypass",                  notify: telegram_dm }
+  - { name: monthly-rotate,      schedule: "0 4 1 * *",   task: "/rotate-secrets all",                     notify: telegram_dm }
+  - { name: daily-log-sweep,     schedule: "0 2 * * *",   task: "/audit-injection-attempts since=24h",     notify: telegram_dm }

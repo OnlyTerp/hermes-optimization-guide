@@ -1,0 +1,76 @@
+# ------------------------------------------------------------
+# Caddyfile for a production Hermes host
+# ------------------------------------------------------------
+# Terminates TLS (auto Let's Encrypt), reverse-proxies:
+#   - hermes.yourdomain.com       -> Hermes dashboard (127.0.0.1:8765)
+#   - langfuse.yourdomain.com     -> Langfuse web (127.0.0.1:3000)
+#   - hooks.yourdomain.com        -> Hermes webhook listener (127.0.0.1:8766)
+#
+# Replace *.yourdomain.com with your actual domain. Caddy will
+# fetch certificates on first request. Make sure DNS A/AAAA records
+# point at this host before first boot.
+#
+# Drop this file at /etc/caddy/Caddyfile and run:
+#   sudo systemctl reload caddy
+# ------------------------------------------------------------
+
+{
+	# Global options — replace the email with your own for Let's Encrypt
+	email ops@yourdomain.com
+	admin off
+}
+
+# Dashboard — protected by basicauth. Generate hash with: caddy hash-password
+hermes.yourdomain.com {
+	encode zstd gzip
+	basicauth * {
+		admin $2a$14$REPLACE_WITH_caddy_hash-password_OUTPUT
+	}
+	reverse_proxy 127.0.0.1:8765 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+	}
+
+	# Enforce HSTS
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+	header X-Content-Type-Options nosniff
+	header X-Frame-Options DENY
+	header Referrer-Policy no-referrer
+	header Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+	# Log to file (rotated)
+	log {
+		output file /var/log/caddy/hermes.log
+	}
+}
+
+# Langfuse
+langfuse.yourdomain.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Real-IP {remote_host}
+	}
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+	log {
+		output file /var/log/caddy/langfuse.log
+	}
+}
+
+# Webhooks — no basicauth (signature-validated in Hermes), but rate-limited
+hooks.yourdomain.com {
+	encode zstd gzip
+
+	# Reject anything over 1MB
+	request_body {
+		max_size 1MB
+	}
+
+	reverse_proxy 127.0.0.1:8766 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+	}
+
+	log {
+		output file /var/log/caddy/hooks.log
+	}
+}
