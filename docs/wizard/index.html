@@ -322,7 +322,8 @@ function generate() {
     lines.push(`    bots:`);
     lines.push(`      admin:`);
     lines.push(`        token: "$\{TELEGRAM_ADMIN_BOT_TOKEN\}"`);
-    lines.push(`        allowed_user_ids: ["$\{TELEGRAM_OWNER_ID\}"]`);
+    lines.push(`        allowed_user_ids:`);
+    lines.push(`          - $\{TELEGRAM_OWNER_ID\}`);
     lines.push(`        trust_label: high`);
   }
   if (gateways.discord) {

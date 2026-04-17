@@ -8,7 +8,7 @@
 
 ```bash
 # 新しい Debian 12 / Ubuntu 24.04 VPS で実行
-curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/main/scripts/vps-bootstrap.sh | bash
+curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/main/scripts/vps-bootstrap.sh | sudo bash
 ```
 
 もしくは [docs/quickstart.md](./docs/quickstart.md)（5 分で Telegram Bot）を参照。
