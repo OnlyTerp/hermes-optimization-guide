@@ -64,11 +64,11 @@
     <fieldset>
       <legend>1. Who's this deployment for?</legend>
       <p class="hint">Picks the starting template.</p>
-      <label><input type="radio" name="persona" value="minimum" checked> Just me, CLI only (simplest)</label>
-      <label><input type="radio" name="persona" value="telegram-bot"> Me + a Telegram bot</label>
-      <label><input type="radio" name="persona" value="production"> Production deployment (multi-gateway, multi-provider, memory, MCP, alerts)</label>
-      <label><input type="radio" name="persona" value="cost-optimized"> Cost-optimized (&lt;$5/mo personal daily-driver)</label>
-      <label><input type="radio" name="persona" value="security-hardened"> Security-hardened (public-facing, untrusted input)</label>
+      <label><input type="radio" name="persona" value="minimum" onchange="applyPersona(this.value)" checked> Just me, CLI only (simplest)</label>
+      <label><input type="radio" name="persona" value="telegram-bot" onchange="applyPersona(this.value)"> Me + a Telegram bot</label>
+      <label><input type="radio" name="persona" value="production" onchange="applyPersona(this.value)"> Production deployment (multi-gateway, multi-provider, memory, MCP, alerts)</label>
+      <label><input type="radio" name="persona" value="cost-optimized" onchange="applyPersona(this.value)"> Cost-optimized (&lt;$5/mo personal daily-driver)</label>
+      <label><input type="radio" name="persona" value="security-hardened" onchange="applyPersona(this.value)"> Security-hardened (public-facing, untrusted input)</label>
     </fieldset>
 
     <fieldset>
@@ -180,6 +180,84 @@ function on(name) {
 function select(name) {
   const el = document.querySelector(`select[name="${name}"]`);
   return el ? el.value : null;
+}
+
+/* Persona presets — each object mirrors the shape of the corresponding
+   templates/config/<persona>.yaml. When the user picks a persona, the
+   rest of the form is pre-filled so Question 1 actually drives output. */
+const PERSONA_PRESETS = {
+  'minimum': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'none',
+    gateways: { cli: true, telegram: false, discord: false, slack: false, email: false, webhook: false },
+    mcps:     { github: false, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
+    approval: 'moderate',
+    obs: 'none',
+    crons:    { backup: false, deps: false, cost: false, mcp: false },
+  },
+  'telegram-bot': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'vector',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
+    mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
+    approval: 'moderate',
+    obs: 'none',
+    crons:    { backup: true, deps: false, cost: true, mcp: false },
+  },
+  'production': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'lightrag',
+    gateways: { cli: true, telegram: true, discord: true, slack: true, email: true, webhook: true },
+    mcps:     { github: true, postgres: true, cloudflare: true, linear: true, filesystem: true, mem0: false },
+    approval: 'strict',
+    obs: 'langfuse',
+    crons:    { backup: true, deps: true, cost: true, mcp: true },
+  },
+  'cost-optimized': {
+    default_model: 'google/gemini-2.5-flash',
+    memory: 'vector',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
+    mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: true, mem0: false },
+    approval: 'moderate',
+    obs: 'helicone',
+    crons:    { backup: true, deps: false, cost: true, mcp: false },
+  },
+  'security-hardened': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'vector',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: true },
+    mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
+    approval: 'strict',
+    obs: 'langfuse',
+    crons:    { backup: true, deps: true, cost: true, mcp: true },
+  },
+};
+
+function setRadio(name, value) {
+  const el = document.querySelector(`input[type="radio"][name="${name}"][value="${value}"]`);
+  if (el) el.checked = true;
+}
+function setCheckbox(name, checked) {
+  const el = document.querySelector(`input[type="checkbox"][name="${name}"]`);
+  if (el) el.checked = !!checked;
+}
+function setSelect(name, value) {
+  const el = document.querySelector(`select[name="${name}"]`);
+  if (el) el.value = value;
+}
+
+function applyPersona(persona) {
+  const p = PERSONA_PRESETS[persona];
+  if (!p) return;
+  setSelect('default_model', p.default_model);
+  setRadio('memory', p.memory);
+  setRadio('approval', p.approval);
+  setRadio('obs', p.obs);
+  Object.entries(p.gateways).forEach(([k, v]) => setCheckbox('gw_' + k, v));
+  Object.entries(p.mcps).forEach(([k, v]) => setCheckbox('mcp_' + k, v));
+  Object.entries(p.crons).forEach(([k, v]) => setCheckbox('cron_' + k, v));
+  generate();
+  setStatus(`Loaded "${persona}" preset — tweak any field, then Generate.`);
 }
 
 function generate() {
@@ -375,7 +453,48 @@ function generate() {
   lines.push(`      - 'curl\\s+.+\\|\\s*(sh|bash)'`);
   lines.push(`      - '169\\.254\\.169\\.254'`);
   lines.push(`      - 'cat\\s+~?/?\\.?ssh/'`);
+
+  // Persona-specific security blocks
+  if (persona === 'security-hardened') {
+    lines.push(`  mcp:`);
+    lines.push(`    default_trust: untrusted`);
+    lines.push(`    require_allowlist: true`);
+    lines.push(`    allow_sampling: false`);
+  } else if (anyMcp) {
+    lines.push(`  mcp:`);
+    lines.push(`    default_trust: trusted`);
+    lines.push(`    allow_sampling: false`);
+  }
+
+  if (persona === 'security-hardened' || persona === 'production') {
+    lines.push(`  webhook:`);
+    lines.push(`    max_body_bytes: 1048576`);
+    lines.push(`    require_signature: true`);
+    lines.push(`  redaction:`);
+    lines.push(`    memory_write: true`);
+    lines.push(`    log: true`);
+    lines.push(``);
+    lines.push(`profiles:`);
+    lines.push(`  quarantine:`);
+    lines.push(`    # Low-trust gateways route here: no memory writes, no MCP, read-only tools`);
+    lines.push(`    allow_memory_write: false`);
+    lines.push(`    allow_send: false`);
+    lines.push(`    mcp_servers: []`);
+    lines.push(`    toolsets: [classify]`);
+  }
   lines.push(``);
+
+  // Cost-routing rules for cost-optimized persona
+  if (persona === 'cost-optimized') {
+    lines.push(`routing:`);
+    lines.push(`  rules:`);
+    lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/llama-3.3-70b" }`);
+    lines.push(`    - { when: "context.tokens > 200000",        use: "google/gemini-2.5-pro" }`);
+    lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi-k2.5" }`);
+    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet-4-5" }`);
+    lines.push(`    - { else: true,                              use: "google/gemini-2.5-flash" }`);
+    lines.push(``);
+  }
 
   // Telemetry
   if (obs === 'langfuse') {
