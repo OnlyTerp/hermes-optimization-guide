@@ -1,6 +1,44 @@
 # Part 9: Custom Model Providers (Use Any Model You Want)
 
-*Hermes supports any OpenAI-compatible API. Here's how to wire up Cerebras, Fireworks, or your own local models.*
+*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, Hugging Face, Cerebras, Groq, Fireworks, and Ollama. Here's how to wire any of them up.*
+
+---
+
+## Native Adapters vs Generic OpenAI-Compatible
+
+As of v0.10.0 (April 2026), Hermes ships **native adapters** for a growing list of providers. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
+
+| Provider | Native adapter? | Notable feature |
+|----------|-----------------|-----------------|
+| **Nous Portal** | Yes | Auth via `hermes model` (no bare API key). Unlocks the [Tool Gateway](./part13-tool-gateway.md). |
+| **Anthropic** | Yes | Native prompt caching, extended thinking, `/fast` priority tier |
+| **OpenAI** | Yes | Native responses API, reasoning effort levels, `/fast` priority tier |
+| **xAI (Grok)** | **Yes, new in v0.10** | Native **live X/Twitter search** as a built-in tool |
+| **Xiaomi MiMo** | **Yes, new in v0.10** | Native reasoning modes (`low`/`medium`/`high`) exposed as config |
+| **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](#part-3-lightrag--graph-rag-that-actually-works)) |
+| **z.ai / GLM** | Yes | Currently strongest open-weights model for tool use |
+| **MiniMax** | Yes | M2.7 — balanced speed/quality; native streaming |
+| **Arcee** | Yes | AFM-4.5 function-calling specialist, cheap |
+| **Cerebras** | Yes | 2000+ tok/s inference |
+| **Groq** | Yes | Fast hosted Llama / Qwen |
+| **Fireworks** | Yes | Qwen3-Embedding-8B (recommended for LightRAG) |
+| **Hugging Face** | Yes | Any TGI / TEI endpoint (self-hosted or Inference Endpoints) |
+| **OpenRouter** | Yes | Pass-through to 200+ models; respects native adapter quirks when downstream is one |
+| **Ollama** (local) | Generic | OpenAI-compatible, zero auth |
+| **Anything else** | Generic | Any OpenAI-compatible `base_url` |
+
+Pick the native adapter when one exists — you get the provider-specific features for free. Fall back to the generic OpenAI-compatible path only for endpoints that don't have a native adapter yet.
+
+### Nous Portal — OAuth, Not an API Key
+
+Nous Portal uses an OAuth flow via `hermes model` instead of a bare API key. After auth, credentials live in `~/.hermes/auth.json` (never in `.env`). Re-auth when it expires:
+
+```bash
+hermes model
+# Pick "Nous Portal" → complete the browser OAuth flow
+```
+
+If you're on a paid subscription, the setup also offers to enable the [Tool Gateway](./part13-tool-gateway.md) — web search, image gen, TTS, and browser automation through your subscription, no extra keys needed.
 
 ---
 
@@ -19,18 +57,38 @@ provider: anthropic
 providers:
   anthropic:
     api_key: ${ANTHROPIC_API_KEY}
-    
+
   openai:
     api_key: ${OPENAI_API_KEY}
-    
+
+  xai:                                # Native adapter (v0.10+)
+    api_key: ${XAI_API_KEY}
+    live_search: true                 # Grok's live X/Twitter search
+
+  xiaomi:                             # Native adapter (v0.10+)
+    api_key: ${XIAOMI_API_KEY}
+    reasoning_mode: high              # low / medium / high
+
+  moonshot:                           # Kimi
+    api_key: ${MOONSHOT_API_KEY}
+
+  zai:                                # z.ai / GLM
+    api_key: ${ZAI_API_KEY}
+
+  minimax:
+    api_key: ${MINIMAX_API_KEY}
+
+  arcee:
+    api_key: ${ARCEE_API_KEY}
+
   cerebras:
     api_key: ${CEREBRAS_API_KEY}
     base_url: https://api.cerebras.ai/v1
-    
+
   fireworks:
     api_key: ${FIREWORKS_API_KEY}
     base_url: https://api.fireworks.ai/inference/v1
-    
+
   local:
     base_url: http://localhost:11434/v1
     api_key: ollama  # Ollama doesn't require a real key
