@@ -318,6 +318,10 @@ function generate() {
   };
   const providersToEmit = new Set([model.split('/')[0]]);
   (EXTRA_PROVIDERS[persona] || []).forEach(p => providersToEmit.add(p));
+  // LightRAG uses google/gemini-2.5-flash (LLM) + openai/text-embedding-3-small
+  // (embedding) — make sure both providers are configured.
+  if (memory === 'lightrag') { providersToEmit.add('google'); providersToEmit.add('openai'); }
+  // mem0 is a cloud service with its own key; no extra LLM provider needed here.
   [...providersToEmit].forEach(p => {
     const envVar = providerKeys[p] || 'API_KEY';
     lines.push(`    ${p}:`);
