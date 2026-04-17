@@ -488,7 +488,7 @@ function generate() {
   if (persona === 'cost-optimized') {
     lines.push(`routing:`);
     lines.push(`  rules:`);
-    lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/llama-3.3-70b" }`);
+    lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/llama-3.1-70b" }`);
     lines.push(`    - { when: "context.tokens > 200000",        use: "google/gemini-2.5-pro" }`);
     lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi-k2.5" }`);
     lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet-4-5" }`);
