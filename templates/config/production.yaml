@@ -62,7 +62,8 @@ gateways:
     bots:
       admin:
         token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids: ["${TELEGRAM_OWNER_ID}"]
+        allowed_user_ids:
+          - ${TELEGRAM_OWNER_ID}
         trust_label: high
   discord:
     enabled: true
