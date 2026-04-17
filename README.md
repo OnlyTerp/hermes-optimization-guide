@@ -1,17 +1,44 @@
 # Hermes Optimization Guide
 
-> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** · 16 parts · Battle-tested on a live production deployment
+> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** with post-release tracking for `main` · **21 parts** · Battle-tested on a live production deployment
 
-### Make Your Hermes Agent Actually Work — Setup, Migration, Knowledge Graphs, Messaging, Skills, Memory, Models, Dashboard, Tool Gateway, and Recovery
-#### Full setup walkthrough, OpenClaw migration, LightRAG graph RAG, 16 messaging platforms, on-the-fly skill creation, memory architecture, custom models, the new local web dashboard, Nous Tool Gateway, Fast Mode, backup/import, and crash recovery
+### The End-to-End Guide — Setup, Migration, Knowledge Graphs, Messaging, Skills, Memory, Models, Dashboard, Tool Gateway, MCP, Coding Agents, Security, Observability, Remote Sandboxes, and Recovery
+#### Every part you need to go from fresh install to a production Hermes deployment that talks on 16 platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, and runs heavy work on disposable Modal/Daytona sandboxes — without burning $100/day on Opus tokens.
 
-*By Terp - [Terp AI Labs](https://x.com/OnlyTerp)*
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **April 17, 2026**
+
+---
+
+## Pick Your Path
+
+This guide grew to 21 parts because *Hermes grew*. You don't have to read them all. Pick the shortest path to what you need:
+
+### 🎯 "I just want it working in 10 minutes"
+[Part 1: Setup](#part-1-setup-stop-fumbling-with-installation) → [Part 12: Web Dashboard](./part12-web-dashboard.md) → done. Use the dashboard to point-and-click the rest.
+
+### 📱 "I want a Telegram bot that's actually useful"
+[Part 1](#part-1-setup-stop-fumbling-with-installation) → [Part 4: Telegram](./part4-telegram-setup.md) → [Part 5: On-the-fly Skills](./part5-creating-skills.md) → [Part 7: Memory](./part7-memory-system.md).
+
+### 🤖 "I want to drive Claude Code / Codex / Gemini from my phone"
+[Part 18: Coding Agents](./part18-coding-agents.md) → [Part 17: MCP Servers](./part17-mcp-servers.md) → [Part 21: Remote Sandboxes](./part21-remote-sandboxes.md).
+
+### 💼 "I'm running this in production"
+[Part 19: Security Playbook](./part19-security-playbook.md) → [Part 20: Observability & Cost](./part20-observability.md) → [Part 16: Backup & Debug](./part16-backup-debug.md) → [Part 11: Gateway Recovery](./part11-gateway-recovery.md).
+
+### 🧠 "I want the most capable agent possible, cost be damned"
+[Part 17: MCP Servers](./part17-mcp-servers.md) → [Part 18: Coding Agents](./part18-coding-agents.md) → [Part 3: LightRAG](./part3-lightrag-setup.md) → [Part 14: Fast Mode](./part14-fast-mode-watchers.md) → [Part 20: Observability](./part20-observability.md).
+
+### 💰 "I want the cheapest possible agent that still works"
+[Part 9: Custom Models](./part9-custom-models.md) (Kimi/GLM/Gemini Flash routing) → [Part 20: Observability](./part20-observability.md#cost-routing-playbook-the-one-that-actually-saves-money) → [Part 6: Context Compression](./part6-context-compression.md).
+
+### 🛡️ "I'm worried about prompt injection (you should be)"
+[Part 19: Security Playbook](./part19-security-playbook.md) — read this first if your agent reads any untrusted input (email, webhooks, Discord, public Telegram groups).
 
 ---
 
 ## What's New (April 10–17, 2026)
 
-Two major Hermes releases dropped this week. This guide is current as of both.
+Two major Hermes releases dropped this week, **plus a stream of landmark PRs on `main`** that are targeted for v0.11. This guide is current as of both releases *and* the most impactful post-v0.10 merges.
 
 ### [v0.9.0 — 2026.4.13 — "Everywhere"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.13)
 
@@ -34,6 +61,37 @@ Two major Hermes releases dropped this week. This guide is current as of both.
 - **Approval bypass inheritance for subagents** — subagents inherit the parent session's approval posture; override per delegation. See [Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents).
 - `HERMES_ENABLE_NOUS_MANAGED_TOOLS` env flag **removed** — replaced by clean subscription detection + per-tool `use_gateway`. `hermes upgrade` migrates automatically.
 
+### 🔥 Cooking on `main` (past 72 hours, targeting v0.11)
+
+The stream of merges between April 14–17 is unusually large — this is why we added five new parts to this guide:
+
+- **Gemini CLI OAuth inference provider** — OAuth login + 1500 req/day free tier. [#11270](https://github.com/NousResearch/hermes-agent/pull/11270). See [Part 9](./part9-custom-models.md#gemini-cli-oauth--free-1500-reqday).
+- **Gemini TTS (7th voice provider)** — `gemini-2.5-flash-preview-tts`, Kore voice, native WAV. [#10922](https://github.com/NousResearch/hermes-agent/issues/10922). See [Part 9](./part9-custom-models.md#gemini-tts--7th-voice-provider).
+- **Multi-model FAL image gen picker** — `hermes tools` now lets you pick FLUX / Imagen / SDXL variants without editing YAML. [#11265](https://github.com/NousResearch/hermes-agent/pull/11265).
+- **Bulk file sync with sync-back on teardown** — SSH/Modal/Daytona remote sandboxes now download only diffed files on shutdown, with SIGINT-safe rollback and flock serialization. [#8018](https://github.com/NousResearch/hermes-agent/pull/8018). See **[Part 21 — Remote Sandboxes](./part21-remote-sandboxes.md)**.
+- **TCP keepalives for provider connections** — dead connections detected in 60s instead of silently hanging. [#11277](https://github.com/NousResearch/hermes-agent/pull/11277).
+- **GLM 5.1 in OpenCode Go catalogs** — fastest open-weights tool-use model now routable through OpenCode. [#11269](https://github.com/NousResearch/hermes-agent/pull/11269).
+- **Azure OpenAI GPT-5.x via `/chat/completions`** — previously locked to `/responses`. [#10086](https://github.com/NousResearch/hermes-agent/pull/10086).
+- **`concept-diagrams` skill** — auto-renders Mermaid diagrams for explanations. Merged April 17.
+- **Feishu CARD-type WebSocket** — interactive cards finally work in enterprise Feishu deployments.
+- **OCAS skill sync** (feature proposal, April 15) — sync your local skills to a central repo. Watch [#11363](https://github.com/NousResearch/hermes-agent/issues/11363).
+
+### 🆕 Brand-new parts in this guide (April 17)
+
+- **[Part 17 — MCP Servers](./part17-mcp-servers.md)** — the viral tool-integration standard. Finally documented for Hermes. GitHub, Postgres, Supabase, Cloudflare, mem0, writing your own, and the `sampling/createMessage` killer feature.
+- **[Part 18 — Delegating to Coding Agents](./part18-coding-agents.md)** — Claude Code, Codex, Gemini CLI, OpenCode, and Aider. Print-mode delegation, thread-bound runtimes (the OpenClaw pattern), ACP as both client and server, cost routing, git isolation.
+- **[Part 19 — Security Playbook](./part19-security-playbook.md)** — defending against the April 15 "Comment and Control" prompt-injection attack, plus the full Hermes hardening posture: provenance labels, approval layers, secrets isolation, webhook sig validation, SSRF guards, MCP trust levels, quarantine mode.
+- **[Part 20 — Observability & Cost Control](./part20-observability.md)** — Langfuse, Helicone, OpenTelemetry → Phoenix. The cost-routing playbook that drops typical feature-implementation spend by 90%. Eval-driven regression protection.
+- **[Part 21 — Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md)** — SSH, Modal, Daytona, Fly Machines, E2B. "Phone drives, beefy remote does the work." Sync-back on teardown with SIGINT safety.
+
+### Viral model / provider developments (past 72h, now in the guide)
+
+- **GPT-5.4** and **GPT-5.4-Cyber** (OpenAI, Apr 15) — reasoning flagship and the first LLM-as-a-security-analyst. See [Part 9 model cheat sheet](./part9-custom-models.md#flagship-model-cheat-sheet-april-17-2026).
+- **Claude Mythos** (Anthropic, cyber-focused, invite-only).
+- **Gemini 3 Flash Preview** (Google) — 1M context, low latency, $0.50/$3 per MTok.
+- **Kimi K2.5** (Moonshot) — arguably the best price/quality ratio in coding models.
+- **GLM 5.1** (z.ai) — the strongest open-weights tool-use model as of this week.
+
 ---
 
 ## Table of Contents
@@ -55,6 +113,11 @@ Two major Hermes releases dropped this week. This guide is current as of both.
 15. [Fast Mode & Background Watchers](./part14-fast-mode-watchers.md) — **New.** `/fast` priority tier, `watch_patterns` real-time process monitoring, pluggable context engine, `/compress <topic>`
 16. [New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md) — **New.** BlueBubbles/iMessage, Weixin/WeCom, Android via Termux — the full 16-platform lineup
 17. [Backup, Import & `/debug`](./part16-backup-debug.md) — **New.** Portable `hermes backup`/`import`, `/debug` bundler, `hermes debug share`, security hardening
+18. [MCP Servers](./part17-mcp-servers.md) — **NEW (April 17).** The viral tool-protocol standard. stdio + HTTP transports, sampling, the 14 MCP servers worth installing today, writing your own
+19. [Delegating to Coding Agents](./part18-coding-agents.md) — **NEW (April 17).** Claude Code, Codex, Gemini CLI, OpenCode, Aider. Print-mode, thread-bound sessions (OpenClaw pattern), ACP, git isolation, cost routing
+20. [Security Playbook](./part19-security-playbook.md) — **NEW (April 17).** Defending against "Comment and Control" prompt injection. Provenance labels, approval layers, secrets redaction, MCP trust model, quarantine mode
+21. [Observability & Cost Control](./part20-observability.md) — **NEW (April 17).** Langfuse, Helicone, OpenTelemetry → Phoenix. The cost-routing playbook that drops spend 90%. Eval-driven regression
+22. [Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md) — **NEW (April 17).** SSH, Modal, Daytona, Fly Machines, E2B. "Phone drives, beefy remote does the work." Diff-based sync-back on teardown
 
 ---
 
