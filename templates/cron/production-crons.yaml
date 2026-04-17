@@ -1,0 +1,47 @@
+# ------------------------------------------------------------
+# Hermes cron wiring — production defaults
+# ------------------------------------------------------------
+# Paste into ~/.hermes/cron.yaml (or include via `cron_files:` in config.yaml).
+# All tasks below assume the matching skill is installed from skills/.
+# ------------------------------------------------------------
+
+- name: nightly-backup
+  schedule: "0 3 * * *"            # Every day 3am local
+  task: /nightly-backup s3://my-backups/hermes/ 30
+  notify: telegram_private
+
+- name: weekly-mcp-audit
+  schedule: "0 9 * * 1"            # Mondays 9am
+  task: /audit-mcp
+  notify: telegram_private
+
+- name: weekly-bypass-audit
+  schedule: "0 10 * * 1"
+  task: /audit-approval-bypass
+  notify: telegram_private
+
+- name: weekly-cost-report
+  schedule: "0 11 * * 1"
+  task: /cost-report window=7d format=markdown
+  notify: telegram_private
+
+- name: weekly-dep-audit
+  schedule: "0 12 * * 1"
+  task: /weekly-dep-audit severity_floor=high
+  notify: telegram_private
+
+- name: monthly-secret-rotation
+  schedule: "0 4 1 * *"            # 1st of month, 4am
+  task: /rotate-secrets webhook_hmac_*
+  notify: telegram_private
+
+- name: daily-injection-sweep
+  schedule: "0 2 * * *"
+  task: /audit-injection-attempts since=24h
+  notify: telegram_private
+
+# Optional — only if you have a newsroom / status page / etc.
+# - name: morning-digest
+#   schedule: "0 7 * * *"
+#   task: /news-digest topics=[hermes,mcp,llm-security]
+#   notify: telegram_private

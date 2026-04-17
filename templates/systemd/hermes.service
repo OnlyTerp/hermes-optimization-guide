@@ -1,0 +1,70 @@
+[Unit]
+Description=Hermes Agent
+Documentation=https://github.com/NousResearch/hermes-agent
+Documentation=https://github.com/OnlyTerp/hermes-optimization-guide
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+Group=hermes
+WorkingDirectory=/home/hermes
+ExecStart=/usr/local/bin/hermes run
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Environment
+EnvironmentFile=-/home/hermes/.hermes/.env
+Environment=HOME=/home/hermes
+Environment=HERMES_CONFIG=/home/hermes/.hermes/config.yaml
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes
+
+# --- Hardening ------------------------------------------------------------
+# Filesystem
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/hermes/.hermes /tmp
+PrivateTmp=true
+PrivateDevices=true
+
+# Capabilities
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Namespaces
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectClock=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+# Address families — allow unix for local IPC, inet for HTTPS outbound
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+
+# System calls
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @mount @cpu-emulation @debug @reboot @swap
+SystemCallArchitectures=native
+
+# Memory / file descriptor limits
+MemoryMax=4G
+LimitNOFILE=65536
+TasksMax=4096
+
+[Install]
+WantedBy=multi-user.target

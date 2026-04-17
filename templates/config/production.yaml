@@ -1,0 +1,183 @@
+# ------------------------------------------------------------
+# Hermes — PRODUCTION config
+# ------------------------------------------------------------
+# Full-stack, hardened, observable.
+#   - Multi-provider with task-aware routing
+#   - Telegram + Discord + Slack + email gateways
+#   - LightRAG + mem0 for cross-device memory
+#   - MCP: GitHub, Postgres, Cloudflare, Linear, filesystem
+#   - Langfuse tracing, cost alerts, eval hooks
+#   - Hardened approval posture
+#   - All scheduled skills wired to cron
+# ------------------------------------------------------------
+
+version: 1
+
+models:
+  default: anthropic/claude-sonnet-4-5
+  classification: google/gemini-2.5-flash
+  long_context: google/gemini-2.5-pro
+  coding: anthropic/claude-sonnet-4-5
+  reasoning: openai/gpt-5.4
+  cheap: moonshot/kimi-k2.5
+  providers:
+    anthropic:
+      api_key: ${ANTHROPIC_API_KEY}
+      prompt_caching: true
+    openai:
+      api_key: ${OPENAI_API_KEY}
+    google:
+      api_key: ${GOOGLE_API_KEY}
+      oauth_enabled: true            # Use Gemini CLI OAuth when available
+    moonshot:
+      api_key: ${MOONSHOT_API_KEY}
+    zai:
+      api_key: ${ZAI_API_KEY}
+    cerebras:
+      api_key: ${CEREBRAS_API_KEY}
+
+routing:
+  # See Part 20 — the rules that drop spend ~90% on typical workloads
+  rules:
+    - intent: classification
+      model: google/gemini-2.5-flash
+    - intent: coding
+      model: anthropic/claude-sonnet-4-5
+    - intent: long_context
+      when: { tokens_in: { gt: 200000 } }
+      model: google/gemini-2.5-pro
+    - intent: reasoning
+      when: { needs_deep_reasoning: true }
+      model: openai/gpt-5.4
+    - intent: bulk_data
+      model: moonshot/kimi-k2.5
+
+gateways:
+  cli: { enabled: true }
+  dashboard:
+    enabled: true
+    listen: 127.0.0.1:8765          # Bind loopback only; expose via Caddy
+  telegram:
+    enabled: true
+    bots:
+      admin:
+        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
+        allowed_user_ids: [${TELEGRAM_OWNER_ID}]
+        trust_label: high
+  discord:
+    enabled: true
+    bot_token: ${DISCORD_BOT_TOKEN}
+    trust_label: medium
+    approval_in_dm_only: true
+  slack:
+    enabled: true
+    signing_secret: ${SLACK_SIGNING_SECRET}
+    bot_token: ${SLACK_BOT_TOKEN}
+    trust_label: medium
+  email:
+    enabled: true
+    imap: { host: imap.gmail.com, user: ${EMAIL_USER}, password: ${EMAIL_APP_PASSWORD} }
+    smtp: { host: smtp.gmail.com, user: ${EMAIL_USER}, password: ${EMAIL_APP_PASSWORD} }
+    trust_label: untrusted
+
+memory:
+  backend: lightrag
+  lightrag:
+    working_dir: ~/.hermes/lightrag
+    llm_model: google/gemini-2.5-flash
+    embedding_model: openai/text-embedding-3-small
+  mem0:
+    enabled: true
+    api_key: ${MEM0_API_KEY}
+
+context:
+  compress_trigger_tokens: 48000
+  compress_model: google/gemini-2.5-flash
+  preserve_last_k: 6
+
+mcp_servers:
+  github:
+    command: npx
+    args: [-y, "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PAT}
+    trust: trusted
+    allow_sampling: false
+    tools_allowlist:
+      - get_pull_request
+      - list_pull_requests
+      - get_pull_request_diff
+      - create_issue
+      - add_issue_comment
+      - create_pull_request_review
+  postgres:
+    command: npx
+    args: [-y, "@modelcontextprotocol/server-postgres", "${POSTGRES_URL}"]
+    trust: trusted
+    allow_sampling: false
+  cloudflare:
+    command: npx
+    args: [-y, "@cloudflare/mcp-server-cloudflare"]
+    env: { CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN} }
+    trust: trusted
+    allow_sampling: false
+  filesystem:
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-filesystem"
+      - ${HOME}/Documents
+      - ${HOME}/Projects
+    trust: trusted
+
+security:
+  approval:
+    bypass_subagents:
+      - nightly-backup
+      - weekly-dep-audit
+      - cost-report
+    auto_approve_read: true
+    denylist:
+      - 'rm\s+-rf\s+/'
+      - 'curl\s+.+\|\s*(sh|bash)'
+      - '169\.254\.169\.254'
+      - 'cat\s+~?/?\.?ssh/'
+      - 'aws\s+s3\s+sync\s+.+\s+s3://'
+      - 'ssh-keyscan'
+    require_approval:
+      - { tool: github,  actions: [create_pr, merge_pr, delete_branch] }
+      - { tool: terminal, actions: [exec] }
+      - { tool: email,    actions: [send] }
+      - { tool: twilio,   actions: [send_sms] }
+      - { tool: any_mcp,  sampling: true }
+    approval_channel: telegram_dm
+  secrets:
+    redaction_patterns:
+      - 'sk-[A-Za-z0-9]{40,}'
+      - 'xoxb-[A-Za-z0-9-]{40,}'
+      - 'ghp_[A-Za-z0-9]{36}'
+      - 'github_pat_[A-Za-z0-9_]{80,}'
+      - 'AKIA[0-9A-Z]{16}'
+    memory_write_redaction: true
+  webhook:
+    require_signature: true
+    max_body_bytes: 1048576
+
+telemetry:
+  level: info
+  exporters:
+    langfuse:
+      public_key: ${LANGFUSE_PUBLIC_KEY}
+      secret_key: ${LANGFUSE_SECRET_KEY}
+      host: ${LANGFUSE_HOST}
+  alerts:
+    cost_per_hour_usd: 5.0
+    tokens_per_turn: 30000
+    webhook: ${ALERT_WEBHOOK_URL}
+
+cron:
+  - { name: nightly-backup,     schedule: "0 3 * * *",   task: "/nightly-backup s3://backups/hermes/ 30", notify: telegram_dm }
+  - { name: weekly-dep-audit,   schedule: "0 9 * * 1",   task: "/weekly-dep-audit severity_floor=high",   notify: telegram_dm }
+  - { name: weekly-cost-report, schedule: "0 9 * * 1",   task: "/cost-report window=7d format=markdown",  notify: telegram_dm }
+  - { name: weekly-mcp-audit,   schedule: "0 10 * * 1",  task: "/audit-mcp",                              notify: telegram_dm }
+  - { name: monthly-rotate,     schedule: "0 4 1 * *",   task: "/rotate-secrets webhook_hmac_*",          notify: telegram_dm }

@@ -1,0 +1,76 @@
+# ------------------------------------------------------------
+# Hermes — COST-OPTIMIZED config
+# ------------------------------------------------------------
+# Target: <$5/mo for personal daily-driver usage.
+#   - Gemini 2.5 Flash / Pro for 90% of calls
+#   - Kimi K2.5 for bulk / background
+#   - Cerebras Llama 70B (free-ish tier) for classification
+#   - Gemini CLI OAuth (1500 req/day FREE)
+#   - Anthropic Sonnet only when `intent: coding` on complex files
+# ------------------------------------------------------------
+
+version: 1
+
+models:
+  default: google/gemini-2.5-flash
+  classification: cerebras/llama-3.1-70b
+  long_context: google/gemini-2.5-pro
+  coding: moonshot/kimi-k2.5            # Fallback to Claude only for hard coding
+  coding_complex: anthropic/claude-sonnet-4-5
+  reasoning: zai/glm-5.1
+  providers:
+    google:
+      oauth_enabled: true               # <-- this is the free 1500/day tier
+      api_key: ${GOOGLE_API_KEY}        # Used only when OAuth is unavailable
+    anthropic:
+      api_key: ${ANTHROPIC_API_KEY}
+      prompt_caching: true              # 90% discount on repeat context
+    moonshot:
+      api_key: ${MOONSHOT_API_KEY}
+    cerebras:
+      api_key: ${CEREBRAS_API_KEY}
+    zai:
+      api_key: ${ZAI_API_KEY}
+
+routing:
+  rules:
+    - intent: classification
+      model: cerebras/llama-3.1-70b
+    - intent: coding
+      when: { complexity: high }
+      model: anthropic/claude-sonnet-4-5
+    - intent: coding
+      model: moonshot/kimi-k2.5
+    - intent: long_context
+      model: google/gemini-2.5-pro
+    - intent: reasoning
+      model: zai/glm-5.1
+  prefer_cached: true                   # Reroute if prompt is >80% cache-hit
+
+context:
+  compress_trigger_tokens: 32000        # Aggressive — Flash handles small windows
+  compress_model: cerebras/llama-3.1-70b
+  preserve_last_k: 4
+
+gateways:
+  cli: { enabled: true }
+  telegram:
+    enabled: true
+    fast_mode_default: false            # Fast Mode is a cost premium
+    bots:
+      admin:
+        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
+        allowed_user_ids: [${TELEGRAM_OWNER_ID}]
+
+memory:
+  backend: lightrag
+  lightrag:
+    llm_model: google/gemini-2.5-flash
+    embedding_model: openai/text-embedding-3-small
+    # Or fully local: sentence-transformers/all-MiniLM-L6-v2
+
+telemetry:
+  level: info
+  alerts:
+    cost_per_hour_usd: 0.50             # ALARM if spending > $0.50/h
+    daily_budget_usd: 0.20              # Hard cap: pause all non-interactive skills
