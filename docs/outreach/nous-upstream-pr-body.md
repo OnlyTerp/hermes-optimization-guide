@@ -30,7 +30,7 @@ _Maintain your own? Open a PR adding it here._
 >
 > I've been writing a community optimization guide since v0.9.0 shipped, and have gotten enough "where should I link this so people can find it?" messages that I wanted to propose an upstream spot: a small **Community Guides** section in the README.
 >
-> The guide itself is at https://github.com/OnlyTerp/hermes-optimization-guide — 21 parts of documentation, 9 installable `SKILL.md` files, 5 production configs, a VPS bootstrap script, and a reproducible cost benchmark. MIT license. CHANGELOG + ROADMAP are real. I cross-check every release note on `main` and update within 72h.
+> The guide itself is at https://github.com/OnlyTerp/hermes-optimization-guide — 21 parts of documentation, 13 installable `SKILL.md` files, 5 production configs, 4 reference architectures, a VPS bootstrap script, an in-browser config wizard, and a reproducible cost benchmark. MIT license. CHANGELOG + ROADMAP are real. I cross-check every release note on `main` and update within 72h.
 >
 > Totally understand if you'd rather maintain a separate page, or curate more carefully before pointing at third-party content. Happy to iterate on the section copy, add more guides as they show up, or even move the list to `docs/community.md` if that fits better.
 >

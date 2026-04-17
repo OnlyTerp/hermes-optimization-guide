@@ -25,7 +25,7 @@ The [Hermes Optimization Guide](https://github.com/OnlyTerp/hermes-optimization-
 
 But it also has, in the same repo:
 
-- **9 installable `SKILL.md` files.** Not examples. Not snippets. Actual files with YAML frontmatter, procedure sections, and security notes. You drop them into `~/.hermes/skills/` and they work.
+- **13 installable `SKILL.md` files.** Not examples. Not snippets. Actual files with YAML frontmatter, procedure sections, and security notes. You drop them into `~/.hermes/skills/` and they work.
 - **5 opinionated production configs.** `minimum`, `telegram-bot`, `production`, `cost-optimized`, `security-hardened`. One `cp` to `~/.hermes/config.yaml` and you have a working deployment. Every non-obvious field is commented.
 - **A VPS bootstrap script.** Fresh Hetzner CX22 to hardened production Hermes in one `curl | bash`. Caddy + UFW + fail2ban + systemd + skill symlinks + unattended-upgrades.
 - **Reproducible benchmarks.** 12 flagship models × 5 canonical tasks, with the methodology, the dates, the exact reproduction command. Not vibes.

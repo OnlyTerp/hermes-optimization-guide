@@ -22,7 +22,7 @@ I built a Hermes (Nous Research's agent framework) optimization guide that goes 
 
 - **Reproducible benchmarks** — 12 flagship models × 5 tasks (triage / summarize / codefix / deepreason / bulk-extract), methodology + `hermes evals run` command to reproduce.
 
-- **9 installable skills** (`SKILL.md` files with YAML frontmatter — drop into `~/.hermes/skills/`): audit-mcp, rotate-secrets, audit-approval-bypass, nightly-backup, weekly-dep-audit, cost-report, telegram-triage, pr-review, release-notes.
+- **13 installable skills** (`SKILL.md` files with YAML frontmatter — drop into `~/.hermes/skills/`): audit-mcp, rotate-secrets, audit-approval-bypass, nightly-backup, weekly-dep-audit, cost-report, telegram-triage, pr-review, release-notes, daily-inbox-triage, hermes-weekly, spam-trap, meeting-prep.
 
 - **Security playbook** (Part 19) — 7-layer defense against prompt injection, written after the Apr 15 "Comment and Control" attack hit Claude Code + Gemini CLI + Copilot Agent.
 
