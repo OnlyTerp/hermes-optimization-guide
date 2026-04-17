@@ -2,6 +2,20 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-04-17 — Wizard + Reference Architectures + CI
+
+### Added
+- **`docs/wizard/index.html`** — interactive static config wizard; 8 questions → ready-to-drop `config.yaml`, runs entirely in the browser (GitHub Pages friendly)
+- **`docs/reference-architectures/`** — 4 full blueprints: Homelab, Solo Developer, Small Agency, Road Warrior
+- **`docs/outreach/`** — launch-ready drafts: launch tweet thread, Hacker News post, r/LocalLLaMA post, upstream PR body to `NousResearch/hermes-agent`, long-form blog post
+- **4 new skills**: `ops/daily-inbox-triage`, `ops/hermes-weekly`, `security/spam-trap`, `dev/meeting-prep` (total skills: 13)
+- **CI** — `.github/workflows/ci.yml`: markdown-link-check, yamllint, skill-frontmatter validator (`validate_skills.py`), prettier advisory
+- **Localized READMEs** — [`README-zh.md`](./README-zh.md), [`README-ja.md`](./README-ja.md) (entry-level summaries)
+
+### Changed
+- README: skills badge 9→13, language links, repo map rows for wizard + reference architectures + outreach, CI badge
+- `templates/config/*.yaml` — quoted `${VAR}` env-var substitutions inside flow mappings so every template is valid YAML
+
 ## 2026-04-17 — Installable Artifacts
 
 ### Added

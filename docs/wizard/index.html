@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes Config Wizard</title>
+<meta name="description" content="Generate a production-ready Hermes config.yaml from answers to 8 questions. Runs entirely in your browser.">
+<style>
+  :root {
+    --bg: #0b0d12;
+    --card: #141821;
+    --fg: #e6e8ee;
+    --muted: #9aa3b2;
+    --accent: #9146ff;
+    --accent-2: #6bd4ff;
+    --danger: #ff6b6b;
+    --ok: #5ad18c;
+    --border: #242a36;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.45;
+  }
+  a { color: var(--accent-2); }
+  .container { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.8rem; margin: 0 0 .5rem; }
+  p.lede { color: var(--muted); margin-top: 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.25rem; margin: 1rem 0; }
+  fieldset { border: 0; padding: 0; margin: 0 0 1.25rem; }
+  legend { font-weight: 600; font-size: 1.05rem; margin-bottom: .35rem; }
+  .hint { color: var(--muted); font-size: .9rem; margin-top: -.25rem; margin-bottom: .5rem; }
+  label { display: block; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: 8px; margin: .3rem 0; cursor: pointer; transition: border-color .15s, background .15s; }
+  label:hover { border-color: var(--accent); }
+  input[type=radio], input[type=checkbox] { margin-right: .55rem; accent-color: var(--accent); }
+  input[type=text], input[type=number], select { width: 100%; padding: .5rem .6rem; border-radius: 8px; background: #0b0e14; border: 1px solid var(--border); color: var(--fg); font-family: inherit; font-size: .95rem; }
+  button { background: var(--accent); color: white; border: 0; padding: .6rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  button.secondary { background: #2a2f3b; color: var(--fg); }
+  button:hover { filter: brightness(1.1); }
+  pre { background: #0b0e14; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; overflow: auto; max-height: 60vh; font-size: .85rem; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .pill { display: inline-block; padding: .15rem .55rem; border-radius: 999px; background: #1c2230; color: var(--muted); font-size: .8rem; margin-right: .3rem; }
+  .footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
+  .footer a { color: var(--accent-2); }
+  @media (min-width: 720px) {
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Hermes Config Wizard</h1>
+  <p class="lede">
+    Answer 8 questions → get a production-ready <code>config.yaml</code> you can drop at <code>~/.hermes/config.yaml</code>.
+    Runs entirely in your browser; nothing is uploaded.
+    Based on the <a href="../../README.md">Hermes Optimization Guide</a>.
+  </p>
+
+  <form id="wizard" class="card" onsubmit="return false;">
+    <fieldset>
+      <legend>1. Who's this deployment for?</legend>
+      <p class="hint">Picks the starting template.</p>
+      <label><input type="radio" name="persona" value="minimum" onchange="applyPersona(this.value)" checked> Just me, CLI only (simplest)</label>
+      <label><input type="radio" name="persona" value="telegram-bot" onchange="applyPersona(this.value)"> Me + a Telegram bot</label>
+      <label><input type="radio" name="persona" value="production" onchange="applyPersona(this.value)"> Production deployment (multi-gateway, multi-provider, memory, MCP, alerts)</label>
+      <label><input type="radio" name="persona" value="cost-optimized" onchange="applyPersona(this.value)"> Cost-optimized (&lt;$5/mo personal daily-driver)</label>
+      <label><input type="radio" name="persona" value="security-hardened" onchange="applyPersona(this.value)"> Security-hardened (public-facing, untrusted input)</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Default model</legend>
+      <p class="hint">Can be overridden per-skill.</p>
+      <select name="default_model">
+        <option value="anthropic/claude-sonnet-4-5">Anthropic Claude Sonnet 4.5 (balanced default)</option>
+        <option value="anthropic/claude-opus-4">Anthropic Claude Opus 4 (max capability)</option>
+        <option value="google/gemini-2.5-flash">Google Gemini 2.5 Flash (cheap + fast + 1M context)</option>
+        <option value="google/gemini-2.5-pro">Google Gemini 2.5 Pro (1M context + reasoning)</option>
+        <option value="openai/gpt-5.4">OpenAI GPT-5.4</option>
+        <option value="moonshot/kimi-k2.5">Moonshot Kimi K2.5 (cheap + strong coding)</option>
+        <option value="zai/glm-5.1">z.ai GLM 5.1 (very cheap)</option>
+      </select>
+    </fieldset>
+
+    <fieldset class="grid2">
+      <div>
+        <legend>3. Memory backend</legend>
+        <label><input type="radio" name="memory" value="vector" checked> Vector DB (qdrant, fast, simple)</label>
+        <label><input type="radio" name="memory" value="lightrag"> LightRAG (knowledge graph + vector; Part 3)</label>
+        <label><input type="radio" name="memory" value="mem0"> mem0 cloud (cross-device)</label>
+        <label><input type="radio" name="memory" value="none"> None</label>
+      </div>
+      <div>
+        <legend>4. Gateways</legend>
+        <label><input type="checkbox" name="gw_cli" checked> CLI</label>
+        <label><input type="checkbox" name="gw_telegram"> Telegram</label>
+        <label><input type="checkbox" name="gw_discord"> Discord</label>
+        <label><input type="checkbox" name="gw_slack"> Slack</label>
+        <label><input type="checkbox" name="gw_email"> Email (IMAP/SMTP)</label>
+        <label><input type="checkbox" name="gw_webhook"> Webhook receiver</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>5. MCP servers to pre-wire</legend>
+      <div class="grid2">
+        <label><input type="checkbox" name="mcp_github"> GitHub (PRs, issues, search)</label>
+        <label><input type="checkbox" name="mcp_postgres"> Postgres (read-only)</label>
+        <label><input type="checkbox" name="mcp_cloudflare"> Cloudflare (Workers, KV, D1)</label>
+        <label><input type="checkbox" name="mcp_linear"> Linear (issues)</label>
+        <label><input type="checkbox" name="mcp_filesystem"> Filesystem (scoped dir)</label>
+        <label><input type="checkbox" name="mcp_mem0"> mem0 (cross-device memory)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>6. Approval layer</legend>
+      <label><input type="radio" name="approval" value="strict" checked> Strict — require approval on every write/exec/send</label>
+      <label><input type="radio" name="approval" value="moderate"> Moderate — auto-approve read; approval on writes</label>
+      <label><input type="radio" name="approval" value="relaxed"> Relaxed — admin-only, trust the CLI</label>
+    </fieldset>
+
+    <fieldset class="grid2">
+      <div>
+        <legend>7. Observability</legend>
+        <label><input type="radio" name="obs" value="none" checked> None (journald only)</label>
+        <label><input type="radio" name="obs" value="langfuse"> Langfuse (self-hosted or cloud)</label>
+        <label><input type="radio" name="obs" value="helicone"> Helicone (cloud proxy)</label>
+      </div>
+      <div>
+        <legend>8. Cron</legend>
+        <label><input type="checkbox" name="cron_backup" checked> Nightly backup</label>
+        <label><input type="checkbox" name="cron_deps" checked> Weekly dep audit</label>
+        <label><input type="checkbox" name="cron_cost" checked> Weekly cost report</label>
+        <label><input type="checkbox" name="cron_mcp" checked> Weekly MCP audit</label>
+      </div>
+    </fieldset>
+
+    <div class="row">
+      <button type="button" onclick="generate()">Generate config.yaml</button>
+      <button type="button" class="secondary" onclick="copyYAML()">Copy</button>
+      <button type="button" class="secondary" onclick="downloadYAML()">Download</button>
+      <span id="status" style="color: var(--ok)"></span>
+    </div>
+  </form>
+
+  <div class="card">
+    <legend style="font-weight:600">Generated <code>config.yaml</code></legend>
+    <p class="hint">Save as <code>~/.hermes/config.yaml</code>. Pair with a <code>~/.hermes/.env</code> that defines the <code>${VAR}</code> references. See <a href="../quickstart.md">docs/quickstart.md</a>.</p>
+    <pre id="out">(click Generate)</pre>
+  </div>
+
+  <div class="footer">
+    <span class="pill">Static page</span>
+    <span class="pill">No tracking</span>
+    <span class="pill">Nothing sent to any server</span>
+    <br>
+    View source: <a href="./index.html">index.html</a> ·
+    Based on templates from <a href="../../templates/config/">templates/config/</a> ·
+    <a href="../../CONTRIBUTING.md">Contribute</a>
+  </div>
+</div>
+
+<script>
+/* Simple config generator — emits valid YAML from the form state.
+   No frameworks, no build step. Designed to be serve-able from GitHub Pages
+   (or directly from `file://`). */
+
+function val(name) {
+  const el = document.querySelector(`[name="${name}"]:checked`);
+  return el ? el.value : null;
+}
+function on(name) {
+  const el = document.querySelector(`[name="${name}"]`);
+  return el ? el.checked : false;
+}
+function select(name) {
+  const el = document.querySelector(`select[name="${name}"]`);
+  return el ? el.value : null;
+}
+
+/* Persona presets — each object mirrors the shape of the corresponding
+   templates/config/<persona>.yaml. When the user picks a persona, the
+   rest of the form is pre-filled so Question 1 actually drives output. */
+const PERSONA_PRESETS = {
+  'minimum': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'vector',
+    gateways: { cli: true, telegram: false, discord: false, slack: false, email: false, webhook: false },
+    mcps:     { github: false, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
+    approval: 'moderate',
+    obs: 'none',
+    crons:    { backup: false, deps: false, cost: false, mcp: false },
+  },
+  'telegram-bot': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'lightrag',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
+    mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
+    approval: 'moderate',
+    obs: 'none',
+    crons:    { backup: true, deps: false, cost: true, mcp: false },
+  },
+  'production': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'lightrag',
+    gateways: { cli: true, telegram: true, discord: true, slack: true, email: true, webhook: true },
+    mcps:     { github: true, postgres: true, cloudflare: true, linear: true, filesystem: true, mem0: false },
+    approval: 'strict',
+    obs: 'langfuse',
+    crons:    { backup: true, deps: true, cost: true, mcp: true },
+  },
+  'cost-optimized': {
+    default_model: 'google/gemini-2.5-flash',
+    memory: 'lightrag',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
+    mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: true, mem0: false },
+    approval: 'moderate',
+    obs: 'none',
+    crons:    { backup: true, deps: false, cost: true, mcp: false },
+  },
+  'security-hardened': {
+    default_model: 'anthropic/claude-sonnet-4-5',
+    memory: 'vector',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: true },
+    mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
+    approval: 'strict',
+    obs: 'langfuse',
+    crons:    { backup: true, deps: true, cost: true, mcp: true },
+  },
+};
+
+function setRadio(name, value) {
+  const el = document.querySelector(`input[type="radio"][name="${name}"][value="${value}"]`);
+  if (el) el.checked = true;
+}
+function setCheckbox(name, checked) {
+  const el = document.querySelector(`input[type="checkbox"][name="${name}"]`);
+  if (el) el.checked = !!checked;
+}
+function setSelect(name, value) {
+  const el = document.querySelector(`select[name="${name}"]`);
+  if (el) el.value = value;
+}
+
+function applyPersona(persona) {
+  const p = PERSONA_PRESETS[persona];
+  if (!p) return;
+  setSelect('default_model', p.default_model);
+  setRadio('memory', p.memory);
+  setRadio('approval', p.approval);
+  setRadio('obs', p.obs);
+  Object.entries(p.gateways).forEach(([k, v]) => setCheckbox('gw_' + k, v));
+  Object.entries(p.mcps).forEach(([k, v]) => setCheckbox('mcp_' + k, v));
+  Object.entries(p.crons).forEach(([k, v]) => setCheckbox('cron_' + k, v));
+  generate();
+  setStatus(`Loaded "${persona}" preset — tweak any field, then Generate.`);
+}
+
+function generate() {
+  const persona = val('persona');
+  const model = select('default_model');
+  const memory = val('memory');
+  const approval = val('approval');
+  const obs = val('obs');
+
+  const gateways = {
+    cli: on('gw_cli'),
+    telegram: on('gw_telegram'),
+    discord: on('gw_discord'),
+    slack: on('gw_slack'),
+    email: on('gw_email'),
+    webhook: on('gw_webhook'),
+  };
+  const mcps = {
+    github: on('mcp_github'),
+    postgres: on('mcp_postgres'),
+    cloudflare: on('mcp_cloudflare'),
+    linear: on('mcp_linear'),
+    filesystem: on('mcp_filesystem'),
+    mem0: on('mcp_mem0'),
+  };
+  const crons = {
+    backup: on('cron_backup'),
+    deps: on('cron_deps'),
+    cost: on('cron_cost'),
+    mcp: on('cron_mcp'),
+  };
+
+  const lines = [];
+  lines.push(`# Generated ${new Date().toISOString()} by the Hermes Config Wizard`);
+  lines.push(`# https://onlyterp.github.io/hermes-optimization-guide/wizard/`);
+  lines.push(`# Persona: ${persona}`);
+  lines.push(`# Pair with ~/.hermes/.env — env vars referenced as $\{VAR\}.`);
+  lines.push(``);
+  lines.push(`version: 1`);
+  lines.push(``);
+  lines.push(`models:`);
+  lines.push(`  default: ${model}`);
+  lines.push(`  providers:`);
+  const providerKeys = {
+    anthropic: 'ANTHROPIC_API_KEY',
+    google:    'GOOGLE_API_KEY',
+    openai:    'OPENAI_API_KEY',
+    moonshot:  'MOONSHOT_API_KEY',
+    zai:       'ZAI_API_KEY',
+    cerebras:  'CEREBRAS_API_KEY',
+  };
+  // Providers required by each persona's routing rules (must be superset of
+  // models referenced in routing blocks later in this function).
+  const EXTRA_PROVIDERS = {
+    'cost-optimized': ['anthropic', 'google', 'moonshot', 'cerebras'],
+    'production':     ['anthropic', 'google'],
+    'security-hardened': ['anthropic'],
+  };
+  const providersToEmit = new Set([model.split('/')[0]]);
+  (EXTRA_PROVIDERS[persona] || []).forEach(p => providersToEmit.add(p));
+  // LightRAG uses google/gemini-2.5-flash (LLM) + openai/text-embedding-3-small
+  // (embedding) — make sure both providers are configured.
+  if (memory === 'lightrag') { providersToEmit.add('google'); providersToEmit.add('openai'); }
+  // mem0 is a cloud service with its own key; no extra LLM provider needed here.
+  [...providersToEmit].forEach(p => {
+    const envVar = providerKeys[p] || 'API_KEY';
+    lines.push(`    ${p}:`);
+    lines.push(`      api_key: "$\{${envVar}\}"`);
+  });
+  lines.push(``);
+
+  // Gateways
+  lines.push(`gateways:`);
+  if (gateways.cli) lines.push(`  cli:\n    enabled: true`);
+  if (gateways.telegram) {
+    lines.push(`  telegram:`);
+    lines.push(`    enabled: true`);
+    lines.push(`    bots:`);
+    lines.push(`      admin:`);
+    lines.push(`        token: "$\{TELEGRAM_ADMIN_BOT_TOKEN\}"`);
+    lines.push(`        allowed_user_ids:`);
+    lines.push(`          - $\{TELEGRAM_OWNER_ID\}`);
+    lines.push(`        trust_label: high`);
+  }
+  if (gateways.discord) {
+    lines.push(`  discord:`);
+    lines.push(`    enabled: true`);
+    lines.push(`    bot_token: "$\{DISCORD_BOT_TOKEN\}"`);
+    lines.push(`    trust_label: medium`);
+  }
+  if (gateways.slack) {
+    lines.push(`  slack:`);
+    lines.push(`    enabled: true`);
+    lines.push(`    signing_secret: "$\{SLACK_SIGNING_SECRET\}"`);
+    lines.push(`    bot_token: "$\{SLACK_BOT_TOKEN\}"`);
+  }
+  if (gateways.email) {
+    lines.push(`  email:`);
+    lines.push(`    enabled: true`);
+    lines.push(`    imap:`);
+    lines.push(`      host: imap.gmail.com`);
+    lines.push(`      user: "$\{EMAIL_USER\}"`);
+    lines.push(`      password: "$\{EMAIL_APP_PASSWORD\}"`);
+    lines.push(`    smtp:`);
+    lines.push(`      host: smtp.gmail.com`);
+    lines.push(`      user: "$\{EMAIL_USER\}"`);
+    lines.push(`      password: "$\{EMAIL_APP_PASSWORD\}"`);
+    lines.push(`    trust_label: untrusted`);
+  }
+  if (gateways.webhook) {
+    lines.push(`  webhook:`);
+    lines.push(`    enabled: true`);
+    lines.push(`    require_signature: true`);
+    lines.push(`    max_body_bytes: 1048576`);
+  }
+  lines.push(``);
+
+  // Memory
+  if (memory && memory !== 'none') {
+    lines.push(`memory:`);
+    lines.push(`  backend: ${memory}`);
+    if (memory === 'vector') {
+      lines.push(`  vector:`);
+      lines.push(`    driver: qdrant`);
+      lines.push(`    path: ~/.hermes/vector`);
+    } else if (memory === 'lightrag') {
+      lines.push(`  lightrag:`);
+      lines.push(`    working_dir: ~/.hermes/lightrag`);
+      lines.push(`    llm_model: google/gemini-2.5-flash`);
+      lines.push(`    embedding_model: openai/text-embedding-3-small`);
+    } else if (memory === 'mem0') {
+      lines.push(`  mem0:`);
+      lines.push(`    api_key: "$\{MEM0_API_KEY\}"`);
+    }
+    lines.push(``);
+  }
+
+  // MCP servers
+  const anyMcp = Object.values(mcps).some(Boolean);
+  if (anyMcp) {
+    lines.push(`mcp_servers:`);
+    if (mcps.github) {
+      lines.push(`  github:`);
+      lines.push(`    command: npx`);
+      lines.push(`    args: [-y, "@modelcontextprotocol/server-github"]`);
+      lines.push(`    env:`);
+      lines.push(`      GITHUB_PERSONAL_ACCESS_TOKEN: "$\{GITHUB_PAT\}"`);
+      lines.push(`    trust: trusted`);
+      lines.push(`    allow_sampling: false`);
+    }
+    if (mcps.postgres) {
+      lines.push(`  postgres:`);
+      lines.push(`    command: npx`);
+      lines.push(`    args: [-y, "@modelcontextprotocol/server-postgres", "$\{DATABASE_URL\}"]`);
+      lines.push(`    trust: trusted`);
+      lines.push(`    allow_sampling: false`);
+    }
+    if (mcps.cloudflare) {
+      lines.push(`  cloudflare:`);
+      lines.push(`    command: npx`);
+      lines.push(`    args: [-y, "@cloudflare/mcp-server-cloudflare"]`);
+      lines.push(`    env:`);
+      lines.push(`      CLOUDFLARE_API_TOKEN: "$\{CLOUDFLARE_API_TOKEN\}"`);
+      lines.push(`    trust: trusted`);
+    }
+    if (mcps.linear) {
+      lines.push(`  linear:`);
+      lines.push(`    command: npx`);
+      lines.push(`    args: [-y, "@linear/mcp-server-linear"]`);
+      lines.push(`    env:`);
+      lines.push(`      LINEAR_API_KEY: "$\{LINEAR_API_KEY\}"`);
+    }
+    if (mcps.filesystem) {
+      lines.push(`  filesystem:`);
+      lines.push(`    command: npx`);
+      lines.push(`    args: [-y, "@modelcontextprotocol/server-filesystem", "/home/hermes/scratch"]`);
+      lines.push(`    trust: trusted`);
+    }
+    if (mcps.mem0) {
+      lines.push(`  mem0:`);
+      lines.push(`    command: npx`);
+      lines.push(`    args: [-y, "@mem0ai/mcp-server-mem0"]`);
+      lines.push(`    env:`);
+      lines.push(`      MEM0_API_KEY: "$\{MEM0_API_KEY\}"`);
+    }
+    lines.push(``);
+  }
+
+  // Approval
+  lines.push(`security:`);
+  lines.push(`  approval:`);
+  if (approval === 'strict') {
+    lines.push(`    auto_approve_read: false`);
+    lines.push(`    require_approval:`);
+    lines.push(`      - { tool: "*", actions: [exec, write, send, create, update, delete, post] }`);
+    lines.push(`    approval_timeout: 300`);
+  } else if (approval === 'moderate') {
+    lines.push(`    auto_approve_read: true`);
+    lines.push(`    require_approval:`);
+    lines.push(`      - { tool: github, actions: [create_pr, merge_pr, delete_branch] }`);
+    lines.push(`      - { tool: terminal, actions: [exec] }`);
+    lines.push(`      - { tool: email, actions: [send] }`);
+    lines.push(`      - { tool: any_mcp, sampling: true }`);
+  } else {
+    lines.push(`    auto_approve_read: true`);
+    lines.push(`    require_approval: []`);
+  }
+  lines.push(`    denylist:`);
+  lines.push(`      - 'rm\\s+-rf\\s+/'`);
+  lines.push(`      - 'curl\\s+.+\\|\\s*(sh|bash)'`);
+  lines.push(`      - '169\\.254\\.169\\.254'`);
+  lines.push(`      - 'cat\\s+~?/?\\.?ssh/'`);
+
+  // Persona-specific security blocks
+  if (persona === 'security-hardened') {
+    lines.push(`  mcp:`);
+    lines.push(`    default_trust: untrusted`);
+    lines.push(`    require_allowlist: true`);
+    lines.push(`    allow_sampling: false`);
+  } else if (anyMcp) {
+    lines.push(`  mcp:`);
+    lines.push(`    default_trust: trusted`);
+    lines.push(`    allow_sampling: false`);
+  }
+
+  if (persona === 'security-hardened' || persona === 'production') {
+    lines.push(`  webhook:`);
+    lines.push(`    max_body_bytes: 1048576`);
+    lines.push(`    require_signature: true`);
+    lines.push(`  redaction:`);
+    lines.push(`    memory_write: true`);
+    lines.push(`    log: true`);
+    lines.push(``);
+    lines.push(`profiles:`);
+    lines.push(`  quarantine:`);
+    lines.push(`    # Low-trust gateways route here: no memory writes, no MCP, read-only tools`);
+    lines.push(`    allow_memory_write: false`);
+    lines.push(`    allow_send: false`);
+    lines.push(`    mcp_servers: []`);
+    lines.push(`    toolsets: [classify]`);
+  }
+  lines.push(``);
+
+  // Cost-routing rules for cost-optimized persona
+  if (persona === 'cost-optimized') {
+    lines.push(`routing:`);
+    lines.push(`  rules:`);
+    lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/llama-3.1-70b" }`);
+    lines.push(`    - { when: "context.tokens > 200000",        use: "google/gemini-2.5-pro" }`);
+    lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi-k2.5" }`);
+    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet-4-5" }`);
+    lines.push(`    - { else: true,                              use: "google/gemini-2.5-flash" }`);
+    lines.push(``);
+  }
+
+  // Telemetry
+  if (obs === 'langfuse') {
+    lines.push(`telemetry:`);
+    lines.push(`  level: info`);
+    lines.push(`  exporters:`);
+    lines.push(`    langfuse:`);
+    lines.push(`      public_key: "$\{LANGFUSE_PUBLIC_KEY\}"`);
+    lines.push(`      secret_key: "$\{LANGFUSE_SECRET_KEY\}"`);
+    lines.push(`      host: "$\{LANGFUSE_HOST\}"`);
+    lines.push(``);
+  } else if (obs === 'helicone') {
+    lines.push(`telemetry:`);
+    lines.push(`  level: info`);
+    lines.push(`  exporters:`);
+    lines.push(`    helicone:`);
+    lines.push(`      api_key: "$\{HELICONE_API_KEY\}"`);
+    lines.push(``);
+  }
+
+  // Cron
+  const cronList = [];
+  if (crons.backup) cronList.push(`  - { name: nightly-backup,     schedule: "0 3 * * *", task: "/nightly-backup s3://backups/hermes/ 30" }`);
+  if (crons.deps)   cronList.push(`  - { name: weekly-dep-audit,   schedule: "0 9 * * 1", task: "/weekly-dep-audit severity_floor=high" }`);
+  if (crons.cost)   cronList.push(`  - { name: weekly-cost-report, schedule: "0 9 * * 1", task: "/cost-report window=7d format=markdown" }`);
+  if (crons.mcp)    cronList.push(`  - { name: weekly-mcp-audit,   schedule: "0 10 * * 1", task: "/audit-mcp" }`);
+  if (cronList.length) {
+    lines.push(`cron:`);
+    cronList.forEach(l => lines.push(l));
+    lines.push(``);
+  }
+
+  const out = lines.join('\n');
+  document.getElementById('out').textContent = out;
+  setStatus('Generated.');
+  return out;
+}
+
+function copyYAML() {
+  const text = document.getElementById('out').textContent;
+  if (!text || text.startsWith('(')) { generate(); }
+  navigator.clipboard.writeText(document.getElementById('out').textContent)
+    .then(() => setStatus('Copied to clipboard.'))
+    .catch(() => setStatus('Copy failed — select manually.'));
+}
+
+function downloadYAML() {
+  const text = document.getElementById('out').textContent;
+  if (!text || text.startsWith('(')) { generate(); }
+  const blob = new Blob([document.getElementById('out').textContent], {type: 'text/yaml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'config.yaml'; a.click();
+  URL.revokeObjectURL(url);
+  setStatus('Downloaded as config.yaml.');
+}
+
+function setStatus(s) {
+  const el = document.getElementById('status');
+  el.textContent = s;
+  setTimeout(() => { if (el.textContent === s) el.textContent = ''; }, 2500);
+}
+
+// Generate on load so there's something to look at
+generate();
+</script>
+</body>
+</html>

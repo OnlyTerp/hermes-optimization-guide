@@ -4,20 +4,17 @@ What's landing next. PRs welcome.
 
 ## In progress
 
-- [ ] **Interactive config wizard** — a static page that asks 8 questions and emits a `config.yaml` + systemd unit. Hosted via GitHub Pages.
 - [ ] **GitHub Pages docs site** — Astro Starlight with full-text search across all parts + skills.
 - [ ] **Asciinema cast** — 60-second "zero to working Telegram bot" recording embedded in the README.
 - [ ] **Langfuse dashboard JSON** — importable ready-made dashboard for Hermes traces.
+- [ ] **Upstream PR** to `NousResearch/hermes-agent` README — add Community Guides section (draft in `docs/outreach/nous-upstream-pr-body.md`).
 
 ## Queued
 
 - [ ] **Skill templates** — `hermes skills new <name>` scaffolding generator
-- [ ] **Reference architectures** — homelab / single-user SaaS / small-team / agency, each with every file needed
-- [ ] **Integration tests** — GitHub Actions job that lints every SKILL.md frontmatter + validates YAML configs
-- [ ] **Cross-link checker** — CI check that fails if any `[...](./...)` link 404s
-- [ ] **Translations** — Chinese + Japanese (large Hermes user base in both communities per v0.9 release notes)
-- [ ] **"Hermes Weekly"** — markdown-first week-in-review section auto-generated from Hermes-agent merged PRs
+- [ ] **Cross-link checker** — CI check that fails if any `[...](./...)` link 404s (partial: markdown-link-check on modified files is live)
 - [ ] **Security CVE feed** — `.github/workflows/cve-watch.yml` that monitors OSV for relevant advisories
+- [ ] **Dashboard screenshots pass** — embed actual screens in parts 12 / 17 / 20
 
 ## Under consideration
 
@@ -27,6 +24,11 @@ What's landing next. PRs welcome.
 
 ## Done (recent)
 
+- ✅ 2026-04-17 — Interactive config wizard (`docs/wizard/`)
+- ✅ 2026-04-17 — 4 reference architectures (homelab / solo-dev / small-agency / road-warrior)
+- ✅ 2026-04-17 — CI (markdown-link-check + yamllint + skill frontmatter validator)
+- ✅ 2026-04-17 — Chinese + Japanese README entry pages
+- ✅ 2026-04-17 — Outreach drafts (tweet, HN, Reddit, upstream PR, blog post)
 - ✅ 2026-04-17 — Installable skill library + templates + bootstrap script
 - ✅ 2026-04-17 — MCP / coding-agent / security / observability / sandbox parts (17–21)
 - ✅ 2026-04-16 — v0.9 + v0.10 refresh (parts 12–16)

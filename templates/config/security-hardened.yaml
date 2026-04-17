@@ -34,8 +34,10 @@ profiles:
 models:
   default: anthropic/claude-sonnet-4-5
   providers:
-    anthropic: { api_key: ${ANTHROPIC_API_KEY} }
-    google:    { api_key: ${GOOGLE_API_KEY} }
+    anthropic:
+      api_key: "${ANTHROPIC_API_KEY}"
+    google:
+      api_key: "${GOOGLE_API_KEY}"
 
 gateways:
   cli: { enabled: true, profile: trusted }        # Local CLI = admin
@@ -44,7 +46,8 @@ gateways:
     bots:
       admin:
         token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids: [${TELEGRAM_OWNER_ID}]
+        allowed_user_ids:
+          - ${TELEGRAM_OWNER_ID}
         profile: trusted
       public:
         token: ${TELEGRAM_PUBLIC_BOT_TOKEN}

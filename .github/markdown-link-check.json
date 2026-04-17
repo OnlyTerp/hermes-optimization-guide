@@ -1,0 +1,22 @@
+{
+  "ignorePatterns": [
+    { "pattern": "^https://t.me/" },
+    { "pattern": "^https://example.com/" },
+    { "pattern": "^https://install.hermes.nous.ai" },
+    { "pattern": "^https://langfuse.yourdomain.com" },
+    { "pattern": "^https://hermes.yourdomain.com" },
+    { "pattern": "^https://hooks.yourdomain.com" },
+    { "pattern": "^http://localhost" },
+    { "pattern": "^http://127.0.0.1" }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://github.com/", "https://raw.githubusercontent.com/"],
+      "headers": { "User-Agent": "markdown-link-check" }
+    }
+  ],
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 206, 429, 403]
+}
