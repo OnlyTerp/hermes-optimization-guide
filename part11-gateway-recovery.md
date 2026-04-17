@@ -187,7 +187,7 @@ if ! curl -s http://localhost:8642/health > /dev/null 2>&1; then
 fi
 
 # Disk space OK?
-USAGE=$(df -h ~/.hermes | awk 'NR==2 {print $5}' | tr -d '%')
+USAGE=$(df -Ph ~/.hermes | awk 'NR==2 {print $5}' | tr -d '%')
 if [ "$USAGE" -gt 90 ]; then
     echo "WARNING: Disk usage at ${USAGE}%"
     exit 1
