@@ -14,7 +14,7 @@ parameters:
     required: true
   repo:
     type: string
-    description: owner/repo (default: current dir's origin)
+    description: "owner/repo (default is current dir's origin)"
 ---
 
 # release-notes — Generate Release Notes

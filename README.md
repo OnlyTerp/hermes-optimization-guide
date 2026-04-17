@@ -4,11 +4,14 @@
 [![Hermes](https://img.shields.io/badge/Hermes-v0.10.0%20%28main%29-9146FF)](https://github.com/NousResearch/hermes-agent)
 [![Last updated](https://img.shields.io/badge/Last%20updated-2026--04--17-brightgreen)](./CHANGELOG.md)
 [![Parts](https://img.shields.io/badge/parts-21-blue)](#table-of-contents)
-[![Skills](https://img.shields.io/badge/installable%20skills-9-blue)](./skills/)
+[![Skills](https://img.shields.io/badge/installable%20skills-13-blue)](./skills/)
 [![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
+[![CI](https://github.com/OnlyTerp/hermes-optimization-guide/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** with post-release tracking for `main` · **21 parts, 9 installable skills, 5 opinionated configs, one-command VPS bootstrap** · Battle-tested on a live production deployment
+> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** with post-release tracking for `main` · **21 parts, 13 installable skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Battle-tested on a live production deployment
+>
+> Other languages: [中文](./README-zh.md) · [日本語](./README-ja.md)
 
 ### The End-to-End Hermes Guide — docs + runnable artifacts
 Every part you need to go from fresh install to a production Hermes deployment that talks on 16 platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, and runs heavy work on disposable Modal/Daytona sandboxes — without burning $100/day on Opus tokens.
@@ -37,7 +40,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 
 | Folder | What's in it |
 |---|---|
-| [`skills/`](./skills) | **9 installable `SKILL.md`** files. `ln -s` into `~/.hermes/skills/` and they're live. |
+| [`skills/`](./skills) | **13 installable `SKILL.md`** files. `ln -s` into `~/.hermes/skills/` and they're live. |
 | [`templates/config/`](./templates/config) | **5 opinionated `config.yaml`** — minimum, telegram-bot, production, cost-optimized, security-hardened. |
 | [`templates/compose/`](./templates/compose) | Self-hosted Langfuse v3 stack (ClickHouse + MinIO + Redis). |
 | [`templates/caddy/`](./templates/caddy) | Caddyfile reference (reverse proxy + auto TLS + HSTS). |
@@ -46,6 +49,9 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) | One-command fresh VPS → production Hermes. |
 | [`diagrams/`](./diagrams) | 6 Mermaid diagrams (architecture, MCP flow, delegation, sandbox sync, observability, security layers). |
 | [`benchmarks/`](./benchmarks) | Reproducible cost + latency table across 12 models × 5 tasks. |
+| [`docs/wizard/`](./docs/wizard) | **Interactive config wizard** — 8 questions → ready-to-drop `config.yaml`. Runs in your browser. |
+| [`docs/reference-architectures/`](./docs/reference-architectures) | **4 blueprints** — Homelab, Solo Dev, Small Agency, Road Warrior. Full parts list + cost + install. |
+| [`docs/outreach/`](./docs/outreach) | Launch tweet, HN post, upstream-PR body drafts (for people linking to this guide). |
 | [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
 | [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
 | [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
