@@ -16,7 +16,7 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 ## 主なコンテンツ
 
 - **21 章の本文**（`part1`〜`part21`） — LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
-- **9 個のインストール可能 Skill**（`skills/`） — 監査、バックアップ、依存スキャン、コストレポート、Telegram トリアージ、PR レビュー など
+- **13 個のインストール可能 Skill**（`skills/`） — 監査、バックアップ、依存スキャン、コストレポート、Telegram トリアージ、PR レビュー、受信トレイ整理、Hermes 週報、スパムフィルタ、会議準備 など
 - **5 つのプロダクション設定テンプレ**（`templates/config/`） — minimum / telegram-bot / production / cost-optimized / security-hardened
 - **インフラ一式**（`templates/compose/`, `templates/caddy/`, `templates/systemd/`, `scripts/`） — Langfuse セルフホスト、Caddy リバースプロキシ、systemd 強化、VPS ブートストラップ
 - **Mermaid アーキテクチャ図**（`diagrams/`）

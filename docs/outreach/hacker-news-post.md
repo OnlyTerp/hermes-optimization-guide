@@ -16,7 +16,7 @@ Hermes (Nous Research, ~94K GH stars) is the agent framework I've been using for
 
 This guide is the other direction: 21 parts of actual documentation *plus*
 
-- **9 installable `SKILL.md` files** (audit-mcp, rotate-secrets, nightly-backup, weekly-dep-audit, cost-report, telegram-triage, pr-review, release-notes, audit-approval-bypass) — drop them into `~/.hermes/skills/` or symlink them in
+- **13 installable `SKILL.md` files** (audit-mcp, rotate-secrets, audit-approval-bypass, nightly-backup, weekly-dep-audit, cost-report, telegram-triage, pr-review, release-notes, daily-inbox-triage, hermes-weekly, spam-trap, meeting-prep) — drop them into `~/.hermes/skills/` or symlink them in
 - **5 opinionated configs** for the 5 real personas (minimum / telegram-bot / production / cost-optimized / security-hardened) — every non-obvious field commented
 - **A VPS bootstrap script** — fresh Debian/Ubuntu to production Hermes with Caddy + UFW + fail2ban + systemd hardening in ~10 min, one `curl | bash`
 - **Docker compose for self-hosted Langfuse** — the single most-asked-for observability setup
