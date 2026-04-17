@@ -253,7 +253,7 @@ Each user gets their own conversation session. The bot tracks sessions per user 
 
 ### Bot not responding
 
-1. Check the token is correct: `echo $TELEGRAM_BOT_TOKEN`
+1. Check the token is set (without printing it in full): `echo ${TELEGRAM_BOT_TOKEN:0:10}...`
 2. Verify the gateway is running: `hermes gateway status`
 3. Check logs: `hermes gateway logs`
 

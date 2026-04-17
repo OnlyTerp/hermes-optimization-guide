@@ -105,14 +105,20 @@ tts:
 
 Models are configured in `~/.hermes/config.yaml`:
 
-> **Security note:** Never put real API keys directly in `config.yaml`. Use environment variable references so keys stay in `~/.hermes/.env` (which should be `chmod 600` and never committed to git).
-
+> **Security note:** Never put real API keys directly in `config.yaml`. Use environment variable references so keys stay in `~/.hermes/.env` (which should be `chmod 600` and never committed to git). You can also use `hermes auth` to set them securely.
 ```yaml
 # Default model
 model: claude-sonnet-4-20250514
 provider: anthropic
 
 # Provider configurations
+# API keys are loaded from ~/.hermes/.env automatically.
+# Set them with: hermes auth
+# Or add to ~/.hermes/.env:
+#   ANTHROPIC_API_KEY=sk-ant-...
+#   OPENAI_API_KEY=sk-...
+#   CEREBRAS_API_KEY=csk-...
+#   FIREWORKS_API_KEY=fw_...
 providers:
   anthropic:
     api_key: ${ANTHROPIC_API_KEY}
@@ -158,6 +164,8 @@ providers:
 Any provider that implements the OpenAI chat completions API works:
 
 ```yaml
+# Add your API key to ~/.hermes/.env:
+#   MY_CUSTOM_API_KEY=your-key-here
 providers:
   my-custom:
     api_key: ${MY_CUSTOM_API_KEY}
@@ -244,6 +252,7 @@ Cerebras is fast but has quirks:
 Config:
 
 ```yaml
+# Set CEREBRAS_API_KEY in ~/.hermes/.env
 providers:
   cerebras:
     api_key: ${CEREBRAS_API_KEY}
