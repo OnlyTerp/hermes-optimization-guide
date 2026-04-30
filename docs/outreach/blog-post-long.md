@@ -21,7 +21,7 @@ So I wrote the opposite.
 
 ## What "ships code" means
 
-The [Hermes Optimization Guide](https://github.com/OnlyTerp/hermes-optimization-guide) has 21 chapters of documentation. That's the part that looks like every other guide.
+The [Hermes Optimization Guide](https://github.com/OnlyTerp/hermes-optimization-guide) has 23 parts of documentation. That's the part that looks like every other guide.
 
 But it also has, in the same repo:
 

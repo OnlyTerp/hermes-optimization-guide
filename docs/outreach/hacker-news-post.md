@@ -14,7 +14,7 @@ Author here. Context on what this is and why:
 
 Hermes (Nous Research, ~94K GH stars) is the agent framework I've been using for a year. Most of the existing community guides explain the architecture but don't give you anything to run — you read 15 parts, still have to write your own `config.yaml`, your own cron skills, your own systemd hardening.
 
-This guide is the other direction: 21 parts of actual documentation *plus*
+This guide is the other direction: 23 parts of actual documentation *plus*
 
 - **13 installable `SKILL.md` files** (audit-mcp, rotate-secrets, audit-approval-bypass, nightly-backup, weekly-dep-audit, cost-report, telegram-triage, pr-review, release-notes, daily-inbox-triage, hermes-weekly, spam-trap, meeting-prep) — drop them into `~/.hermes/skills/` or symlink them in
 - **5 opinionated configs** for the 5 real personas (minimum / telegram-bot / production / cost-optimized / security-hardened) — every non-obvious field commented
