@@ -37,7 +37,7 @@ This guide is built in public. PRs welcome.
 ├── ECOSYSTEM.md
 ├── ROADMAP.md
 ├── LICENSE
-├── part6-context-compression.md … part22-latest-power-moves.md
+├── part1-setup.md … part22-latest-power-moves.md
 ├── diagrams/architecture.md
 ├── skills/
 │   ├── README.md
