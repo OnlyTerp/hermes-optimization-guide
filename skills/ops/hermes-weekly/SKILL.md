@@ -27,7 +27,7 @@ model_hint: google/gemini-2.5-flash
 
 # hermes-weekly — Weekly Digest
 
-Automates the "Cooking on main" section of the guide — but for anyone running Hermes who wants a once-a-week summary of what landed upstream.
+Automates a weekly upstream-change digest for anyone running Hermes who wants a concise summary of what landed.
 
 ## Procedure
 
@@ -68,7 +68,7 @@ Automates the "Cooking on main" section of the guide — but for anyone running 
 
 ## Why this skill
 
-- The "Cooking on main" section in the guide's README is curated manually. This lets any Hermes user run it themselves with their own focus.
+- The guide no longer tracks speculative "cooking on main" notes. This skill lets Hermes users make their own upgrade digest from merged upstream work.
 - Useful for users who are on a pinned version and want a checklist before upgrading.
 - Can be piped into Discord / Telegram channel / newsletter via `notify:` in the cron config.
 
@@ -86,4 +86,4 @@ cron:
 
 - [release-notes](../../dev/release-notes/SKILL.md) — same pattern but for your own repo
 - [weekly-dep-audit](../weekly-dep-audit/SKILL.md) — upgrade-safety check
-- README "[Cooking on main](../../../README.md)" — the manually-curated version
+- [CHANGELOG](../../../CHANGELOG.md) — the manually curated guide history

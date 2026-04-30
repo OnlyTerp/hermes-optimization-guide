@@ -6,31 +6,31 @@ The canonical "where do I find X for Hermes" directory. Maintained alongside the
 
 ## MCP Servers Worth Installing
 
-### Official (Anthropic-maintained)
-- [`@modelcontextprotocol/server-github`](https://github.com/modelcontextprotocol/servers/tree/main/src/github) — PRs, issues, code search, Actions
+### Official / reference
+- [`github/github-mcp-server`](https://github.com/github/github-mcp-server) — PRs, issues, code search, Actions
 - [`@modelcontextprotocol/server-filesystem`](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) — read/write to scoped directories
-- [`@modelcontextprotocol/server-postgres`](https://github.com/modelcontextprotocol/servers/tree/main/src/postgres) — read-only SQL
-- [`@modelcontextprotocol/server-sqlite`](https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite) — local SQLite
-- [`@modelcontextprotocol/server-puppeteer`](https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer) — headless browser automation
+- [`@modelcontextprotocol/server-postgres`](https://www.npmjs.com/package/@modelcontextprotocol/server-postgres) — read-only SQL
+- [`@modelcontextprotocol/server-sqlite`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite) — local SQLite
+- [`@modelcontextprotocol/server-puppeteer`](https://www.npmjs.com/package/@modelcontextprotocol/server-puppeteer) — headless browser automation
 - [`@modelcontextprotocol/server-memory`](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) — lightweight KV memory
-- [`@modelcontextprotocol/server-google-drive`](https://github.com/modelcontextprotocol/servers/tree/main/src/gdrive) — Drive read
+- [`@modelcontextprotocol/server-google-drive`](https://www.npmjs.com/package/@modelcontextprotocol/server-gdrive) — Drive read
 
 ### First-party vendor MCPs
 - [`@cloudflare/mcp-server-cloudflare`](https://github.com/cloudflare/mcp-server-cloudflare) — Workers, KV, D1, R2
-- [`@supabase/mcp-server-supabase`](https://github.com/supabase/mcp-server-supabase) — Postgres + storage + auth
-- [`@stripe/mcp-server-stripe`](https://github.com/stripe/agent-sdk) — payments read + restricted writes
-- [`@linear/mcp-server-linear`](https://github.com/linear/linear-mcp-server) — issue tracking
-- [`@notion/mcp-server-notion`](https://github.com/notionhq/notion-mcp-server) — page read/write
+- [`@supabase/mcp-server-supabase`](https://github.com/supabase-community/supabase-mcp/tree/main/packages/mcp-server-supabase) — Postgres + storage + auth
+- [`@stripe/mcp-server-stripe`](https://github.com/stripe/ai/tree/main/tools/modelcontextprotocol) — payments read + restricted writes
+- [`Linear remote MCP`](https://linear.app/docs/mcp) — issue tracking
+- [`@notionhq/notion-mcp-server`](https://github.com/makenotion/notion-mcp-server) — page read/write
 - [`@browserbase/mcp-server`](https://github.com/browserbase/mcp-server-browserbase) — managed headless browser
 - [`@chromadb/mcp-server-chroma`](https://github.com/chroma-core/chroma-mcp) — vector search
 
 ### Community
-- [`mem0/mcp-server-mem0`](https://github.com/mem0ai/mem0/tree/main/mcp) — persistent cross-device memory
+- [`Mem0 remote MCP`](https://docs.mem0.ai/platform/mem0-mcp) — persistent cross-device memory
 - [`arxiv-mcp-server`](https://github.com/blazickjp/arxiv-mcp-server) — arxiv search + PDF extraction
 - [`mcp-server-atlassian`](https://github.com/sooperset/mcp-atlassian) — Jira + Confluence
-- [`mcp-server-slack`](https://github.com/modelcontextprotocol/servers/tree/main/src/slack) — message, search, profile
+- [`@modelcontextprotocol/server-slack`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/slack) — message, search, profile
 - [`dbt-mcp`](https://github.com/dbt-labs/dbt-mcp) — dbt Cloud
-- [`mcp-server-e2b`](https://github.com/e2b-dev/e2b-mcp) — disposable Python sandboxes
+- [`e2b-dev/mcp-server`](https://github.com/e2b-dev/mcp-server) — disposable Python sandboxes
 - [`mcp-obsidian`](https://github.com/MarkusPfundstein/mcp-obsidian) — your Obsidian vault
 
 See [Part 17](./part17-mcp-servers.md) for install patterns and trust model guidance.
@@ -74,7 +74,7 @@ See [Part 20](./part20-observability.md).
 
 ## Security research / CVEs of note (2026)
 
-- **Comment and Control (2026-04-15)** — cross-vendor prompt-injection via GitHub PR titles hitting Claude Code, Gemini CLI, GitHub Copilot Agent. [Disclosure thread](https://example.com/disclosure).
+- **Comment and Control (2026-04-15)** — cross-vendor prompt-injection via GitHub PR titles hitting Claude Code, Gemini CLI, GitHub Copilot Agent. See the defensive write-up referenced in [Part 19](./part19-security-playbook.md).
 - **MCP stdio poisoning** — untrusted npm packages that proxy stdio MCP traffic. Mitigated by pinning versions + Socket.dev/Semgrep audits.
 - **Webhook replay attacks** — a reminder that HMAC + TTL together, not HMAC alone, prevents replay.
 

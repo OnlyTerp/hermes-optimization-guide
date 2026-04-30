@@ -6,8 +6,8 @@ From zero to working Telegram bot.
 
 - A Linux, macOS, or WSL machine (anything with bash)
 - A Telegram account
-- An Anthropic API key — [console.anthropic.com](https://console.anthropic.com/settings/keys)
-- (Optional) A Google API key — [aistudio.google.com](https://aistudio.google.com/apikey) for free-tier routing
+- One provider: Anthropic/OpenAI/OpenRouter API key, Nous Portal login, or Gemini OAuth via `hermes model`
+- (Optional) A Google API key — [aistudio.google.com](https://aistudio.google.com/apikey) if you prefer API-key Gemini over OAuth
 
 ## Step 1 — Install Hermes
 
@@ -41,7 +41,7 @@ Create `~/.hermes/.env`:
 ```bash
 cat > ~/.hermes/.env <<'EOF'
 ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
+# GOOGLE_API_KEY=AIza...              # optional; Gemini OAuth can be configured via `hermes model`
 TELEGRAM_ADMIN_BOT_TOKEN=1234567890:ABC...
 TELEGRAM_OWNER_ID=1234567            # your numeric ID from @userinfobot
 EOF
@@ -76,6 +76,7 @@ Now try:
 ## Step 7 — Level up
 
 - **More platforms:** [Part 4 (Telegram deep-dive)](../part4-telegram-setup.md), [Part 15 (iMessage/WeChat/Android)](../part15-new-platforms.md)
+- **Latest features:** [Part 22 (Curator, TUI, plugins)](../part22-latest-power-moves.md)
 - **Memory that reasons:** [Part 3 (LightRAG)](../part3-lightrag-setup.md)
 - **Tools:** [Part 17 (MCP servers)](../part17-mcp-servers.md)
 - **Coding agent driver:** [Part 18 (Claude Code, Codex, Gemini CLI)](../part18-coding-agents.md)

@@ -1,7 +1,6 @@
 {
   "ignorePatterns": [
     { "pattern": "^https://t.me/" },
-    { "pattern": "^https://example.com/" },
     { "pattern": "^https://install.hermes.nous.ai" },
     { "pattern": "^https://langfuse.yourdomain.com" },
     { "pattern": "^https://hermes.yourdomain.com" },

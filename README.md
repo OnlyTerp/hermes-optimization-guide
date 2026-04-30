@@ -1,24 +1,24 @@
 # Hermes Optimization Guide
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Hermes](https://img.shields.io/badge/Hermes-v0.10.0%20%28main%29-9146FF)](https://github.com/NousResearch/hermes-agent)
-[![Last updated](https://img.shields.io/badge/Last%20updated-2026--04--17-brightgreen)](./CHANGELOG.md)
-[![Parts](https://img.shields.io/badge/parts-21-blue)](#table-of-contents)
+[![Hermes](https://img.shields.io/badge/Hermes-v0.12.0%20%282026.4.30%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.30)
+[![Last updated](https://img.shields.io/badge/Last%20updated-2026--04--30-brightgreen)](./CHANGELOG.md)
+[![Parts](https://img.shields.io/badge/parts-23-blue)](#table-of-contents)
 [![Skills](https://img.shields.io/badge/installable%20skills-13-blue)](./skills/)
 [![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
 [![CI](https://github.com/OnlyTerp/hermes-optimization-guide/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Tested on Hermes Agent v0.10.0 (v2026.4.16)** with post-release tracking for `main` · **21 parts, 13 installable skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Battle-tested on a live production deployment
+> **Current through Hermes Agent v0.12.0 (v2026.4.30)** · **23 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Updated for Curator, the Ink TUI, plugins, Teams/Yuanbao/QQBot, Bedrock/Azure/LM Studio, remote model catalogs, dashboard chat, and the latest skill-hub workflows
 >
 > Other languages: [中文](./README-zh.md) · [日本語](./README-ja.md)
 
 ### The End-to-End Hermes Guide — docs + runnable artifacts
-Every part you need to go from fresh install to a production Hermes deployment that talks on 16 platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, and runs heavy work on disposable Modal/Daytona sandboxes — without burning $100/day on Opus tokens.
+Every part you need to go from fresh install to a production Hermes deployment that talks on 18+ built-in/plugin platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, curates its own skills, and runs heavy work on disposable Modal/Daytona/Vercel sandboxes — without burning $100/day on frontier tokens.
 
 Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
 
-*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **April 17, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **April 30, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
 
 ---
 
@@ -55,7 +55,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
 | [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
 | [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
-| `part1-*.md` … `part21-*.md` | The guide itself. |
+| README + `part1-*.md` … `part22-*.md` | The 23-part guide itself. |
 
 ---
 
@@ -63,7 +63,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 
 ```mermaid
 flowchart LR
-  Inputs[16 platforms<br/>Telegram · Discord · Slack<br/>iMessage · WeChat · Email<br/>SMS · Webhooks · Cron · Voice · CLI] --> Gateway
+  Inputs[18+ platforms<br/>Telegram · Discord · Slack<br/>QQBot · Yuanbao · Teams<br/>iMessage · WeChat · Email<br/>SMS · Webhooks · Cron · Voice · CLI] --> Gateway
   Gateway --> Router[Model Router<br/>cost + context + capability]
   Router --> Providers[Anthropic · OpenAI<br/>Google · Cerebras · Moonshot<br/>z.ai · xAI · Local]
   Gateway --> Approval[Approval Layer<br/>denylist · allowlist · quarantine]
@@ -78,7 +78,7 @@ Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 
 ## Pick Your Path
 
-This guide grew to 21 parts because *Hermes grew*. You don't have to read them all. Pick the shortest path to what you need:
+This guide grew to 23 parts because *Hermes grew*. Parts 1–5 live in this README; Parts 6–22 live as separate files. You don't have to read them all — pick the shortest path to what you need:
 
 ### 🎯 "I just want it working in 10 minutes"
 [Part 1: Setup](#part-1-setup-stop-fumbling-with-installation) → [Part 12: Web Dashboard](./part12-web-dashboard.md) → done. Use the dashboard to point-and-click the rest.
@@ -87,10 +87,10 @@ This guide grew to 21 parts because *Hermes grew*. You don't have to read them a
 [Part 1](#part-1-setup-stop-fumbling-with-installation) → [Part 4: Telegram](./part4-telegram-setup.md) → [Part 5: On-the-fly Skills](./part5-creating-skills.md) → [Part 7: Memory](./part7-memory-system.md).
 
 ### 🤖 "I want to drive Claude Code / Codex / Gemini from my phone"
-[Part 18: Coding Agents](./part18-coding-agents.md) → [Part 17: MCP Servers](./part17-mcp-servers.md) → [Part 21: Remote Sandboxes](./part21-remote-sandboxes.md).
+[Part 18: Coding Agents](./part18-coding-agents.md) → [Part 22: Latest Power Moves](./part22-latest-power-moves.md) → [Part 21: Remote Sandboxes](./part21-remote-sandboxes.md).
 
 ### 💼 "I'm running this in production"
-[Part 19: Security Playbook](./part19-security-playbook.md) → [Part 20: Observability & Cost](./part20-observability.md) → [Part 16: Backup & Debug](./part16-backup-debug.md) → [Part 11: Gateway Recovery](./part11-gateway-recovery.md).
+[Part 19: Security Playbook](./part19-security-playbook.md) → [Part 20: Observability & Cost](./part20-observability.md) → [Part 16: Backup & Debug](./part16-backup-debug.md) → [Part 22: Curator + Plugins](./part22-latest-power-moves.md).
 
 ### 🧠 "I want the most capable agent possible, cost be damned"
 [Part 17: MCP Servers](./part17-mcp-servers.md) → [Part 18: Coding Agents](./part18-coding-agents.md) → [Part 3: LightRAG](./part3-lightrag-setup.md) → [Part 14: Fast Mode](./part14-fast-mode-watchers.md) → [Part 20: Observability](./part20-observability.md).
@@ -103,61 +103,39 @@ This guide grew to 21 parts because *Hermes grew*. You don't have to read them a
 
 ---
 
-## What's New (April 10–17, 2026)
+## What's New (April 2026)
 
-Two major Hermes releases dropped this week, **plus a stream of landmark PRs on `main`** that are targeted for v0.11. This guide is current as of both releases *and* the most impactful post-v0.10 merges.
+Hermes moved fast after this repo's v0.10 refresh. The current stable target is **[v0.12.0 — 2026.4.30 — "Curator"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.30)**, following **[v0.11.0 — 2026.4.23 — "Interface"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.23)**. This update removes speculative "cooking on main" notes and folds the landed features into the guide.
 
-### [v0.9.0 — 2026.4.13 — "Everywhere"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.13)
+### v0.12.0 — "Curator"
 
-- **Local web dashboard** (`hermes dashboard`) — full browser UI for config, API keys, sessions, logs, analytics, cron, and skills. See [Part 12](./part12-web-dashboard.md).
-- **Fast Mode** (`/fast`) — priority-tier inference on OpenAI & Anthropic, available on every gateway platform, not just the CLI. See [Part 14](./part14-fast-mode-watchers.md).
-- **Three new messaging adapters** — iMessage (via BlueBubbles), WeChat/Weixin, and WeCom (Enterprise WeChat). Brings the total to **16 platforms**. See [Part 15](./part15-new-platforms.md).
-- **Android / Termux** tested install path — run the full Hermes CLI on your phone. See [Part 15](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
-- **Background process monitoring** (`watch_patterns`) — real-time regex event hooks on long-running processes, no more polling. See [Part 14](./part14-fast-mode-watchers.md#background-process-monitoring-watch_patterns).
-- **Pluggable context engine** — swap in a custom engine to filter memory, inject domain context, or pre-summarize tool output. See [Part 14](./part14-fast-mode-watchers.md#pluggable-context-engine).
-- **`hermes backup` / `hermes import`** — first-class portable backups with interactive conflict resolution. See [Part 16](./part16-backup-debug.md).
-- **Dashboard plugins** — third-party tabs that extend the web UI. See [Part 12](./part12-web-dashboard.md#dashboard-plugins-extend-the-ui).
-- **Proxy support, webhook secret validation, SSRF protection, log redaction** — hardening pass across every adapter. See [Part 16](./part16-backup-debug.md#security-hardening-v09--v010-notes).
+- **Autonomous Curator** — `hermes curator` grades, consolidates, pins, archives, and restores agent-created skills on a default 7-day cadence. See [Part 22](./part22-latest-power-moves.md#1-turn-on-curator-before-your-skill-library-becomes-noise).
+- **Self-improvement loop upgraded** — the review fork is rubric-based, active-skill-biased, restricted to memory + skills tools, and correctly inherits the parent provider/model/credentials. See [Part 5](./part5-creating-skills.md#curator-v012-keep-the-skill-library-from-rotting).
+- **Provider expansion** — LM Studio became a first-class provider; GMI Cloud, Azure AI Foundry, MiniMax OAuth, Tencent TokenHub, AWS Bedrock, NVIDIA NIM, Vercel AI Gateway, Step Plan, Gemini OAuth, and Codex OAuth are now part of the realistic routing menu. See [Part 9](./part9-custom-models.md).
+- **Plugin-first gateway** — gateway platforms can ship as plugins; Microsoft Teams is the first plugin-shipped platform, and Tencent Yuanbao is the 18th native platform. See [Part 15](./part15-new-platforms.md#2026-update-qqbot-yuanbao-and-teams).
+- **Bundled plugins worth enabling** — Spotify tools, Google Meet transcription/duplex audio, Langfuse observability, achievements, extra image providers, and dashboard skins. See [Part 22](./part22-latest-power-moves.md#4-use-plugins-for-integrations-not-one-off-scripts).
+- **Dashboard caught up** — Models tab, auxiliary-model configuration, dashboard Chat backed by the real `hermes --tui`, plugin slots, themes, update/restart controls, and better session analytics. See [Part 12](./part12-web-dashboard.md).
+- **TUI is now the primary interface** — `hermes --tui` adds sticky composer, slash autocomplete, live tool cards, `/steer`, `/queue`, `/background`, `/busy`, `/indicator`, voice parity, LaTeX, and better resume/delete flows. See [Part 22](./part22-latest-power-moves.md#2-use-the-tui-as-your-daily-driver).
+- **Remote model catalog** — OpenRouter and Nous Portal picker lists update from a hosted manifest, so users see new models without waiting for a Hermes release. See [Part 9](./part9-custom-models.md#remote-model-catalog-stop-hardcoding-this-weeks-winner).
+- **Cron got serious** — per-job `workdir`, per-job toolsets, `context_from` chaining, and zero-LLM direct webhook delivery make scheduled automations cheaper and more predictable.
+- **Tool/runtime hardening** — hardline command blocklists, Docker host-user bind mounts, Vercel Sandbox backend, SSH permission fixes, local Chromium for localhost/LAN browser tasks, and richer approval hooks.
 
-### [v0.10.0 — 2026.4.16 — "Tool Gateway"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.16)
+### v0.11.0 — "Interface"
 
-- **Nous Tool Gateway** — paid [Nous Portal](https://portal.nousresearch.com) subscribers get web search (Firecrawl), image generation (FAL FLUX 2 Pro), TTS (OpenAI), and browser automation (Browser Use) through their subscription — **no extra API keys**. Per-tool `use_gateway: true` with clean precedence over direct keys. See [Part 13](./part13-tool-gateway.md).
-- **Native xAI and Xiaomi MiMo providers** — both now have first-class adapters with provider-specific features (Grok's live-X search, MiMo's reasoning modes), not just OpenRouter pass-through. See [Part 9](./part9-custom-models.md).
-- **`/compress <topic>`** — guided compression that preserves detail relevant to a topic. See [Part 14](./part14-fast-mode-watchers.md#compress-topic--guided-compression).
-- **`/debug` + `hermes debug share`** — single-command diagnostic bundler with upload endpoint for bug reports. See [Part 16](./part16-backup-debug.md#debug-and-hermes-debug-share).
-- **Approval bypass inheritance for subagents** — subagents inherit the parent session's approval posture; override per delegation. See [Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents).
-- `HERMES_ENABLE_NOUS_MANAGED_TOOLS` env flag **removed** — replaced by clean subscription detection + per-tool `use_gateway`. `hermes upgrade` migrates automatically.
+- **Ink TUI rewrite** — `hermes --tui` is a React/Ink interface over a Python JSON-RPC backend with streaming, status bars, pickers, and subagent observability.
+- **Transport layer rewrite** — Anthropic, Chat Completions, OpenAI Responses, and Bedrock transports are separate, making native providers more reliable than generic OpenAI-compatible shims.
+- **AWS Bedrock native provider** — IAM credentials, Converse API, cross-region inference profiles, and Bedrock Guardrails. See [Part 9](./part9-custom-models.md#aws-bedrock-and-azure-ai-foundry-enterprise-routing-without-proxy-glue).
+- **Auxiliary model UI** — choose separate models for compression, vision, session search, title generation, and curator instead of silently burning your main model on side tasks.
+- **Smarter delegation** — orchestrator-role subagents, configurable spawn depth, and file coordination between sibling workers reduce multi-agent clobbering. See [Part 18](./part18-coding-agents.md).
+- **Plugin and hook surface expanded** — plugins can register slash commands, dispatch tools, block tool execution, rewrite tool results, transform terminal output, add image backends, and add dashboard tabs.
+- **Webhook direct delivery** — push alerts to a platform chat without waking the LLM, ideal for uptime checks and event streams.
 
-### 🔥 Cooking on `main` (past 72 hours, targeting v0.11)
+### Still important from v0.9/v0.10
 
-The stream of merges between April 14–17 is unusually large — this is why we added five new parts to this guide:
-
-- **Gemini CLI OAuth inference provider** — OAuth login + 1500 req/day free tier. [#11270](https://github.com/NousResearch/hermes-agent/pull/11270). See [Part 9](./part9-custom-models.md#gemini-cli-oauth--free-1500-reqday).
-- **Gemini TTS (7th voice provider)** — `gemini-2.5-flash-preview-tts`, Kore voice, native WAV. [#10922](https://github.com/NousResearch/hermes-agent/issues/10922). See [Part 9](./part9-custom-models.md#gemini-tts--7th-voice-provider).
-- **Multi-model FAL image gen picker** — `hermes tools` now lets you pick FLUX / Imagen / SDXL variants without editing YAML. [#11265](https://github.com/NousResearch/hermes-agent/pull/11265).
-- **Bulk file sync with sync-back on teardown** — SSH/Modal/Daytona remote sandboxes now download only diffed files on shutdown, with SIGINT-safe rollback and flock serialization. [#8018](https://github.com/NousResearch/hermes-agent/pull/8018). See **[Part 21 — Remote Sandboxes](./part21-remote-sandboxes.md)**.
-- **TCP keepalives for provider connections** — dead connections detected in 60s instead of silently hanging. [#11277](https://github.com/NousResearch/hermes-agent/pull/11277).
-- **GLM 5.1 in OpenCode Go catalogs** — fastest open-weights tool-use model now routable through OpenCode. [#11269](https://github.com/NousResearch/hermes-agent/pull/11269).
-- **Azure OpenAI GPT-5.x via `/chat/completions`** — previously locked to `/responses`. [#10086](https://github.com/NousResearch/hermes-agent/pull/10086).
-- **`concept-diagrams` skill** — auto-renders Mermaid diagrams for explanations. Merged April 17.
-- **Feishu CARD-type WebSocket** — interactive cards finally work in enterprise Feishu deployments.
-- **OCAS skill sync** (feature proposal, April 15) — sync your local skills to a central repo. Watch [#11363](https://github.com/NousResearch/hermes-agent/issues/11363).
-
-### 🆕 Brand-new parts in this guide (April 17)
-
-- **[Part 17 — MCP Servers](./part17-mcp-servers.md)** — the viral tool-integration standard. Finally documented for Hermes. GitHub, Postgres, Supabase, Cloudflare, mem0, writing your own, and the `sampling/createMessage` killer feature.
-- **[Part 18 — Delegating to Coding Agents](./part18-coding-agents.md)** — Claude Code, Codex, Gemini CLI, OpenCode, and Aider. Print-mode delegation, thread-bound runtimes (the OpenClaw pattern), ACP as both client and server, cost routing, git isolation.
-- **[Part 19 — Security Playbook](./part19-security-playbook.md)** — defending against the April 15 "Comment and Control" prompt-injection attack, plus the full Hermes hardening posture: provenance labels, approval layers, secrets isolation, webhook sig validation, SSRF guards, MCP trust levels, quarantine mode.
-- **[Part 20 — Observability & Cost Control](./part20-observability.md)** — Langfuse, Helicone, OpenTelemetry → Phoenix. The cost-routing playbook that drops typical feature-implementation spend by 90%. Eval-driven regression protection.
-- **[Part 21 — Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md)** — SSH, Modal, Daytona, Fly Machines, E2B. "Phone drives, beefy remote does the work." Sync-back on teardown with SIGINT safety.
-
-### Viral model / provider developments (past 72h, now in the guide)
-
-- **GPT-5.4** and **GPT-5.4-Cyber** (OpenAI, Apr 15) — reasoning flagship and the first LLM-as-a-security-analyst. See [Part 9 model cheat sheet](./part9-custom-models.md#flagship-model-cheat-sheet-april-17-2026).
-- **Claude Mythos** (Anthropic, cyber-focused, invite-only).
-- **Gemini 3 Flash Preview** (Google) — 1M context, low latency, $0.50/$3 per MTok.
-- **Kimi K2.5** (Moonshot) — arguably the best price/quality ratio in coding models.
-- **GLM 5.1** (z.ai) — the strongest open-weights tool-use model as of this week.
+- **Local web dashboard** (`hermes dashboard`) — config, API keys, sessions, logs, analytics, cron, skills, models, plugins, and optional browser Chat. See [Part 12](./part12-web-dashboard.md).
+- **Nous Tool Gateway** — Nous Portal subscribers can route web search, image generation, TTS, and browser automation through the subscription instead of juggling separate API keys. See [Part 13](./part13-tool-gateway.md).
+- **Fast Mode** (`/fast`) and **guided compression** (`/compress <topic>`) still matter, but they are no longer the whole story; pair them with auxiliary model routing and `/steer`. See [Part 14](./part14-fast-mode-watchers.md).
+- **MCP + coding-agent delegation + remote sandboxes** remain the high-leverage developer stack. See [Part 17](./part17-mcp-servers.md), [Part 18](./part18-coding-agents.md), and [Part 21](./part21-remote-sandboxes.md).
 
 ---
 
@@ -172,19 +150,20 @@ The stream of merges between April 14–17 is unusually large — this is why we
 7. [Context Compression](./part6-context-compression.md) — Fix the silent context loss bug, configure compression thresholds, survive long sessions
 8. [Memory System](./part7-memory-system.md) — The three-tier memory architecture: persistent facts, conversation recall, procedural memory
 9. [Subagent Patterns](./part8-subagent-patterns.md) — Orchestrator/worker delegation, ACP subagents, parallel task execution
-10. [Custom Model Providers](./part9-custom-models.md) — Cerebras, Fireworks, Ollama, native xAI/MiMo/z.ai/Kimi/MiniMax/Arcee, Nous Portal, model aliases, fallback chains
+10. [Custom Model Providers](./part9-custom-models.md) — Bedrock, Azure AI Foundry, LM Studio, Gemini OAuth, Codex OAuth, OpenRouter routing, model aliases, fallback chains
 11. [SOUL.md Anti-Patterns](./part10-soul-antipatterns.md) — What makes an agent annoying vs useful, the formula that works
 12. [Gateway Recovery](./part11-gateway-recovery.md) — Crash detection, auto-recovery, common failure modes, health checks
-13. [Web Dashboard](./part12-web-dashboard.md) — **New.** `hermes dashboard`, the full browser UI — config, keys, sessions, logs, analytics, cron, skills, REST API, plugins
-14. [Nous Tool Gateway](./part13-tool-gateway.md) — **New.** Web search, image gen, TTS, and browser automation through a single Nous Portal subscription
-15. [Fast Mode & Background Watchers](./part14-fast-mode-watchers.md) — **New.** `/fast` priority tier, `watch_patterns` real-time process monitoring, pluggable context engine, `/compress <topic>`
-16. [New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md) — **New.** BlueBubbles/iMessage, Weixin/WeCom, Android via Termux — the full 16-platform lineup
-17. [Backup, Import & `/debug`](./part16-backup-debug.md) — **New.** Portable `hermes backup`/`import`, `/debug` bundler, `hermes debug share`, security hardening
-18. [MCP Servers](./part17-mcp-servers.md) — **NEW (April 17).** The viral tool-protocol standard. stdio + HTTP transports, sampling, the 14 MCP servers worth installing today, writing your own
-19. [Delegating to Coding Agents](./part18-coding-agents.md) — **NEW (April 17).** Claude Code, Codex, Gemini CLI, OpenCode, Aider. Print-mode, thread-bound sessions (OpenClaw pattern), ACP, git isolation, cost routing
-20. [Security Playbook](./part19-security-playbook.md) — **NEW (April 17).** Defending against "Comment and Control" prompt injection. Provenance labels, approval layers, secrets redaction, MCP trust model, quarantine mode
-21. [Observability & Cost Control](./part20-observability.md) — **NEW (April 17).** Langfuse, Helicone, OpenTelemetry → Phoenix. The cost-routing playbook that drops spend 90%. Eval-driven regression
-22. [Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md) — **NEW (April 17).** SSH, Modal, Daytona, Fly Machines, E2B. "Phone drives, beefy remote does the work." Diff-based sync-back on teardown
+13. [Web Dashboard](./part12-web-dashboard.md) — `hermes dashboard`, browser Chat via real TUI, models/plugins tabs, config, keys, sessions, logs, analytics, cron
+14. [Nous Tool Gateway](./part13-tool-gateway.md) — Web search, image gen, TTS, and browser automation through a single Nous Portal subscription
+15. [Fast Mode & Background Watchers](./part14-fast-mode-watchers.md) — `/fast`, `/steer`, `/queue`, `watch_patterns`, pluggable context engine, `/compress <topic>`
+16. [New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md) — BlueBubbles/iMessage, Weixin/WeCom, QQBot, Yuanbao, Teams plugin, Android via Termux
+17. [Backup, Import & `/debug`](./part16-backup-debug.md) — Portable `hermes backup`/`import`, `/debug` bundler, `hermes debug share`, security hardening
+18. [MCP Servers](./part17-mcp-servers.md) — The tool-protocol standard. stdio + HTTP transports, sampling, trust boundaries, server shortlist, writing your own
+19. [Delegating to Coding Agents](./part18-coding-agents.md) — Claude Code, Codex, Gemini CLI, OpenCode, Aider. Print-mode, orchestrator subagents, ACP, git isolation, cost routing
+20. [Security Playbook](./part19-security-playbook.md) — Prompt-injection defense, provenance labels, approval layers, secrets redaction, MCP trust model, hardline blocks
+21. [Observability & Cost Control](./part20-observability.md) — Langfuse plugin, Helicone, OpenTelemetry → Phoenix, auxiliary routing, eval-driven regressions
+22. [Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md) — SSH, Modal, Daytona, Vercel Sandbox, Fly Machines, E2B. Diff-based sync-back on teardown
+23. [Latest Power Moves](./part22-latest-power-moves.md) — Curator, TUI habits, context-file hygiene, plugins, dashboard Chat, cron chaining, and the 2026 upgrade checklist
 
 ---
 
@@ -328,12 +307,12 @@ Supported providers and recommended models:
 |----------|-----------|----------|-------------|
 | **Nous Portal** | Hermes 5, Hermes 4 405B | Built-in [Tool Gateway](./part13-tool-gateway.md) — web search/image/TTS/browser with no extra keys | Auth via `hermes model` |
 | **Anthropic** | Opus 4.6, Sonnet 4 | Best reasoning, complex tasks, coding, `/fast` priority tier | `ANTHROPIC_API_KEY` |
-| **OpenAI** | GPT-5.4 Pro, o3, GPT-4.1 | Strong tool use, fast inference, huge context, `/fast` priority tier | `OPENAI_API_KEY` |
+| **OpenAI** | GPT-5-class, o-series, GPT-4.1 | Strong tool use, fast inference, huge context, `/fast` priority tier | `OPENAI_API_KEY` |
 | **Xiaomi MiMo** | MiMo V2 Pro *(native adapter)* | Fast, cheap, native reasoning modes, great for orchestration | `XIAOMI_API_KEY` |
 | **xAI** | Grok 3, Grok 3 Mini *(native adapter)* | Fast, good reasoning, native live-X search | `XAI_API_KEY` |
 | **Kimi / Moonshot** | Kimi 2.5 | Big context, excellent for entity extraction / LightRAG ingestion | `MOONSHOT_API_KEY` |
 | **z.ai / GLM** | GLM-5, GLM-5 Air | Strongest open-weights model, great for translation + tools | `ZAI_API_KEY` |
-| **Google** | Gemini 3.1 Pro | Massive context (2M tokens), multimodal, cheap | `GEMINI_API_KEY` |
+| **Google** | Gemini Pro/Flash | Massive context, multimodal, cheap; OAuth supported via `hermes model` | `GEMINI_API_KEY` or OAuth |
 | **MiniMax** | M2.7 | Good balance of speed and quality | `MINIMAX_API_KEY` |
 | **Cerebras** | Llama 4 Scout, Qwen 3 32B | Blazing fast inference (2000+ tok/s), cheap | `CEREBRAS_API_KEY` |
 | **Groq** | Llama 4, Qwen 3 | Very fast inference, limited context | `GROQ_API_KEY` |
@@ -353,7 +332,7 @@ Run models on your own hardware for free. Recommended local models:
 | Nemotron 30B | 30B | Fine-tunable, good general purpose | 16GB |
 | nomic-embed-text | 274M | Free embeddings for memory search | 2GB |
 
-> **Recommendation:** Use a cloud frontier model (Opus 4.6, GPT-5.4 Pro, Gemini 3.1 Pro) as your primary and a local Ollama model (Qwen 3.5, Gemma 4) for embeddings, fallback, and simple tasks. Best of both worlds.
+> **Recommendation:** Use a cloud frontier model (Anthropic/OpenAI/Gemini) as your primary and a local Ollama or LM Studio model for embeddings, fallback, and simple tasks. Best of both worlds.
 
 You can configure **multiple providers** with automatic fallback. If one goes down, Hermes switches to the next.
 
@@ -1770,6 +1749,7 @@ You've now got the full picture:
 - **[Part 3: LightRAG](#part-3-lightrag--graph-rag-that-actually-works)** — Graph-based knowledge
 - **[Part 4: Telegram](#part-4-telegram-setup-chat-from-anywhere)** — Mobile access
 - **[Part 5: On-the-Fly Skills](#part-5-on-the-fly-skills-let-hermes-build-its-own-playbook)** — Self-improving workflows
+- **[Part 22: Latest Power Moves](./part22-latest-power-moves.md)** — Curator, TUI habits, plugins, and the current upgrade checklist
 
 Start with setup, add what you need, and let Hermes build the rest.
 

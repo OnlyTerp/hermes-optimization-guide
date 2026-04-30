@@ -2,6 +2,27 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-04-30 — Hermes v0.11/v0.12 Refresh
+
+### Added
+- **Part 22 — Latest Power Moves** covering Curator, TUI steering habits, context-file hygiene, plugins, auxiliary models, cron chaining, and the v0.12 upgrade checklist
+- Curator guidance in Part 5, including dry-run, scheduling, pin/archive behavior, and how it differs from skills/memory/context files
+- v0.12 platform coverage for QQBot, Tencent Yuanbao, and Microsoft Teams as a plugin-shipped gateway
+- AWS Bedrock, Azure AI Foundry, LM Studio, GMI Cloud, Tencent TokenHub, MiniMax OAuth, Gemini OAuth, and remote model catalog notes in Part 9
+- Vercel Sandbox coverage in Part 21
+
+### Changed
+- README "What's New" now reflects landed v0.11.0 and v0.12.0 releases instead of speculative post-v0.10 PR tracking
+- Part 12 updated for dashboard Chat, Models tab, plugins, Curator controls, and `web,pty` install requirements
+- Part 14 updated for `/steer`, `/queue`, `/background`, `/busy`, and current Fast Mode language
+- Part 18 updated for orchestrator-role subagents and file coordination
+- Part 19 updated with MCP/plugin/dashboard threat surfaces and v0.12 hardline block guidance
+- Part 20 updated to prefer the bundled Langfuse observability plugin and auxiliary routing
+
+### Removed
+- Stale "Cooking on main" framing and example.com disclosure placeholder
+- Old Gemini CLI install requirement for Gemini OAuth
+
 ## 2026-04-17 — Wizard + Reference Architectures + CI
 
 ### Added

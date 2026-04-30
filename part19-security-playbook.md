@@ -17,6 +17,8 @@ Hermes is uniquely exposed because it takes input from **many** surfaces and has
 | GitHub MCP | PR titles, issue bodies, comments | Comment-and-Control pattern |
 | Web-scraped content | Page HTML the agent reads | "Read then act" injections |
 | Voice transcript | Whisper transcription | "Say the magic phrase" attacks |
+| MCP/plugin package | Tool schema, stdout, hook behavior | Supply-chain prompt injection / token burn |
+| Dashboard plugin | Browser UI + backend endpoints | Local secret/config exposure |
 
 The goal isn't to eliminate these channels — Hermes is *for* reading them. The goal is to make sure untrusted text can't cross a trust boundary into secrets, writes, or shell.
 
@@ -82,6 +84,8 @@ security:
       - "chmod -R 777 /"
       - "curl * | sudo bash"
       - ".*/etc/shadow"
+      - "169.254.169.254"
+      - "ssh-keyscan"
     approval_channels:              # Where the prompt shows up
       - telegram_private            # Your personal DM, not the group
       - cli
@@ -101,6 +105,10 @@ security:
       - name: build-and-test          # Runs in a clean workspace on CI-level triggers
     # DO NOT ADD: any subagent that reads Telegram, email, webhooks, or scraped web
 ```
+
+### v0.12 Hardline Blocks
+
+Hermes now has hardline command blocking for unrecoverable patterns. Treat it as the seatbelt, not the whole car: keep your own denylist, preserve private approval channels, and never route approvals back into the same untrusted group/chat that triggered the action.
 
 ---
 

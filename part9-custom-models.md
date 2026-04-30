@@ -1,33 +1,38 @@
 # Part 9: Custom Model Providers (Use Any Model You Want)
 
-*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, Hugging Face, Cerebras, Groq, Fireworks, and Ollama. OAuth providers landing post-v0.10 add Gemini CLI (free tier: 1500 req/day), Qwen, and Claude Code Pro/Max. This is the up-to-date (April 17, 2026) cheat sheet.*
+*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Gemini OAuth, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, and Ollama. This is the April 30, 2026 cheat sheet.*
 
-> **What's new since v0.10.0** — [Gemini CLI OAuth inference provider](https://github.com/NousResearch/hermes-agent/pull/11270) (#11270), [Gemini TTS provider](https://github.com/NousResearch/hermes-agent/pull/10922), [multi-model FAL image gen](https://github.com/NousResearch/hermes-agent/pull/11265), [GLM 5.1 in OpenCode Go catalogs](https://github.com/NousResearch/hermes-agent/pull/11269), [Azure OpenAI GPT-5.x on chat/completions](https://github.com/NousResearch/hermes-agent/pull/10086), plus [TCP keepalives](https://github.com/NousResearch/hermes-agent/pull/11277) that detect dead provider connections before you notice the hang. All shipping on `main`, targeted for v0.11.
+> **What's new since the v0.10 guide refresh** — Gemini OAuth is now built into `hermes model` (no separate CLI install), AWS Bedrock uses the native Converse API, Azure AI Foundry auto-detects OpenAI vs Anthropic transports, LM Studio has `hermes doctor` checks and live `/models`, MiniMax OAuth uses PKCE, and OpenRouter/Nous model pickers update from a remote manifest instead of a hardcoded release snapshot.
 
 ---
 
 ## Native Adapters vs Generic OpenAI-Compatible
 
-As of v0.10.0 (April 2026), Hermes ships **native adapters** for a growing list of providers. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
+As of v0.12.0 (April 2026), Hermes ships **native adapters** for a large provider set. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
 
 | Provider | Native adapter? | Notable feature |
 |----------|-----------------|-----------------|
 | **Nous Portal** | Yes | Auth via `hermes model` (no bare API key). Unlocks the [Tool Gateway](./part13-tool-gateway.md). |
 | **Anthropic** | Yes | Native prompt caching, extended thinking, `/fast` priority tier |
 | **OpenAI** | Yes | Native responses API, reasoning effort levels, `/fast` priority tier |
-| **xAI (Grok)** | **Yes, new in v0.10** | Native **live X/Twitter search** as a built-in tool |
-| **Xiaomi MiMo** | **Yes, new in v0.10** | Native reasoning modes (`low`/`medium`/`high`) exposed as config |
-| **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](#part-3-lightrag--graph-rag-that-actually-works)) |
-| **z.ai / GLM** | Yes | **GLM 5.1** (added to OpenCode Go catalogs [#11269](https://github.com/NousResearch/hermes-agent/pull/11269)) — currently strongest open-weights model for tool use |
+| **OpenAI Codex OAuth** | Yes | ChatGPT/Codex login through `hermes model`, no API key |
+| **AWS Bedrock** | Yes | Converse API, IAM credentials, cross-region inference profiles, Bedrock Guardrails |
+| **Azure AI Foundry** | Yes | Auto-detects OpenAI-style vs Anthropic-style deployments and context length |
+| **LM Studio** | Yes | Local `/models` discovery, optional auth, reasoning transport, `hermes doctor` checks |
+| **xAI (Grok)** | Yes | Native live X search and xAI image/STT/TTS integrations |
+| **Xiaomi MiMo** | Yes | Native reasoning modes (`low`/`medium`/`high`) exposed as config |
+| **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](./README.md#part-3-lightrag--graph-rag-that-actually-works)) |
+| **z.ai / GLM** | Yes | Strong open-weight tool-use models; good cheap fallback for planning/exploration |
 | **Google Gemini (direct)** | Yes | 1M context; native prompt caching on Gemini 2.5 Pro |
-| **Google Gemini CLI (OAuth)** | **Yes, new post-v0.10** | OAuth via `gemini auth` — **1500 requests/day free tier**. [#11270](https://github.com/NousResearch/hermes-agent/pull/11270) |
-| **MiniMax** | Yes | M2.7 — balanced speed/quality; native streaming |
+| **Google Gemini (OAuth)** | Yes | Browser PKCE login via `hermes model`; free tier supported; no external `gemini` install |
+| **MiniMax** | Yes | API key or OAuth; native streaming and TTS |
+| **GMI Cloud** | Yes | Hosted open models behind a native provider |
+| **Tencent TokenHub** | Yes | Tencent model routing through TokenHub aliases |
 | **Arcee** | Yes | AFM-4.5 function-calling specialist, cheap |
 | **Cerebras** | Yes | 2000+ tok/s inference |
 | **Groq** | Yes | Fast hosted Llama / Qwen |
-| **Qwen (OAuth)** | Yes | OAuth via portal-request flow, free-tier available |
 | **Fireworks** | Yes | Qwen3-Embedding-8B (recommended for LightRAG) |
-| **Azure OpenAI** | Yes | GPT-5.x now via `/chat/completions` (was `/responses` only) [#10086](https://github.com/NousResearch/hermes-agent/pull/10086) |
+| **Vercel AI Gateway** | Yes | Dynamic model discovery, pricing metadata, attribution |
 | **Hugging Face** | Yes | Any TGI / TEI endpoint (self-hosted or Inference Endpoints) |
 | **OpenRouter** | Yes | Pass-through to 200+ models; respects native adapter quirks when downstream is one |
 | **Ollama** (local) | Generic | OpenAI-compatible, zero auth |
@@ -35,30 +40,22 @@ As of v0.10.0 (April 2026), Hermes ships **native adapters** for a growing list 
 
 Pick the native adapter when one exists — you get the provider-specific features for free. Fall back to the generic OpenAI-compatible path only for endpoints that don't have a native adapter yet.
 
-### Flagship Model Cheat Sheet (April 17, 2026)
+### Provider Cheat Sheet (April 30, 2026)
 
-For the "which model should I pick right now?" question, this is the current state of the world:
+The exact "best model" moves weekly, so treat this as a routing posture rather than a leaderboard. Use `hermes model` for live picker data, then pin only what you need reproducible.
 
-| Model | Provider | Input / Output ($/MTok) | Context | Best for |
-|-------|----------|------------------------|---------|----------|
-| **Claude Sonnet 4.5** | Anthropic | $3 / $15 | 200K | Default for coding, refactor, multi-step reasoning |
-| **Claude Opus 4** | Anthropic | $15 / $75 | 200K | The hardest reasoning only; $15/MTok stings fast |
-| **Claude Mythos** (Cyber) | Anthropic | Invite-only | 200K | Security research — vulnerability discovery, malware triage |
-| **GPT-5.4** | OpenAI | $5 / $20 | 256K | Reasoning heavy-lift, agentic long chains |
-| **GPT-5.4-Cyber** | OpenAI | Trusted Access only | 256K | Defensive cybersec workflows, reverse engineering |
-| **GPT-5.4 Mini** | OpenAI | $0.60 / $4.80 | 256K | Cheap reasoning fallback |
-| **Gemini 2.5 Pro** | Google / OpenRouter | $1.25 / $10 | 1M | Long-context, whole-repo reads, research synthesis |
-| **Gemini 3 Flash Preview** | Google / OpenRouter | $0.50 / $3 | 1M | Fast agentic reasoning with 1M window |
-| **Gemini 2.5 Flash** | Google / OpenRouter | $0.30 / $2.50 | 1M | Classification, triage, bulk extraction |
-| **Kimi K2.5** | Moonshot | ~$0.15 / $2.50 | 200K | Best price/quality for coding in 2026 |
-| **GLM 5.1** | z.ai | ~$0.20 / $2 | 128K | Strongest open-weights tool use |
-| **xAI Grok 4** | xAI | $3 / $15 | 256K | Native live-X search; current-events questions |
-| **Xiaomi MiMo** | Xiaomi | $0.50 / $3 | 200K | Three-mode reasoning toggle (low/med/high) |
-| **MiniMax M2.7** | MiniMax | $10/mo flat | 256K | Flat-rate users doing bulk work |
-| **Cerebras Llama 3.3 70B** | Cerebras | $0.60 / $0.60 | 128K | 3000+ tok/s — interactive chat, fast classification |
-| **Local Nemotron 30B** | Ollama | Free | 128K | Privacy, offline, embedding, session search |
+| Need | Start here | Why |
+|------|------------|-----|
+| Default coding / refactors | Anthropic Sonnet or Codex OAuth | Best reliability for patch-heavy work; Codex OAuth avoids API-key churn |
+| Deep reasoning / high stakes | OpenAI reasoning or Anthropic Opus-class | Use explicitly; do not make it the default for cron/bulk tasks |
+| Long-context repo or document reads | Gemini Pro/Flash or OpenRouter equivalent | Huge window, cheap enough for map/reduce and summarization |
+| Cheap daily driver | Gemini OAuth + Kimi/Moonshot + z.ai/GLM | Good quality/cost mix, especially with auxiliary routing |
+| Enterprise / VPC / compliance | AWS Bedrock or Azure AI Foundry | IAM/Azure auth, guardrails, private deployments, audit controls |
+| Local/privacy/offline | LM Studio or Ollama | No cloud egress; great for extraction, embeddings, and drafts |
+| Ultra-fast interactive turns | Cerebras or Groq | Very high tokens/sec; useful for classification and short-form chat |
+| Current-events search | xAI Grok or tool-backed web search | Grok has native live-X search; Tool Gateway can cover broader web |
 
-> Prices are current per-provider retail as of April 17, 2026. Batch and prompt-caching discounts are not included — stack them via [Part 20](./part20-observability.md#rule-2-prompt-caching-is-free-money).
+> Pricing and context windows change too quickly to hardcode. Hermes now pulls OpenRouter and Nous Portal picker lists from a remote manifest, while provider APIs supply pricing/context metadata where available.
 
 ---
 
@@ -73,22 +70,51 @@ hermes model
 
 If you're on a paid subscription, the setup also offers to enable the [Tool Gateway](./part13-tool-gateway.md) — web search, image gen, TTS, and browser automation through your subscription, no extra keys needed.
 
-### Gemini CLI OAuth — Free 1500 req/day
+### Gemini OAuth — Free-Tier Friendly
 
-If you have a Google account, skip the API key entirely and sign in with OAuth:
+If you have a Google account, skip the API key entirely and sign in from Hermes:
 
 ```bash
-npm install -g @google/gemini-cli
-gemini auth
 hermes model
-# Pick "Gemini CLI (OAuth)" — Hermes detects the logged-in session
+# Pick "Google Gemini (OAuth)" → complete the browser PKCE flow
 ```
 
-Hermes drives Gemini via the local CLI. You get 1500 requests/day on the free tier — plenty for exploration, classification, and Gemini's killer long-context reads. Merged in [#11270](https://github.com/NousResearch/hermes-agent/pull/11270) (April 16, 2026).
+Tokens are stored under `~/.hermes/auth/google_oauth.json` with 0600 permissions and automatic refresh. On headless SSH boxes, Hermes falls back to paste-mode auth.
 
-### Gemini TTS — 7th Voice Provider
+### AWS Bedrock and Azure AI Foundry — Enterprise Routing Without Proxy Glue
 
-As of [#10922](https://github.com/NousResearch/hermes-agent/issues/10922) (merged April 16), Gemini joins Edge, ElevenLabs, OpenAI, MiniMax, Mistral, and NeuTTS as a TTS backend:
+Bedrock uses the native Converse API and the normal boto3 credential chain:
+
+```bash
+pip install 'hermes-agent[bedrock]'
+hermes model
+# Choose "AWS Bedrock" → region → model/profile
+```
+
+Use this when you want IAM roles, Bedrock Guardrails, and cross-region inference profiles instead of direct vendor API keys.
+
+Azure AI Foundry handles both endpoint styles:
+
+```bash
+hermes model
+# Choose "Azure Foundry" → paste endpoint + key
+```
+
+Hermes probes the endpoint, detects OpenAI-style `/chat/completions` vs Anthropic-style `/messages`, discovers deployments when possible, and stores the right `api_mode` in `config.yaml`.
+
+### Remote Model Catalog: Stop Hardcoding This Week's Winner
+
+OpenRouter and Nous Portal model pickers now fetch:
+
+```text
+https://hermes-agent.nousresearch.com/docs/api/model-catalog.json
+```
+
+The cache lives at `~/.hermes/cache/model_catalog.json`. If the manifest is down, Hermes falls back to the disk cache or the bundled snapshot, so model selection still works offline.
+
+### Gemini TTS
+
+Gemini is now one of the practical voice backends alongside Edge, ElevenLabs, OpenAI, MiniMax, Mistral, NeuTTS, and xAI:
 
 ```yaml
 tts:
@@ -109,7 +135,7 @@ Models are configured in `~/.hermes/config.yaml`:
 
 ```yaml
 # Default model
-model: claude-sonnet-4-20250514
+model: claude-sonnet
 provider: anthropic
 
 # Provider configurations
@@ -120,11 +146,23 @@ providers:
   openai:
     api_key: ${OPENAI_API_KEY}
 
-  xai:                                # Native adapter (v0.10+)
+  bedrock:
+    region: us-east-2                  # Auth via AWS_PROFILE, env vars, or instance role
+
+  azure-foundry:
+    api_key: ${AZURE_FOUNDRY_API_KEY}
+    base_url: ${AZURE_FOUNDRY_ENDPOINT}
+    api_mode: chat_completions         # Or anthropic_messages; wizard auto-detects
+
+  lmstudio:
+    base_url: http://127.0.0.1:1234/v1
+    api_key: ${LM_API_KEY}             # Optional if your LM Studio server requires auth
+
+  xai:
     api_key: ${XAI_API_KEY}
     live_search: true                 # Grok's live X/Twitter search
 
-  xiaomi:                             # Native adapter (v0.10+)
+  xiaomi:
     api_key: ${XIAOMI_API_KEY}
     reasoning_mode: high              # low / medium / high
 
@@ -136,6 +174,12 @@ providers:
 
   minimax:
     api_key: ${MINIMAX_API_KEY}
+
+  gmi:
+    api_key: ${GMI_API_KEY}
+
+  tencent-tokenhub:
+    api_key: ${TOKENHUB_API_KEY}
 
   arcee:
     api_key: ${ARCEE_API_KEY}
@@ -220,12 +264,12 @@ Use these as opinionated defaults, then tune with [Part 20's cost-routing playbo
 
 | Task | First choice | Fallback (cheaper) | Fallback (fastest) |
 |------|--------------|--------------------|--------------------|
-| Daily conversation | Claude Sonnet 4.5 | GLM 5.1 | Cerebras Llama 70B |
-| Coding delegation | Claude Code via Sonnet 4.5 | OpenCode + Kimi K2.5 | OpenCode + Cerebras |
+| Daily conversation | Anthropic Sonnet | Gemini OAuth or z.ai/GLM | Cerebras Llama/Qwen |
+| Coding delegation | Claude Code / Codex OAuth | OpenCode + Kimi/Moonshot | OpenCode + Cerebras |
 | Long-context reads (>200K) | Gemini 2.5 Pro | Gemini 2.5 Flash | — |
 | Classification / triage | Gemini 2.5 Flash | Cerebras Qwen3 32B | Arcee AFM-4.5 |
-| Reasoning (math, planning) | GPT-5.4 | Claude Opus 4 | GLM 5.1 |
-| Current events / live search | xAI Grok 4 | Gemini with grounding | — |
+| Reasoning (math, planning) | OpenAI reasoning model | Anthropic Opus-class | z.ai/GLM |
+| Current events / live search | xAI Grok | Gemini with grounding | Tool Gateway web search |
 | Embeddings (LightRAG) | Qwen3-Embedding-8B (Fireworks) | nomic-embed-text (Ollama) | OpenAI `text-embedding-3-small` |
 | TTS (Telegram voice) | OpenAI TTS via Tool Gateway | Gemini 2.5 Flash TTS | Edge TTS (free) |
 | Vision | Gemini 2.5 Flash | GPT-4o | Claude Sonnet 4.5 |

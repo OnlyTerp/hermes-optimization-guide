@@ -1,6 +1,6 @@
-# Part 21: Remote Sandboxes & Bulk File Sync — SSH, Modal, Daytona
+# Part 21: Remote Sandboxes & Bulk File Sync — SSH, Modal, Daytona, Vercel
 
-*Running Hermes on a $5 VPS is great for chat. Running heavy coding work there is not. This part sets up the "phone drives, beefy remote does the work" pattern: Hermes lives on your small VPS, delegates execution to a disposable sandbox on SSH/Modal/Daytona, syncs files both ways, and tears it down when idle. Ships in v0.9+ with the [bulk file sync](https://github.com/NousResearch/hermes-agent/pull/8018) hardening that landed April 17, 2026.*
+*Running Hermes on a $5 VPS is great for chat. Running heavy coding work there is not. This part sets up the "phone drives, beefy remote does the work" pattern: Hermes lives on your small VPS, delegates execution to a disposable sandbox on SSH/Modal/Daytona/Vercel, syncs files both ways, and tears it down when idle.*
 
 ---
 
@@ -30,11 +30,12 @@ Hermes uploads your workspace on task start, delegates work, then downloads only
 | **SSH** | Your infra | Whatever your host costs | Homelab / always-on dev box |
 | **Modal** | Per-second compute | $0 (hibernate) | Bursty coding tasks, GPU work |
 | **Daytona** | Per-second workspace | $0 (hibernate) | Long-lived dev workspaces |
+| **Vercel Sandbox** | Per-run / platform billing | $0 when unused | Webapp builds and isolated `execute_code` tasks |
 | **Fly Machines** | Per-second | $0 (stop) | Regional sandboxes near your users |
 | **E2B** | Per-second | $0 | Quick throwaway Python sandboxes |
 | **Local Docker** | Your hardware | N/A | Testing / development |
 
-Hermes ships native support for SSH, Modal, and Daytona as of v0.9+. Fly Machines and E2B work via a thin `remote_exec` plugin.
+Hermes ships native support for SSH, Modal, Daytona, and Vercel Sandbox. Fly Machines and E2B work via thin plugins.
 
 ---
 
@@ -89,7 +90,7 @@ Under the hood on teardown:
 5. Applies only changed files back to `~/.hermes`, with `fcntl.flock` serialization if another sandbox runs concurrently
 6. SIGINT-safe — pressing Ctrl-C during sync rolls back cleanly
 
-This is what PR [#8018](https://github.com/NousResearch/hermes-agent/pull/8018) (merged April 17) formalized. Before it, you either rsynced everything every time (slow) or lost remote-made edits on teardown.
+This is the hardening that made remote sandboxes safe enough for real coding work. Before diff-based sync-back, you either rsynced everything every time (slow) or lost remote-made edits on teardown.
 
 ---
 
@@ -164,7 +165,32 @@ sandboxes:
       pull_on_command: "/sync-home"  # Manual sync when you want it
 ```
 
-Pair with the [Gemini CLI OAuth provider](./part9-custom-models.md) (merged PR [#11270](https://github.com/NousResearch/hermes-agent/pull/11270), April 16) for free-tier Gemini use inside the sandbox — the 1500 req/day free tier covers most exploratory work.
+Pair with the [Gemini OAuth provider](./part9-custom-models.md#gemini-oauth--free-tier-friendly) for free-tier-friendly long-context reads inside the sandbox.
+
+---
+
+## Vercel Sandbox (Web Builds / Isolated Code Execution)
+
+Vercel Sandbox is now a native backend for `execute_code` and terminal-style runs. Use it when the task is webapp-shaped: install dependencies, run a build, inspect generated output, and throw the environment away.
+
+```yaml
+sandboxes:
+  vercel-web:
+    backend: vercel
+    project: my-webapp
+    timeout: 1800
+    sync:
+      push: ~/projects/my-webapp
+      pull_on_teardown: true
+      pull_paths:
+        - .
+      ignore:
+        - node_modules
+        - .next
+        - dist
+```
+
+It is not a replacement for Daytona if you want a persistent dev workspace. Treat it as a clean execution target for builds, tests, and short isolated scripts.
 
 ---
 

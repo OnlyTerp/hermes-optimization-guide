@@ -58,7 +58,7 @@ Produce a release-notes document following the "What's New / Improvements / Fixe
 
 ## 🚀 What's New
 - HTTP MCP servers now reconnect automatically with exponential backoff. ([#1234](…))
-- Gemini CLI OAuth is now a first-class provider. ([#1270](…))
+- Gemini OAuth is now a first-class provider. ([#1270](…))
 
 ## ⚡ Improvements
 - 40% faster skill load via async frontmatter parsing. ([#1205](…))

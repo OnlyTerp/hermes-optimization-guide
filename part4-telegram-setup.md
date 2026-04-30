@@ -6,7 +6,7 @@
 
 ## The 16-Platform Gateway
 
-As of v0.9.0 (April 2026), the Hermes gateway ships adapters for **16 platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism:
+As of v0.12.0 (April 2026), the Hermes gateway ships adapters/plugins for **18+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism:
 
 | Flagship | New in v0.9 | Enterprise / regional | Self-hosted / generic |
 |----------|-------------|-----------------------|-----------------------|

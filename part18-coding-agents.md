@@ -12,7 +12,7 @@ Hermes is excellent at reasoning, memory, conversation, and workflow. It is *not
 |-------|-----------|------------|
 | **Claude Code** | Strongest at large refactors, test writing, PR reviews | Pro/Max OAuth or `ANTHROPIC_API_KEY` |
 | **Codex** (OpenAI) | Fast feedback loop, great at bug hunts, small edits | OAuth via `openai` CLI or `OPENAI_API_KEY` |
-| **Gemini CLI** | 1M context — unbeatable for "read the whole repo" tasks | OAuth via `gemini auth` (free tier generous) |
+| **Gemini CLI** | 1M context — unbeatable for "read the whole repo" tasks | OAuth via `gemini auth`; Hermes' own Gemini OAuth covers normal model-provider use |
 | **OpenCode** (anomalyco) | Open-source, routes to GLM/Kimi/MiMo cheaply | Bring any provider key |
 | **Aider** | Surgical git-based edits, smallest token footprint | Bring any provider key |
 
@@ -33,7 +33,7 @@ codex auth login
 
 # Gemini CLI
 npm install -g @google/gemini-cli
-gemini auth                       # Free tier: 1500 req/day
+gemini auth                       # Only needed when delegating to Gemini CLI itself
 
 # OpenCode (Go variant preferred for Hermes)
 curl -fsSL https://opencode.ai/install.sh | bash
@@ -101,7 +101,7 @@ Each specialist has a sweet spot. Let Hermes route:
 | Bug reproduction + fix in a single file | Codex | Fast turnaround, cheaper per task |
 | "Explain this codebase" | Gemini CLI | 1M context eats any repo whole |
 | Bulk surgical edits with deterministic diffs | Aider | Smallest token footprint, git-native |
-| Anything on a budget | OpenCode + GLM 4.6 / Kimi K2 | One-tenth the cost of Claude for ~80% quality |
+| Anything on a budget | OpenCode + GLM / Kimi | Much cheaper than frontier models for routine edits |
 
 A sensible `~/.hermes/config.yaml`:
 
@@ -119,7 +119,7 @@ delegation:
       agent: gemini-cli
     - match: { budget: low }
       agent: opencode
-      model: glm-5.1
+      model: zai/glm
 ```
 
 ---
@@ -128,7 +128,7 @@ delegation:
 
 What you actually want on your phone: a Telegram topic named "Claude Code" where every message lands in a persistent Claude Code session. No re-explaining context. No re-spawning. Just chat with the coding agent directly, with Hermes handling the transport, memory, and voice-to-text.
 
-This is the feature request tracked in [#5394](https://github.com/NousResearch/hermes-agent/issues/5394) and already landing in bits across v0.9/v0.10. As of v0.10.0 the workflow is:
+This pattern is now practical because v0.11 added orchestrator-role subagents, spawn-depth controls, and file-coordination between sibling workers. The workflow:
 
 ```bash
 # In Telegram, create a topic, then from the CLI or dashboard:
@@ -138,6 +138,8 @@ hermes bind-thread <thread-id> --runtime claude-code --cwd ~/projects/myapp
 From that point:
 - Every message in the topic goes to a persistent Claude Code session
 - File edits happen in `~/projects/myapp` on the Hermes host
+- Orchestrator subagents can spawn their own workers if `max_spawn_depth` allows it
+- Concurrent workers coordinate file state instead of blindly overwriting siblings
 - `/unbind` in the topic detaches and reverts to normal Hermes chat
 - `/runtime gemini-cli` swaps the runtime without losing the thread
 

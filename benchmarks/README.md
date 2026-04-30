@@ -2,7 +2,7 @@
 
 Real, reproducible cost + latency benchmarks across flagship models, run on standardized tasks. This folder contains the **methodology**, the **task set**, and the **raw results**.
 
-> ⚠ Benchmark numbers drift as providers re-price and models update. The committed data is dated. Re-run with `benchmarks/run.sh` (stub below) to refresh.
+> ⚠ Benchmark numbers drift as providers re-price and models update. The committed data is a dated April 2026 snapshot. Re-run with `benchmarks/run.sh` (stub below) to refresh.
 
 ---
 
@@ -28,7 +28,7 @@ Real, reproducible cost + latency benchmarks across flagship models, run on stan
 
 ---
 
-## Current snapshot — 2026-04-17
+## Dated snapshot — 2026-04-17
 
 Retail list prices; some providers may offer committed-use discounts.
 

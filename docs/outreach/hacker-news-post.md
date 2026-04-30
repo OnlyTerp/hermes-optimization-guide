@@ -24,7 +24,7 @@ This guide is the other direction: 21 parts of actual documentation *plus*
 - **Reproducible cost benchmarks** — 12 flagship models × 5 canonical tasks (triage / summarize / codefix / deepreason / bulk-extract), methodology included, rerun-able with `hermes evals run`
 - **ECOSYSTEM.md** — 40+ curated MCP servers / coding agents / dashboard plugins
 
-The part I wanted to share specifically for HN: the **cost routing playbook** (Part 20) — five rules that drop typical agent spend ~90% (Gemini Flash for triage, Cerebras Llama for classification, Kimi K2.5 as default coder, Sonnet only when you explicitly opt in, Gemini 2.5 Pro for long-context). The benchmarks folder lets you verify yourself on your own workload.
+The part I wanted to share specifically for HN: the **cost routing playbook** (Part 20) — five rules that drop typical agent spend ~90% (Gemini Flash for triage, Cerebras Llama for classification, Kimi/Moonshot as default coder, Sonnet only when you explicitly opt in, Gemini Pro for long-context). The benchmarks folder lets you verify yourself on your own workload.
 
 And the **defensive security playbook** (Part 19) — written after the Apr 15 "Comment and Control" cross-vendor prompt-injection disclosure that hit Claude Code + Gemini CLI + Copilot Agent. Seven layers: provenance labels, approval, secret isolation, webhook signatures, SSRF, MCP trust levels, quarantine profiles. If your coding agent reads arbitrary PR bodies or emails, this is the hardening posture I wish I'd had 6 months ago.
 

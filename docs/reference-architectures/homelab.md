@@ -83,9 +83,9 @@ models:
 
   routing:
     - when: task == "reasoning"
-      use: anthropic/claude-sonnet-4-5
+      use: anthropic/claude-sonnet
     - when: task == "coding" && complexity == "high"
-      use: anthropic/claude-sonnet-4-5
+      use: anthropic/claude-sonnet
 
 gateways:
   cli:
@@ -129,7 +129,7 @@ hermes /reload
 ## Honest tradeoffs
 
 - **Latency.** Local 70B Q4 ≈ 20–40 tok/s on a 3090. Flagship Sonnet ≈ 60–90 tok/s. Most "work" queries you won't notice; coding/deep reasoning you will.
-- **Quality.** Current open models (Qwen 2.5 Coder, Llama 3.1 70B, Kimi K2.5 local) are *close* on many tasks, *behind* on long-context + nuanced reasoning. Routing lets you hand the hard stuff to Sonnet.
+- **Quality.** Current open/local models (Qwen Coder, Llama, Kimi-class local models) are *close* on many tasks, *behind* on long-context + nuanced reasoning. Routing lets you hand the hard stuff to Sonnet.
 - **Patching.** You maintain the box. Enable unattended-upgrades (the bootstrap script does) and schedule monthly reboots.
 - **Reachability.** Tailscale is solid but means "no Tailscale = no Hermes". Keep a cellphone backup admin bot, or run a tiny cloud relay.
 - **Backups.** Set [`nightly-backup`](../../skills/ops/nightly-backup/SKILL.md) to write encrypted archives to a second physical disk — not the same RAID array.

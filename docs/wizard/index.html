@@ -75,13 +75,13 @@
       <legend>2. Default model</legend>
       <p class="hint">Can be overridden per-skill.</p>
       <select name="default_model">
-        <option value="anthropic/claude-sonnet-4-5">Anthropic Claude Sonnet 4.5 (balanced default)</option>
-        <option value="anthropic/claude-opus-4">Anthropic Claude Opus 4 (max capability)</option>
+        <option value="anthropic/claude-sonnet">Anthropic Claude Sonnet (balanced default)</option>
+        <option value="anthropic/claude-opus">Anthropic Claude Opus-class (max capability)</option>
         <option value="google/gemini-2.5-flash">Google Gemini 2.5 Flash (cheap + fast + 1M context)</option>
         <option value="google/gemini-2.5-pro">Google Gemini 2.5 Pro (1M context + reasoning)</option>
-        <option value="openai/gpt-5.4">OpenAI GPT-5.4</option>
-        <option value="moonshot/kimi-k2.5">Moonshot Kimi K2.5 (cheap + strong coding)</option>
-        <option value="zai/glm-5.1">z.ai GLM 5.1 (very cheap)</option>
+        <option value="openai/reasoning">OpenAI reasoning model</option>
+        <option value="moonshot/kimi">Moonshot Kimi (cheap + strong coding)</option>
+        <option value="zai/glm">z.ai GLM (very cheap)</option>
       </select>
     </fieldset>
 
@@ -187,7 +187,7 @@ function select(name) {
    rest of the form is pre-filled so Question 1 actually drives output. */
 const PERSONA_PRESETS = {
   'minimum': {
-    default_model: 'anthropic/claude-sonnet-4-5',
+    default_model: 'anthropic/claude-sonnet',
     memory: 'vector',
     gateways: { cli: true, telegram: false, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: false, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
@@ -196,7 +196,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: false, deps: false, cost: false, mcp: false },
   },
   'telegram-bot': {
-    default_model: 'anthropic/claude-sonnet-4-5',
+    default_model: 'anthropic/claude-sonnet',
     memory: 'lightrag',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
@@ -205,7 +205,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'production': {
-    default_model: 'anthropic/claude-sonnet-4-5',
+    default_model: 'anthropic/claude-sonnet',
     memory: 'lightrag',
     gateways: { cli: true, telegram: true, discord: true, slack: true, email: true, webhook: true },
     mcps:     { github: true, postgres: true, cloudflare: true, linear: true, filesystem: true, mem0: false },
@@ -223,7 +223,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'security-hardened': {
-    default_model: 'anthropic/claude-sonnet-4-5',
+    default_model: 'anthropic/claude-sonnet',
     memory: 'vector',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: true },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
@@ -507,8 +507,8 @@ function generate() {
     lines.push(`  rules:`);
     lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/llama-3.1-70b" }`);
     lines.push(`    - { when: "context.tokens > 200000",        use: "google/gemini-2.5-pro" }`);
-    lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi-k2.5" }`);
-    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet-4-5" }`);
+    lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi" }`);
+    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet" }`);
     lines.push(`    - { else: true,                              use: "google/gemini-2.5-flash" }`);
     lines.push(``);
   }

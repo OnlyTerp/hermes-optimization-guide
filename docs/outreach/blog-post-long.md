@@ -52,14 +52,14 @@ Most guides stop before that because their authors never did the work, or did it
 
 This one gets its own section because it's the part readers care most about.
 
-The default advice on cost is "use cheaper models". But you can't just set `default: gpt-5.4-mini` — for certain tasks (nuanced reasoning, long-context analysis, hard coding) it will silently hurt quality and you'll blame the framework.
+The default advice on cost is "use cheaper models". But you can't just set the cheapest default model and forget it — for certain tasks (nuanced reasoning, long-context analysis, hard coding) it will silently hurt quality and you'll blame the framework.
 
 Here's what actually works, derived from our benchmarks:
 
 1. **Triage** (~60% of traffic for a personal bot): Gemini 2.5 Flash. Cheap, fast, 1M context. Routes to the right skill or punts to the right model.
 2. **Classification** (tagging, routing, spam-trap): Cerebras Llama 70B on a free tier. Effectively zero cost.
-3. **Default coding:** Kimi K2.5. Cheapest competent coder, good for 80% of changes.
-4. **Hard coding / architecture:** Anthropic Sonnet 4.5. Opt-in (say "use sonnet" or mark the skill with `model: anthropic/claude-sonnet-4-5`).
+3. **Default coding:** Kimi/Moonshot. Cheap competent coder, good for routine changes.
+4. **Hard coding / architecture:** Anthropic Sonnet. Opt-in (say "use sonnet" or mark the skill with `model: anthropic/claude-sonnet`).
 5. **Long-context research:** Gemini 2.5 Pro. 1M context + reasoning.
 
 With prompt caching on (Anthropic, OpenAI), `prefer_cached: true` as a default, and Fast Mode *off* unless you explicitly need it — the typical user month drops from $150 to $20–40.

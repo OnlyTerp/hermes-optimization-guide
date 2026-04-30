@@ -29,10 +29,10 @@ profiles:
           - { tool: "*", actions: [exec, write, send, create, update, delete] }
   trusted:
     description: Admin-only. Full capability.
-    models: { default: anthropic/claude-sonnet-4-5 }
+    models: { default: anthropic/claude-sonnet }
 
 models:
-  default: anthropic/claude-sonnet-4-5
+  default: anthropic/claude-sonnet
   providers:
     anthropic:
       api_key: "${ANTHROPIC_API_KEY}"

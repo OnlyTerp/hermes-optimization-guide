@@ -24,6 +24,7 @@ What's landing next. PRs welcome.
 
 ## Done (recent)
 
+- ✅ 2026-04-30 — v0.11/v0.12 refresh: Curator, TUI, plugins, Bedrock/Azure/LM Studio, Teams/Yuanbao/QQBot, Vercel Sandbox, Part 22
 - ✅ 2026-04-17 — Interactive config wizard (`docs/wizard/`)
 - ✅ 2026-04-17 — 4 reference architectures (homelab / solo-dev / small-agency / road-warrior)
 - ✅ 2026-04-17 — CI (markdown-link-check + yamllint + skill frontmatter validator)

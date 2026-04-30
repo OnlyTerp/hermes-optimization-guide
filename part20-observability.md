@@ -1,4 +1,4 @@
-# Part 20: Observability & Cost Control — Langfuse, Helicone, /usage, Routing Playbooks
+# Part 20: Observability & Cost Control — Langfuse Plugin, Helicone, /usage, Routing Playbooks
 
 *You can't optimize what you can't see. Hermes tracks tokens, latency, and errors natively, but once you're running across CLI + Telegram + Discord + cron + coding-agent delegations, you want a real tracing stack. This part sets up Langfuse, Helicone, or OpenTelemetry → Phoenix with one config block, then gives you the cost-routing playbook that dropped our test deployment from $34 to $3 per feature implementation.*
 
@@ -70,7 +70,11 @@ hermes logs export --since 30d --format jsonl \
 
 ## Level 3 — Langfuse (Recommended Default)
 
-Langfuse is the "everything in one place" option: tracing, prompt management, evals, self-hostable. If you're not sure where to start, start here.
+Langfuse is the "everything in one place" option: tracing, prompt management, evals, self-hostable. If you're not sure where to start, start here. In v0.12, Langfuse also ships as a bundled observability plugin, so prefer enabling that over hand-rolled hooks.
+
+```bash
+hermes plugins enable observability/langfuse
+```
 
 ### Setup (Hosted Cloud)
 
@@ -176,36 +180,36 @@ Hermes emits `gen_ai.*` spans following the [OpenInference](https://github.com/A
 
 ### Rule 1: Route by Task Complexity, Not Default
 
-Most Hermes cost bloat comes from using Claude Opus / GPT-5 for tasks Kimi / GLM / MiniMax would handle identically. Set up a **task-aware default**:
+Most Hermes cost bloat comes from using your most expensive frontier model for tasks Gemini Flash, Kimi/Moonshot, GLM, MiniMax, Cerebras, or a local model would handle identically. Set up a **task-aware default**:
 
 ```yaml
 model_routing:
   default:
-    model: claude-sonnet-4-20250514
+    model: claude-sonnet
     provider: anthropic
   routes:
     - match: { intent: [classification, extraction, triage, sum_under_500_tokens] }
       model: gemini-2.5-flash
-      provider: openrouter
+      provider: google-gemini-cli
     - match: { intent: long_context, tokens_gte: 150000 }
       model: gemini-2.5-pro
       provider: openrouter
     - match: { intent: [write_code, refactor, debug], complexity: medium }
-      model: glm-5.1
+      model: zai/glm
       provider: zai
     - match: { intent: [write_code, refactor, debug], complexity: high }
-      model: claude-sonnet-4-20250514
+      model: claude-sonnet
       provider: anthropic
     - match: { intent: [reasoning, math], complexity: high }
-      model: gpt-5.4
+      model: openai-reasoning
       provider: openai
 ```
 
 Hermes classifies intent via a tiny prompt (~100 tokens) and routes accordingly. Empirically:
 
-| Scenario | Naive default (Sonnet 4.5) | Routed | Savings |
+| Scenario | Naive frontier default | Routed | Savings |
 |----------|----------------------------|--------|---------|
-| Feature implementation (100 calls) | ~$34 | ~$3 (mostly Kimi) | 91% |
+| Feature implementation (100 calls) | ~$34 | ~$3 (mostly Kimi/GLM) | 91% |
 | Long-doc summarization (10 calls, 200K each) | ~$42 | ~$4 (Gemini 2.5 Pro) | 90% |
 | Daily classification triage | ~$18/day | ~$1/day (Flash) | 94% |
 
@@ -294,8 +298,8 @@ hermes evals dataset create telegram-support-flows
 hermes evals dataset add telegram-support-flows ~/.hermes/traces/support/*.json
 
 # Run on every release
-hermes evals run telegram-support-flows --model claude-sonnet-4-20250514
-hermes evals run telegram-support-flows --model glm-5.1     # Check if cheaper model still passes
+hermes evals run telegram-support-flows --model anthropic/claude-sonnet
+hermes evals run telegram-support-flows --model zai/glm     # Check if cheaper model still passes
 hermes evals compare
 ```
 
