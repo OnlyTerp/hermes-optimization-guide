@@ -25,6 +25,8 @@ models:
     anthropic:
       api_key: ${ANTHROPIC_API_KEY}
       prompt_caching: true              # 90% discount on repeat context
+    openai:
+      api_key: ${OPENAI_API_KEY}        # Required for LightRAG embeddings below
     moonshot:
       api_key: ${MOONSHOT_API_KEY}
     cerebras:
