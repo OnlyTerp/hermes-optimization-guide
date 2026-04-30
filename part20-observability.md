@@ -190,7 +190,7 @@ model_routing:
   routes:
     - match: { intent: [classification, extraction, triage, sum_under_500_tokens] }
       model: gemini-2.5-flash
-      provider: google-gemini-cli
+      provider: google
     - match: { intent: long_context, tokens_gte: 150000 }
       model: gemini-2.5-pro
       provider: openrouter

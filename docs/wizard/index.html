@@ -425,10 +425,10 @@ function generate() {
     }
     if (mcps.linear) {
       lines.push(`  linear:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@linear/mcp-server-linear"]`);
-      lines.push(`    env:`);
-      lines.push(`      LINEAR_API_KEY: "$\{LINEAR_API_KEY\}"`);
+      lines.push(`    url: https://mcp.linear.app/mcp`);
+      lines.push(`    # OAuth is completed by the MCP client on first connection.`);
+      lines.push(`    trust: trusted`);
+      lines.push(`    allow_sampling: false`);
     }
     if (mcps.filesystem) {
       lines.push(`  filesystem:`);
