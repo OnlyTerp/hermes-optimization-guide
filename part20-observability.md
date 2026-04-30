@@ -195,13 +195,13 @@ model_routing:
       model: gemini-2.5-pro
       provider: openrouter
     - match: { intent: [write_code, refactor, debug], complexity: medium }
-      model: zai/glm
+      model: glm
       provider: zai
     - match: { intent: [write_code, refactor, debug], complexity: high }
       model: claude-sonnet
       provider: anthropic
     - match: { intent: [reasoning, math], complexity: high }
-      model: openai-reasoning
+      model: reasoning
       provider: openai
 ```
 
