@@ -6,8 +6,8 @@ From zero to working Telegram bot.
 
 - A Linux, macOS, or WSL machine (anything with bash)
 - A Telegram account
-- One provider: Anthropic/OpenAI/OpenRouter API key, Nous Portal login, or Gemini OAuth via `hermes model`
-- (Optional) A Google API key — [aistudio.google.com](https://aistudio.google.com/apikey) if you prefer API-key Gemini over OAuth
+- An Anthropic API key for the default model
+- A Google API key — [aistudio.google.com](https://aistudio.google.com/apikey) for Gemini Flash classification + LightRAG in the Telegram template
 
 ## Step 1 — Install Hermes
 
@@ -41,7 +41,7 @@ Create `~/.hermes/.env`:
 ```bash
 cat > ~/.hermes/.env <<'EOF'
 ANTHROPIC_API_KEY=sk-ant-...
-# GOOGLE_API_KEY=AIza...              # optional; Gemini OAuth can be configured via `hermes model`
+GOOGLE_API_KEY=AIza...                # required by telegram-bot.yaml for Gemini Flash classification + LightRAG
 TELEGRAM_ADMIN_BOT_TOKEN=1234567890:ABC...
 TELEGRAM_OWNER_ID=1234567            # your numeric ID from @userinfobot
 EOF
