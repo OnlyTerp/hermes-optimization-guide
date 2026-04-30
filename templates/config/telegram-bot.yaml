@@ -3,6 +3,7 @@
 # ------------------------------------------------------------
 # Opinionated setup for a personal Telegram assistant:
 #   - Anthropic primary + Gemini Flash for classification
+#   - OpenAI embeddings for LightRAG memory
 #   - Telegram gateway with a private admin DM + (optional) public bot
 #   - LightRAG memory backend
 #   - Sensible approval defaults
@@ -20,6 +21,8 @@ models:
       prompt_caching: true
     google:
       api_key: ${GOOGLE_API_KEY}
+    openai:
+      api_key: ${OPENAI_API_KEY}
 
 gateways:
   cli:

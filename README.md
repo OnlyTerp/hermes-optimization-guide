@@ -78,7 +78,7 @@ Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 
 ## Pick Your Path
 
-This guide grew to 23 parts because *Hermes grew*. Parts 1–5 live in this README; Parts 6–22 live as separate files. You don't have to read them all — pick the shortest path to what you need:
+This guide grew to 23 parts because *Hermes grew*. Six sections (Parts 1–5 plus SOUL.md) live in this README; Parts 6–22 live as separate files. You don't have to read them all — pick the shortest path to what you need:
 
 ### 🎯 "I just want it working in 10 minutes"
 [Part 1: Setup](#part-1-setup-stop-fumbling-with-installation) → [Part 12: Web Dashboard](./part12-web-dashboard.md) → done. Use the dashboard to point-and-click the rest.
