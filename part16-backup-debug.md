@@ -1,6 +1,6 @@
 # Part 16: Backup, Import, and `/debug` — Your Recovery Kit
 
-*New in Hermes v0.9.0 and v0.10.0. Two long-missing features finally shipped: first-class backup/import of your whole Hermes install, and a built-in diagnostic bundler you can share in bug reports.*
+*First-class backup/import, debug bundles, update preflights, and the hardening details you need before you let Hermes run unattended.*
 
 ---
 
@@ -138,12 +138,12 @@ sessions.db
 
 ### The New Diagnostic Flow
 
-When something goes weird, the old flow was: grep through `~/.hermes/logs/`, paste 800 lines into a GitHub issue, hope you got the right ones. The v0.10 flow is:
+When something goes weird, the old flow was: grep through `~/.hermes/logs/`, paste 800 lines into a GitHub issue, hope you got the right ones. The modern flow is:
 
 ```text
 You → /debug
   Collecting diagnostics…
-  ✓ Agent version: v0.10.0 (v2026.4.16)
+  ✓ Agent version: v0.12.0 (v2026.4.30)
   ✓ Platform: Linux 6.8.0 / Python 3.12.3
   ✓ Gateway: running (3 adapters connected)
   ✓ Last 200 lines of agent.log
@@ -225,9 +225,38 @@ Preserves detail relevant to the topic and aggressively compresses everything el
 
 ---
 
-## Security Hardening (v0.9 + v0.10 Notes)
+## Security Hardening Notes
 
 A handful of hardening changes landed in the "everywhere" + "gateway" releases worth calling out explicitly:
+
+### v0.12 hardline blocklist
+
+Hermes now has a hardline blocklist for commands that should not be recoverable through casual approval prompts. Keep your own denylist too, but do not rely on "the model will know this is dangerous" for commands that delete homes, scrape credentials, or hit metadata services.
+
+Useful custom denylist additions:
+
+```yaml
+security:
+  approval:
+    denylist:
+      - 'rm\s+-rf\s+(/|~|\$HOME)'
+      - 'curl\s+.+\|\s*(sh|bash)'
+      - '169\.254\.169\.254'
+      - 'cat\s+~?/?\.?ssh/'
+      - 'aws\s+s3\s+sync\s+.+\s+s3://'
+      - 'ssh-keyscan'
+```
+
+### `hermes update --check` before upgrades
+
+Before a major upgrade:
+
+```bash
+hermes update --check
+hermes backup
+```
+
+The preflight catches obvious incompatibilities and the backup gives you a rollback point for `HERMES_HOME`.
 
 ### Webhook secrets validated on startup
 
@@ -280,4 +309,4 @@ You've now seen the full April 2026 feature surface:
 - [Part 14 — Fast Mode & Background Watchers](./part14-fast-mode-watchers.md)
 - [Part 15 — New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md)
 
-If you installed fresh on v0.10.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.
+If you installed fresh on v0.12.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.

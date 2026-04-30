@@ -14,12 +14,12 @@
 version: 1
 
 models:
-  default: anthropic/claude-sonnet-4-5
+  default: anthropic/claude-sonnet
   classification: google/gemini-2.5-flash
   long_context: google/gemini-2.5-pro
-  coding: anthropic/claude-sonnet-4-5
-  reasoning: openai/gpt-5.4
-  cheap: moonshot/kimi-k2.5
+  coding: anthropic/claude-sonnet
+  reasoning: openai/reasoning
+  cheap: moonshot/kimi
   providers:
     anthropic:
       api_key: ${ANTHROPIC_API_KEY}
@@ -28,7 +28,7 @@ models:
       api_key: ${OPENAI_API_KEY}
     google:
       api_key: ${GOOGLE_API_KEY}
-      oauth_enabled: true            # Use Gemini CLI OAuth when available
+      oauth_enabled: true            # Use Gemini OAuth when available
     moonshot:
       api_key: ${MOONSHOT_API_KEY}
     zai:
@@ -42,15 +42,15 @@ routing:
     - intent: classification
       model: google/gemini-2.5-flash
     - intent: coding
-      model: anthropic/claude-sonnet-4-5
+      model: anthropic/claude-sonnet
     - intent: long_context
       when: { tokens_in: { gt: 200000 } }
       model: google/gemini-2.5-pro
     - intent: reasoning
       when: { needs_deep_reasoning: true }
-      model: openai/gpt-5.4
+      model: openai/reasoning
     - intent: bulk_data
-      model: moonshot/kimi-k2.5
+      model: moonshot/kimi
 
 gateways:
   cli: { enabled: true }

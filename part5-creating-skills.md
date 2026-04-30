@@ -114,6 +114,43 @@ Hermes patches the skill with new information using `skill_manage(action='patch'
 
 ---
 
+## Curator (v0.12): Keep the Skill Library From Rotting
+
+The old skill failure mode was predictable: after a month of "save that as a skill," `~/.hermes/skills/` filled with duplicates, stale commands, and one-off notes that should have been memory. Hermes v0.12 adds **Curator** to clean that up.
+
+Run it manually:
+
+```bash
+hermes curator run --dry-run
+hermes curator run
+```
+
+Or enable the default weekly schedule:
+
+```bash
+hermes curator enable
+hermes curator status
+```
+
+What Curator does:
+
+- **Scores skills** for freshness, usage, clarity, overlap, and safety.
+- **Merges duplicates** instead of letting near-identical workflows compete.
+- **Archives dead skills** without deleting them; restore if it was too aggressive.
+- **Pins important skills** so core workflows survive pruning.
+- **Focuses on agent-created skills** first, not bundled/vendor skills.
+
+Good operating pattern:
+
+1. Pin your production runbooks and irreplaceable workflows.
+2. Run `hermes curator run --dry-run` after major upgrades.
+3. Let it archive one-off skills, not memory facts or project instructions.
+4. Ask Hermes to update a skill immediately after a failed run; don't wait for Curator to infer the fix later.
+
+Curator is a librarian, not a teammate. It keeps the shelves useful; you still decide what knowledge is important.
+
+---
+
 ## Skill Structure
 
 Every skill is a directory with a `SKILL.md` file:

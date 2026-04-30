@@ -1,6 +1,6 @@
 # Part 13: The Nous Tool Gateway (One Subscription, Four Tools, Zero Extra Keys)
 
-*New in Hermes v0.10.0 (2026.4.16). If you have a paid Nous Portal subscription, you already have web search, image generation, text-to-speech, and browser automation — you just haven't turned them on yet.*
+*If you have a paid Nous Portal subscription, you already have web search, image generation, text-to-speech, and browser automation — you just haven't turned them on yet.*
 
 ---
 

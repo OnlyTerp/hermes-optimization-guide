@@ -1,6 +1,6 @@
 # Part 12: The Local Web Dashboard (Stop Editing YAML)
 
-*New in Hermes v0.9.0 (2026.4.13). The easiest way to run Hermes — a full browser-based control panel for everything you used to do in the terminal.*
+*Introduced in v0.9 and substantially upgraded through v0.12. The dashboard is now a browser-based control panel plus an embedded real Hermes TUI, not just a YAML editor.*
 
 ---
 
@@ -8,16 +8,18 @@
 
 Before v0.9, managing Hermes meant: edit `config.yaml`, export env vars, grep through logs, and use the CLI to inspect sessions. Great for power users. Terrible for anyone new.
 
-The new **web dashboard** (`hermes dashboard`) replaces all of that with a single browser UI:
+The **web dashboard** (`hermes dashboard`) replaces most of that with a single browser UI:
 
-- Live status of the gateway and all 16 platform adapters
+- Live status of the gateway and all built-in/plugin platform adapters
+- Browser Chat backed by the real `hermes --tui`
 - Form-based editor for every config field (all 150+ of them, auto-discovered from `DEFAULT_CONFIG`)
+- Models tab for main + auxiliary model configuration
 - API key manager for providers, tools, and platforms
 - Full-text search across past sessions (FTS5)
 - Log tailer with level/component filters
 - Usage and cost analytics (daily token + cost breakdown, per-model)
 - Cron job management
-- Skills and toolsets browser with enable/disable toggles
+- Skills, Curator, plugins, and toolsets browser with enable/disable toggles
 
 Everything runs on `127.0.0.1` — no data leaves your machine.
 
@@ -33,13 +35,13 @@ That's it. It starts a local server and opens `http://127.0.0.1:9119` in your de
 
 ### Install the Dependencies (One Time)
 
-The dashboard uses FastAPI + Uvicorn + a React frontend:
+The dashboard uses FastAPI + Uvicorn + a React frontend. The Chat tab also needs PTY support:
 
 ```bash
-pip install hermes-agent[web]
+pip install 'hermes-agent[web,pty]'
 ```
 
-If you installed with `hermes-agent[all]`, you're already done. The frontend auto-builds on first launch if `npm` is available.
+If you installed with `hermes-agent[all]`, you're already done. The `web` extra brings FastAPI/Uvicorn; `pty` lets the Chat tab spawn `hermes --tui` behind a pseudo-terminal on Linux/macOS/WSL. The frontend auto-builds on first launch if `npm` is available.
 
 ### Options
 
@@ -48,6 +50,8 @@ If you installed with `hermes-agent[all]`, you're already done. The frontend aut
 | `--port` | `9119` | Port to serve on |
 | `--host` | `127.0.0.1` | Bind address |
 | `--no-open` | — | Don't auto-open the browser |
+| `--insecure` | off | Permit non-localhost binding; dangerous without a proxy/auth |
+| `--tui` | off | Enable the in-browser Chat tab; also available via `HERMES_DASHBOARD_TUI=1` |
 
 ```bash
 # Custom port
@@ -77,6 +81,18 @@ Live overview that auto-refreshes every 5 seconds:
 
 This is the page you leave open on a second monitor.
 
+### Chat
+
+The Chat tab embeds the actual `hermes --tui` process through xterm.js. That matters: slash commands, approval prompts, clarify/sudo/secret prompts, skins, markdown streaming, tool-call cards, `/resume`, `/steer`, `/queue`, and TUI fixes appear here automatically because the dashboard is not maintaining a second chat implementation.
+
+Requirements:
+
+- Node.js for the Ink TUI bundle
+- `ptyprocess` via `pip install 'hermes-agent[pty]'`
+- POSIX PTY support: Linux, macOS, or WSL; native Windows Python is not supported for the embedded PTY
+
+Tip: launch from the Sessions page with the play icon to resume a past session directly into `/chat?resume=<id>`.
+
 ### Config
 
 Form-based editor for `config.yaml`. Fields are auto-discovered from `DEFAULT_CONFIG` and grouped into tabs:
@@ -88,6 +104,8 @@ Form-based editor for `config.yaml`. Fields are auto-discovered from `DEFAULT_CO
 - **delegation** — subagent limits, reasoning effort
 - **memory** — provider, context injection settings
 - **approvals** — dangerous command mode (`ask` / `yolo` / `deny`)
+- **plugins** — enabled/disabled plugin allowlists
+- **curator** — schedule, pruning thresholds, pinned/archived behavior
 
 Dropdowns for known-value fields (terminal backend, skin, approval mode). Toggles for booleans. Text inputs for everything else.
 
@@ -145,6 +163,17 @@ Usage and cost, computed from session history. Pick a time window (7 / 30 / 90 d
 
 If you're on the Nous Portal Tool Gateway (Part 13), gateway tool usage shows up here too.
 
+### Models
+
+Use this page before you edit routing YAML by hand. It exposes:
+
+- Main model/provider selection
+- Auxiliary models for compression, vision, title generation, session search, and curator
+- Remote OpenRouter/Nous picker data when available
+- Per-model usage analytics so "cheap default, expensive opt-in" stays honest
+
+This is the fastest way to stop wasting your best model on background summaries.
+
 ### Cron
 
 Create and manage scheduled agent prompts.
@@ -165,6 +194,23 @@ Browse, search, and toggle every skill and toolset.
 - **Category filter** — click pills to narrow (MLOps, MCP, Red Teaming, AI, etc.)
 - **Toggle** — enable/disable individual skills per session
 - **Toolsets** — separate section showing built-in toolsets (file, web, browser), with active/inactive state, setup requirements, and the list of tools each one provides
+
+### Plugins
+
+Plugins ship disabled. Use the dashboard to review what was discovered from bundled, user, project, pip, and Nix sources before enabling anything with hooks/tools.
+
+Good first enables:
+
+- `observability/langfuse` — trace LLM/tool calls to Langfuse
+- `spotify` — native playback/queue/search tools
+- `google_meet` — join, transcribe, speak, and follow up on Meet calls
+- `hermes-achievements` — dashboard achievements from real session history
+
+Project-local plugins under `.hermes/plugins/` should stay disabled unless you trust the repository.
+
+### Curator
+
+v0.12 adds Curator controls for skill-library hygiene: run dry-runs, inspect proposed archives/merges, pin important skills, and review archived skills before restoring or deleting. See [Part 5](./part5-creating-skills.md#curator-v012-keep-the-skill-library-from-rotting) and [Part 22](./part22-latest-power-moves.md#1-turn-on-curator-before-your-skill-library-becomes-noise).
 
 ---
 

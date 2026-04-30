@@ -7,7 +7,7 @@
 **1/8**
 I got tired of Hermes guides that explain the architecture but don't give you anything to run, so I shipped the opposite:
 
-21 parts of documentation **plus** 13 installable skills, 5 production configs, 4 reference architectures, a VPS bootstrap script, hardened systemd units, a reproducible cost benchmark, and an in-browser config wizard.
+23 parts of documentation **plus** 13 installable skills, 5 production configs, 4 reference architectures, a VPS bootstrap script, hardened systemd units, a reproducible cost benchmark, and an in-browser config wizard.
 
 github.com/OnlyTerp/hermes-optimization-guide
 
@@ -60,7 +60,7 @@ Part 19 is the defensive playbook: 7 layers (provenance, approval, secret isolat
 Cost routing playbook (Part 20) drops a typical workload by ~90%:
 - Triage → Gemini Flash or Cerebras
 - Classification → Cerebras Llama (~free)
-- Default coding → Kimi K2.5
+- Default coding → Kimi/Moonshot
 - Hard coding → Sonnet (explicit opt-in)
 - Long context → Gemini 2.5 Pro
 

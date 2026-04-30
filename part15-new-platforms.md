@@ -1,12 +1,12 @@
-# Part 15: New Messaging Platforms (iMessage, WeChat, Android)
+# Part 15: Messaging Platforms (iMessage, WeChat, QQBot, Yuanbao, Teams, Android)
 
-*Hermes v0.9.0 (2026.4.13) — the "everywhere" release. Three new surfaces that dramatically expand where Hermes can run and who can talk to it.*
+*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams as the first plugin-shipped platform.*
 
 ---
 
-## The 16-Platform Lineup
+## The 18+ Platform Lineup
 
-As of v0.9, the gateway ships adapters for:
+As of v0.12, the gateway ships built-in adapters plus plugin-shipped platforms:
 
 | Platform | Mode | Notes |
 |----------|------|-------|
@@ -17,6 +17,9 @@ As of v0.9, the gateway ships adapters for:
 | **iMessage (BlueBubbles)** | Webhook | **New in v0.9** |
 | **Weixin (WeChat personal)** | Long-poll | **New in v0.9** |
 | **WeCom (Enterprise WeChat)** | Webhook | **New in v0.9** |
+| **QQBot** | WebSocket/Webhook | Added after the original v0.9 platform sweep |
+| **Tencent Yuanbao** | Native gateway | **New in v0.12**, text + media delivery |
+| **Microsoft Teams** | Plugin | **New in v0.12**, first plugin-shipped gateway platform |
 | Signal | REST via signal-cli | Self-hosted bridge |
 | DingTalk | Webhook | Corporate IM, China/APAC |
 | Feishu / Lark | Webhook | Corporate IM, ByteDance |
@@ -33,8 +36,31 @@ All of them respect:
 - Tool Gateway routing (Part 13)
 - Cron delivery targets
 - The shared session database (Part 7)
+- Pre-dispatch plugin hooks
 
-This part covers the three brand-new adapters plus **Android / Termux** — running the agent itself on a phone.
+This part covers the v0.9 adapters, the newer v0.12 surfaces, and **Android / Termux** — running the agent itself on a phone.
+
+## 2026 Update: QQBot, Yuanbao, and Teams
+
+### QQBot
+
+Use QQBot when your community already lives in QQ and you want the same approval/session model as Telegram or Discord. Treat QQ groups as untrusted input by default: keep allowlists tight, require approval for filesystem/network tools, and use [Part 19](./part19-security-playbook.md) for prompt-injection hardening.
+
+### Tencent Yuanbao
+
+Yuanbao is now a native gateway adapter with text and media delivery. It belongs in the same bucket as Weixin/WeCom: powerful in China/APAC workflows, but operationally different from Western SaaS bots. Verify media size limits and identity mapping before using it for production approvals.
+
+### Microsoft Teams Plugin
+
+Teams proves the v0.12 gateway-plugin architecture: new platforms no longer need to land inside `gateway/platforms/` to be usable. Enable only trusted platform plugins:
+
+```bash
+hermes plugins list
+hermes plugins enable teams
+hermes gateway setup
+```
+
+Keep project-local plugins disabled unless the repository is trusted (`HERMES_ENABLE_PROJECT_PLUGINS=true` is intentionally opt-in).
 
 ---
 

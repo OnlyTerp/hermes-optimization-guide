@@ -1,6 +1,6 @@
 # Part 14: Fast Mode & Background Watchers
 
-*New in Hermes v0.9.0 (2026.4.13). Two small features with outsized impact: priority-tier inference on OpenAI and Anthropic, and real-time pattern matching on background process output.*
+*Priority-tier inference, live background-process events, and the newer TUI controls that keep long sessions steerable instead of stuck.*
 
 ---
 
@@ -10,7 +10,7 @@
 
 Both OpenAI and Anthropic run **priority processing queues** for latency-sensitive traffic. Higher cost per token, but dramatically lower p50 and p99 latency — especially under load on reasoning models.
 
-`/fast` toggles that priority tier per session. On supported models (GPT-5.4, Codex, Claude Opus 4.6, Claude Sonnet 4), flipping it on injects `service_tier: "priority"` into every outgoing request.
+`/fast` toggles that priority tier per session. On supported OpenAI/Codex and Anthropic models, flipping it on injects `service_tier: "priority"` into outgoing requests.
 
 ### When to Use It
 
@@ -62,6 +62,29 @@ This makes Fast Mode the default for every new session. The `/fast` slash comman
 ### Pricing Heads-Up
 
 Priority tier is more expensive per token. Watch the **Analytics** tab in the dashboard (Part 12) for per-day cost deltas after enabling it. If you're surprised by a bill, the most common cause is leaving `agent.service_tier: priority` on globally for cron jobs that don't need it.
+
+---
+
+## `/steer`, `/queue`, and Background Turns
+
+The newer TUI makes long-running work much easier to control:
+
+| Command | Use it when | Pattern |
+|---------|-------------|---------|
+| `/steer <instruction>` | The agent is mid-run but drifting | "Continue, but don't edit generated files" |
+| `/queue <prompt>` | You want the next task to start after the current one | "After tests pass, summarize the risk" |
+| `/background <prompt>` | Fire off work without blocking the main chat | "Research alternatives while I keep coding" |
+| `/busy` | You want to inspect what Hermes is doing | Check active runs/subagents |
+| `/indicator` | The spinner/activity feed is too loud or too quiet | Toggle busy indicator style |
+
+Best practice:
+
+1. Use `/steer` for **constraints**, not brand-new goals.
+2. Use `/queue` for dependent follow-ups.
+3. Use `/background` for independent research or monitoring.
+4. If the run touches files, keep follow-up prompts specific enough that Hermes can avoid clobbering its own edits.
+
+This is the practical replacement for repeatedly interrupting and restating the whole task.
 
 ---
 

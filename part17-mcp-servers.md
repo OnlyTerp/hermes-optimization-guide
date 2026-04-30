@@ -107,13 +107,15 @@ Without a `tools_allowlist`, every tool the server exposes is available.
 
 These are the ones that pay for themselves within a day:
 
+> **2026 reality check:** MCP is also a supply-chain boundary. Prefer official servers, pin package versions, restrict filesystem roots, and keep `allow_sampling: false` unless the server genuinely needs to call an LLM.
+
 | Server | What it adds | Why you want it |
 |--------|--------------|-----------------|
 | **@modelcontextprotocol/server-github** | Issues, PRs, repo search, branch diffs | Hermes becomes a code-aware teammate |
 | **@modelcontextprotocol/server-filesystem** | Scoped file reads/writes/search | Safer than giving terminal access |
 | **@modelcontextprotocol/server-postgres** | Read-only SQL | Answer "what's in the db?" without exposing DSN |
 | **@modelcontextprotocol/server-sqlite** | Local SQLite analysis | Great for log files, analytics snapshots |
-| **@modelcontextprotocol/server-puppeteer** | Browser automation | Complement to the Tool Gateway's Browser Use |
+| **@modelcontextprotocol/server-puppeteer** | Browser automation | Complement to the Tool Gateway's Browser Use; sandbox it tightly |
 | **@modelcontextprotocol/server-memory** | Knowledge-graph memory | Pairs with [Part 3 LightRAG](./part3-lightrag-setup.md) for redundancy |
 | **mcp.mem0.ai** | Hosted long-term memory | Cross-device memory across Hermes + Claude Code |
 | **Cloudflare Observability MCP** | Query your Worker logs/analytics | If you run anything on Cloudflare |
@@ -124,7 +126,7 @@ These are the ones that pay for themselves within a day:
 | **@browserbase/mcp** | Headless browser-as-a-service | Scraping sites Firecrawl can't handle |
 | **@chroma-core/chroma-mcp** | ChromaDB vectors | Works alongside LightRAG |
 
-For the full catalog, see [modelcontextprotocol.io/servers](https://modelcontextprotocol.io/servers) and the `awesome-mcp-servers` list on GitHub.
+For the full catalog, see the [MCP Registry](https://registry.modelcontextprotocol.io/) and the `awesome-mcp-servers` list on GitHub.
 
 ---
 
