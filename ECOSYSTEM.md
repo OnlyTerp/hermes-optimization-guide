@@ -7,7 +7,7 @@ The canonical "where do I find X for Hermes" directory. Maintained alongside the
 ## MCP Servers Worth Installing
 
 ### Official / reference
-- [`github/github-mcp-server`](https://github.com/github/github-mcp-server) — PRs, issues, code search, Actions
+- [`@modelcontextprotocol/server-github`](https://www.npmjs.com/package/@modelcontextprotocol/server-github) — PRs, issues, code search, Actions
 - [`@modelcontextprotocol/server-filesystem`](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) — read/write to scoped directories
 - [`@modelcontextprotocol/server-postgres`](https://www.npmjs.com/package/@modelcontextprotocol/server-postgres) — read-only SQL
 - [`@modelcontextprotocol/server-sqlite`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite) — local SQLite
