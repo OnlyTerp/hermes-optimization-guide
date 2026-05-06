@@ -37,6 +37,14 @@ See [Part 17](./part17-mcp-servers.md) for install patterns and trust model guid
 
 ---
 
+## Native Hermes plugins
+
+- [`hermes-tweet`](https://github.com/Xquik-dev/hermes-tweet) — X/Twitter search, reads, and gated account actions for Hermes Agent through Xquik
+
+See [Part 22](./part22-latest-power-moves.md#4-use-plugins-for-integrations-not-one-off-scripts) for plugin-first integration guidance.
+
+---
+
 ## Coding-agent integrations
 
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) — `claude -p` + ACP

@@ -2,6 +2,11 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-05-06 — Ecosystem Directory Update
+
+### Added
+- Hermes Tweet native plugin entry in `ECOSYSTEM.md`.
+
 ## 2026-04-30 — Hermes v0.11/v0.12 Refresh
 
 ### Added

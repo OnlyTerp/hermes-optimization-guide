@@ -5,6 +5,7 @@
     { "pattern": "^https://langfuse.yourdomain.com" },
     { "pattern": "^https://hermes.yourdomain.com" },
     { "pattern": "^https://hooks.yourdomain.com" },
+    { "pattern": "^https://discord.gg/" },
     { "pattern": "^http://localhost" },
     { "pattern": "^http://127.0.0.1" }
   ],
