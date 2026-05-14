@@ -1,18 +1,19 @@
-# Part 15: Messaging Platforms (iMessage, WeChat, QQBot, Yuanbao, Teams, Android)
+# Part 15: Messaging Platforms (Google Chat, iMessage, WeChat, QQBot, Yuanbao, Teams, Android)
 
-*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams as the first plugin-shipped platform.*
+*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 adds Google Chat and reinforces platform adapters as opt-in plugins.*
 
 ---
 
-## The 18+ Platform Lineup
+## The 20+ Platform Lineup
 
-As of v0.12, the gateway ships built-in adapters plus plugin-shipped platforms:
+As of v0.13, the gateway ships built-in adapters plus plugin-shipped platforms:
 
 | Platform | Mode | Notes |
 |----------|------|-------|
 | Telegram | Polling + Webhook | Flagship adapter — see [Part 4](./part4-telegram-setup.md) |
 | Discord | WebSocket (bot) | Slash commands, voice/media, DMs + servers |
 | Slack | Socket / Events API | Threads, file uploads, blocks |
+| **Google Chat** | App / webhook | **New in v0.13**, Workspace-native chat surface |
 | WhatsApp | Web API | QR-code login, requires always-on node |
 | **iMessage (BlueBubbles)** | Webhook | **New in v0.9** |
 | **Weixin (WeChat personal)** | Long-poll | **New in v0.9** |
@@ -38,9 +39,28 @@ All of them respect:
 - The shared session database (Part 7)
 - Pre-dispatch plugin hooks
 
-This part covers the v0.9 adapters, the newer v0.12 surfaces, and **Android / Termux** — running the agent itself on a phone.
+This part covers the v0.9 adapters, the newer v0.12/v0.13 surfaces, and **Android / Termux** — running the agent itself on a phone.
 
-## 2026 Update: QQBot, Yuanbao, and Teams
+## 2026 Update: Google Chat, QQBot, Yuanbao, and Teams
+
+### Google Chat
+
+Google Chat is the cleanest v0.13 choice for Google Workspace teams that do not want a separate Slack/Discord surface. Treat spaces as group chats: use allowlists, never approve sensitive actions in the same room that requested them, and route production approvals to a private admin DM/channel.
+
+Typical posture:
+
+```yaml
+gateways:
+  google_chat:
+    enabled: true
+    project_id: ${GOOGLE_CLOUD_PROJECT}
+    credentials_json: ${GOOGLE_CHAT_CREDENTIALS_JSON}
+    allowed_spaces:
+      - ${GOOGLE_CHAT_ADMIN_SPACE}
+    trust_label: medium
+```
+
+Keep public/customer-facing spaces in quarantine profile until identity mapping and approval routing are proven.
 
 ### QQBot
 

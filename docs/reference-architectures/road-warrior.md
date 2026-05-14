@@ -54,7 +54,7 @@ Then customize:
 version: 1
 
 models:
-  default: google/gemini-2.5-flash          # Cheap + fast for "plan the work" phase
+  default: google/gemini-3.1-flash          # Cheap + fast for "plan the work" phase
   providers:
     google:
       api_key: "${GOOGLE_API_KEY}"

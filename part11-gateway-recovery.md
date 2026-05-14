@@ -73,7 +73,7 @@ model_fallback:
   - provider: cerebras
     model: llama-3.3-70b
   - provider: openrouter
-    model: anthropic/claude-sonnet-4
+    model: anthropic/claude-sonnet-5
   - provider: local
     model: nemotron:latest
 ```

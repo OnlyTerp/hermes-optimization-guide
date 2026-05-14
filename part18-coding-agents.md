@@ -1,6 +1,6 @@
 # Part 18: Delegating to Coding Agents — Claude Code, Codex, Gemini CLI, OpenCode
 
-*Hermes' killer move for developers isn't writing code itself — it's **orchestrating** the specialist coding agents from your Telegram chat. Drive Claude Code, Codex, Gemini CLI, and OpenCode from your phone while you're on the subway. This is the OpenClaw-style pattern people are calling "clawdbots" and "moltbots" in the 2026 agent scene.*
+*Hermes' killer move for developers isn't writing code itself — it's **orchestrating** specialist coding agents from your Telegram chat or Kanban board. Drive Claude Code, Codex, Gemini CLI, OpenCode, and cheap Kimi/GLM lanes from your phone while Hermes keeps state, memory, approvals, and review gates.*
 
 ---
 
@@ -10,13 +10,13 @@ Hermes is excellent at reasoning, memory, conversation, and workflow. It is *not
 
 | Agent | Strengths | Auth model |
 |-------|-----------|------------|
-| **Claude Code** | Strongest at large refactors, test writing, PR reviews | Pro/Max OAuth or `ANTHROPIC_API_KEY` |
-| **Codex** (OpenAI) | Fast feedback loop, great at bug hunts, small edits | OAuth via `openai` CLI or `OPENAI_API_KEY` |
-| **Gemini CLI** | 1M context — unbeatable for "read the whole repo" tasks | OAuth via `gemini auth`; Hermes' own Gemini OAuth covers normal model-provider use |
-| **OpenCode** (anomalyco) | Open-source, routes to GLM/Kimi/MiMo cheaply | Bring any provider key |
+| **Claude Code** | Best unattended PR work, large refactors, tests, reviews; pair with Sonnet 5/Opus 4.7 | Pro/Max OAuth or `ANTHROPIC_API_KEY` |
+| **Codex** (OpenAI) | Fast sandboxed feedback loop, bug hunts, small/medium edits; strong with GPT-5.5/Codex models | OAuth via `openai` CLI or `OPENAI_API_KEY` |
+| **Gemini CLI** | 1M context and multimodal repo/document sweeps; strongest "read everything first" lane | OAuth via `gemini auth`; Hermes' own Gemini OAuth covers normal model-provider use |
+| **OpenCode** (anomalyco) | Open-source, routes to Kimi K2.6 / GLM / MiMo cheaply | Bring any provider key |
 | **Aider** | Surgical git-based edits, smallest token footprint | Bring any provider key |
 
-Hermes keeps state, memory, conversation, and platform integration; each specialist does what it does best. You get one chat interface, many agents.
+Hermes keeps state, memory, conversation, approvals, Kanban lifecycle, and platform integration; each specialist does what it does best. You get one control plane, many agents.
 
 ---
 
@@ -97,11 +97,11 @@ Each specialist has a sweet spot. Let Hermes route:
 
 | Task | Sweet-spot specialist | Why |
 |------|-----------------------|-----|
-| Large refactor across 10+ files | Claude Code | Best at sustained multi-file edits |
-| Bug reproduction + fix in a single file | Codex | Fast turnaround, cheaper per task |
-| "Explain this codebase" | Gemini CLI | 1M context eats any repo whole |
+| Large refactor across 10+ files | Claude Code + Sonnet 5/Opus 4.7 | Best at sustained multi-file edits |
+| Bug reproduction + fix in a single file | Codex + GPT-5.5/Codex | Fast sandboxed turnaround |
+| "Explain this codebase" | Gemini CLI + Gemini 3.1 Pro | 1M context eats any repo whole |
 | Bulk surgical edits with deterministic diffs | Aider | Smallest token footprint, git-native |
-| Anything on a budget | OpenCode + GLM / Kimi | Much cheaper than frontier models for routine edits |
+| Anything on a budget | OpenCode + Kimi K2.6 / GLM | Much cheaper than frontier models for routine edits |
 
 A sensible `~/.hermes/config.yaml`:
 
@@ -119,8 +119,27 @@ delegation:
       agent: gemini-cli
     - match: { budget: low }
       agent: opencode
-      model: zai/glm
+      model: moonshot/kimi-k2.6
 ```
+
+## Mode 1B: Kanban Worker Lanes (Preferred for Long Work)
+
+For work that should survive restarts, human review, retries, or multiple handoffs, put the coding agent behind [Part 23's Kanban flow](./part23-tenacity-stack.md#2-add-worker-lanes-instead-of-giant-prompt-swarms):
+
+```text
+/kanban create "Fix flaky checkout tests and open a PR" \
+  --assignee codex-worker \
+  --workspace worktree
+```
+
+Good defaults:
+
+- `codex-worker` for small isolated fixes; successful exit blocks for Hermes/human review instead of auto-completing.
+- `claude-code` for multi-file refactors; require tests and review before marking done.
+- `gemini-cli` for repo-scale audit cards that should produce comments/specs, not commits.
+- `reviewer` as a separate lane so "agent wrote code" and "work is done" stay different states.
+
+Use print mode for quick one-shot answers. Use Kanban lanes for anything you would be embarrassed to lose halfway through.
 
 ---
 
@@ -128,7 +147,7 @@ delegation:
 
 What you actually want on your phone: a Telegram topic named "Claude Code" where every message lands in a persistent Claude Code session. No re-explaining context. No re-spawning. Just chat with the coding agent directly, with Hermes handling the transport, memory, and voice-to-text.
 
-This pattern is now practical because v0.11 added orchestrator-role subagents, spawn-depth controls, and file-coordination between sibling workers. The workflow:
+This pattern is useful for pair-programming from chat. For unattended work, prefer Kanban worker lanes so task state and review gates survive restarts. The interactive workflow:
 
 ```bash
 # In Telegram, create a topic, then from the CLI or dashboard:

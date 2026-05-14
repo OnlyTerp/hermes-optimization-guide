@@ -1,24 +1,24 @@
 # Hermes Optimization Guide
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Hermes](https://img.shields.io/badge/Hermes-v0.12.0%20%282026.4.30%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.30)
-[![Last updated](https://img.shields.io/badge/Last%20updated-2026--04--30-brightgreen)](./CHANGELOG.md)
-[![Parts](https://img.shields.io/badge/parts-23-blue)](#table-of-contents)
+[![Hermes](https://img.shields.io/badge/Hermes-v0.13.0%20%282026.5.7%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.5.7)
+[![Last updated](https://img.shields.io/badge/Last%20updated-2026--05--14-brightgreen)](./CHANGELOG.md)
+[![Parts](https://img.shields.io/badge/parts-24-blue)](#table-of-contents)
 [![Skills](https://img.shields.io/badge/installable%20skills-13-blue)](./skills/)
 [![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
 [![CI](https://github.com/OnlyTerp/hermes-optimization-guide/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Current through Hermes Agent v0.12.0 (v2026.4.30)** · **23 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Updated for Curator, the Ink TUI, plugins, Teams/Yuanbao/QQBot, Bedrock/Azure/LM Studio, remote model catalogs, dashboard chat, and the latest skill-hub workflows
+> **Current through Hermes Agent v0.13.0 (v2026.5.7)** · **24 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Updated for durable Kanban, `/goal`, Checkpoints v2, no-agent cron, Google Chat, provider plugins, v0.13 security defaults, Curator, the Ink TUI, plugins, Bedrock/Azure/LM Studio, remote model catalogs, dashboard chat, and the latest skill-hub workflows
 >
 > Other languages: [中文](./README-zh.md) · [日本語](./README-ja.md)
 
 ### The End-to-End Hermes Guide — docs + runnable artifacts
-Every part you need to go from fresh install to a production Hermes deployment that talks on 18+ built-in/plugin platforms, orchestrates Claude Code / Codex / Gemini CLI, plugs into any MCP server, traces every call in Langfuse, curates its own skills, and runs heavy work on disposable Modal/Daytona/Vercel sandboxes — without burning $100/day on frontier tokens.
+Every part you need to go from fresh install to a production Hermes deployment that talks on 20+ built-in/plugin platforms, orchestrates Claude Code / Codex / Gemini CLI through durable Kanban lanes, plugs into any MCP server, traces every call in Langfuse, curates its own skills, and runs heavy work on disposable Modal/Daytona/Vercel sandboxes — without burning $100/day on frontier tokens.
 
 Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
 
-*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **April 30, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **May 14, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
 
 ---
 
@@ -55,7 +55,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
 | [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
 | [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
-| README + `part1-*.md` … `part22-*.md` | The 23-part guide itself. |
+| README + `part1-*.md` … `part23-*.md` | The 24-part guide itself. |
 
 ---
 
@@ -63,7 +63,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 
 ```mermaid
 flowchart LR
-  Inputs[18+ platforms<br/>Telegram · Discord · Slack<br/>QQBot · Yuanbao · Teams<br/>iMessage · WeChat · Email<br/>SMS · Webhooks · Cron · Voice · CLI] --> Gateway
+  Inputs[20+ platforms<br/>Telegram · Discord · Slack<br/>Google Chat · QQBot<br/>Yuanbao · Teams<br/>iMessage · WeChat · Email<br/>SMS · Webhooks · Cron · Voice · CLI] --> Gateway
   Gateway --> Router[Model Router<br/>cost + context + capability]
   Router --> Providers[Anthropic · OpenAI<br/>Google · Cerebras · Moonshot<br/>z.ai · xAI · Local]
   Gateway --> Approval[Approval Layer<br/>denylist · allowlist · quarantine]
@@ -78,7 +78,7 @@ Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 
 ## Pick Your Path
 
-This guide grew to 23 parts because *Hermes grew*. Six sections (Parts 1–5 plus SOUL.md) live in this README; Parts 6–22 live as separate files. You don't have to read them all — pick the shortest path to what you need:
+This guide grew to 24 parts because *Hermes grew*. Six sections (Parts 1–5 plus SOUL.md) live in this README; Parts 6–23 live as separate files. You don't have to read them all — pick the shortest path to what you need:
 
 ### 🎯 "I just want it working in 10 minutes"
 [Part 1: Setup](#part-1-setup-stop-fumbling-with-installation) → [Part 12: Web Dashboard](./part12-web-dashboard.md) → done. Use the dashboard to point-and-click the rest.
@@ -87,10 +87,10 @@ This guide grew to 23 parts because *Hermes grew*. Six sections (Parts 1–5 plu
 [Part 1](#part-1-setup-stop-fumbling-with-installation) → [Part 4: Telegram](./part4-telegram-setup.md) → [Part 5: On-the-fly Skills](./part5-creating-skills.md) → [Part 7: Memory](./part7-memory-system.md).
 
 ### 🤖 "I want to drive Claude Code / Codex / Gemini from my phone"
-[Part 18: Coding Agents](./part18-coding-agents.md) → [Part 22: Latest Power Moves](./part22-latest-power-moves.md) → [Part 21: Remote Sandboxes](./part21-remote-sandboxes.md).
+[Part 18: Coding Agents](./part18-coding-agents.md) → [Part 23: Tenacity Stack](./part23-tenacity-stack.md) → [Part 21: Remote Sandboxes](./part21-remote-sandboxes.md).
 
 ### 💼 "I'm running this in production"
-[Part 19: Security Playbook](./part19-security-playbook.md) → [Part 20: Observability & Cost](./part20-observability.md) → [Part 16: Backup & Debug](./part16-backup-debug.md) → [Part 22: Curator + Plugins](./part22-latest-power-moves.md).
+[Part 19: Security Playbook](./part19-security-playbook.md) → [Part 20: Observability & Cost](./part20-observability.md) → [Part 16: Backup & Debug](./part16-backup-debug.md) → [Part 23: Kanban + Goals](./part23-tenacity-stack.md).
 
 ### 🧠 "I want the most capable agent possible, cost be damned"
 [Part 17: MCP Servers](./part17-mcp-servers.md) → [Part 18: Coding Agents](./part18-coding-agents.md) → [Part 3: LightRAG](./part3-lightrag-setup.md) → [Part 14: Fast Mode](./part14-fast-mode-watchers.md) → [Part 20: Observability](./part20-observability.md).
@@ -103,9 +103,23 @@ This guide grew to 23 parts because *Hermes grew*. Six sections (Parts 1–5 plu
 
 ---
 
-## What's New (April 2026)
+## What's New (May 2026)
 
-Hermes moved fast after this repo's v0.10 refresh. The current stable target is **[v0.12.0 — 2026.4.30 — "Curator"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.30)**, following **[v0.11.0 — 2026.4.23 — "Interface"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.4.23)**. This update removes speculative "cooking on main" notes and folds the landed features into the guide.
+Hermes moved again after the Curator/TUI refresh. The current stable target is **[v0.13.0 — 2026.5.7 — "The Tenacity Release"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.5.7)**. This update folds the landed durability features into the guide and removes v0.12-as-current framing.
+
+### v0.13.0 — "Tenacity"
+
+- **Durable multi-agent Kanban** — boards, heartbeats, reclaim, retry budgets, zombie detection, and human unblock/review flow make long work auditable instead of fragile. See [Part 23](./part23-tenacity-stack.md#1-treat-kanban-as-the-durable-execution-layer).
+- **`/goal` persistent objectives** — keep a session locked on an observable target until done, paused, cleared, or out of budget. See [Part 23](./part23-tenacity-stack.md#3-use-goal-for-do-not-stop-until-it-is-done).
+- **Checkpoints v2** — real pruning, disk guardrails, cleaned-up shadow repos, and post-write syntax linting for Python/JSON/YAML/TOML. See [Part 23](./part23-tenacity-stack.md#4-checkpoints-v2-changes-your-risk-model).
+- **Gateway/session resilience** — gateway auto-resume after restarts, source reloads, and `/update` bounces; less lost state during unattended runs.
+- **Cron no-agent mode** — deterministic script-only watchdogs deliver stdout with zero LLM spend. See [Part 23](./part23-tenacity-stack.md#5-use-no_agent-cron-for-watchdogs).
+- **Google Chat + platform plugin hooks** — Google Chat is the 20th platform; IRC/Teams-style adapters can live outside core. See [Part 15](./part15-new-platforms.md#2026-update-google-chat-qqbot-yuanbao-and-teams).
+- **Providers are plugins** — provider profiles can ship out-of-tree, so new model backends no longer need core patches. See [Part 9](./part9-custom-models.md).
+- **Security defaults hardened** — secret redaction is on by default; Discord role allowlists are guild-scoped; WhatsApp rejects strangers by default; MCP OAuth/auth.json TOCTOU windows closed. See [Part 19](./part19-security-playbook.md#v013-security-defaults).
+- **Multimodal/media upgrades** — `video_analyze` for Gemini-compatible models, xAI Custom Voices, skill `[[as_document]]` routing, and image MCP result handling.
+- **Dashboard grows up** — Kanban, plugins page, profiles page, sortable analytics, reverse-proxy prefix support, and larger default theme.
+- **MCP transport reliability** — SSE OAuth forwarding, stale-pipe retries, keepalive for lifecycle waits, and image results surfaced as media.
 
 ### v0.12.0 — "Curator"
 
@@ -164,6 +178,7 @@ Hermes moved fast after this repo's v0.10 refresh. The current stable target is 
 21. [Observability & Cost Control](./part20-observability.md) — Langfuse plugin, Helicone, OpenTelemetry → Phoenix, auxiliary routing, eval-driven regressions
 22. [Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md) — SSH, Modal, Daytona, Vercel Sandbox, Fly Machines, E2B. Diff-based sync-back on teardown
 23. [Latest Power Moves](./part22-latest-power-moves.md) — Curator, TUI habits, context-file hygiene, plugins, dashboard Chat, cron chaining, and the 2026 upgrade checklist
+24. [Tenacity Stack](./part23-tenacity-stack.md) — Durable Kanban, `/goal`, Checkpoints v2, no-agent cron, worker lanes, and v0.13 upgrade checklist
 
 ---
 
@@ -306,20 +321,20 @@ Supported providers and recommended models:
 | Provider | Top Models | Best For | Env Variable |
 |----------|-----------|----------|-------------|
 | **Nous Portal** | Hermes 5, Hermes 4 405B | Built-in [Tool Gateway](./part13-tool-gateway.md) — web search/image/TTS/browser with no extra keys | Auth via `hermes model` |
-| **Anthropic** | Opus 4.6, Sonnet 4 | Best reasoning, complex tasks, coding, `/fast` priority tier | `ANTHROPIC_API_KEY` |
-| **OpenAI** | GPT-5-class, o-series, GPT-4.1 | Strong tool use, fast inference, huge context, `/fast` priority tier | `OPENAI_API_KEY` |
+| **Anthropic** | Sonnet 5, Opus 4.7, Sonnet 4.6 | Best coding reliability, long unattended PR work, `/fast` priority tier | `ANTHROPIC_API_KEY` |
+| **OpenAI** | GPT-5.5, GPT-5 Codex, o-series | Strong tool use, sandboxed coding loops, deep reasoning, `/fast` priority tier | `OPENAI_API_KEY` |
 | **Xiaomi MiMo** | MiMo V2 Pro *(native adapter)* | Fast, cheap, native reasoning modes, great for orchestration | `XIAOMI_API_KEY` |
-| **xAI** | Grok 3, Grok 3 Mini *(native adapter)* | Fast, good reasoning, native live-X search | `XAI_API_KEY` |
-| **Kimi / Moonshot** | Kimi 2.5 | Big context, excellent for entity extraction / LightRAG ingestion | `MOONSHOT_API_KEY` |
-| **z.ai / GLM** | GLM-5, GLM-5 Air | Strongest open-weights model, great for translation + tools | `ZAI_API_KEY` |
-| **Google** | Gemini Pro/Flash | Massive context, multimodal, cheap; OAuth supported via `hermes model` | `GEMINI_API_KEY` or OAuth |
-| **MiniMax** | M2.7 | Good balance of speed and quality | `MINIMAX_API_KEY` |
+| **xAI** | Grok 4.x, Grok Mini *(native adapter)* | Fast, good reasoning, native live-X search, Custom Voices | `XAI_API_KEY` |
+| **Kimi / Moonshot** | Kimi K2.6, Kimi 2.5 | Big context, excellent $/pass for code and extraction | `MOONSHOT_API_KEY` |
+| **z.ai / GLM** | GLM-5, GLM-5 Air | Strong open-weight tool use, great for translation + cheap reasoning | `ZAI_API_KEY` |
+| **Google** | Gemini 3.1 Pro, Gemini 2.5 Pro/Flash | Massive context, multimodal/video, cheap; OAuth supported via `hermes model` | `GEMINI_API_KEY` or OAuth |
+| **MiniMax** | M2.7+ | Good balance of speed, TTS, and quality | `MINIMAX_API_KEY` |
 | **Cerebras** | Llama 4 Scout, Qwen 3 32B | Blazing fast inference (2000+ tok/s), cheap | `CEREBRAS_API_KEY` |
 | **Groq** | Llama 4, Qwen 3 | Very fast inference, limited context | `GROQ_API_KEY` |
 | **Arcee** | AFM-4.5, Caller | Function-calling specialists, cheap | `ARCEE_API_KEY` |
 | **Hugging Face** | Any TGI/TEI endpoint | Self-hosted and Inference Endpoints | `HF_TOKEN` |
 | **OpenRouter** | All of the above + 200 more | Access every model from one key, auto-fallback | `OPENROUTER_API_KEY` |
-| **Ollama** (local) | Qwen 3.5 Opus Distilled V3, Gemma 4, Nemotron | Free, private, runs on your GPU — great for embeddings and simple tasks | None needed |
+| **Ollama** (local) | DeepSeek V4-Pro/Flash, Qwen3-Coder-Next, Qwen3.6, Gemma 4, Nemotron | Free/private local inference — great for embeddings, drafts, and offline work | None needed |
 
 ### Local Models (Ollama)
 
@@ -327,8 +342,10 @@ Run models on your own hardware for free. Recommended local models:
 
 | Model | Size | Best For | Min VRAM |
 |-------|------|----------|----------|
-| Qwen 3.5 Opus Distilled V3 | 32B | Best local reasoning, coding | 16GB |
-| Gemma 4 | 27B | Google's latest, fast, 1M context | 16GB |
+| Qwen3-Coder-Next | 30B+ | Best local coding lane | 24GB |
+| DeepSeek V4-Flash | MoE | Cheap local/open inference if you can host it | 24GB+ |
+| Qwen3.6-27B | 27B | Single-GPU reasoning/coding balance | 16GB |
+| Gemma 4 | 27B | Fast general assistant, long context | 16GB |
 | Nemotron 30B | 30B | Fine-tunable, good general purpose | 16GB |
 | nomic-embed-text | 274M | Free embeddings for memory search | 2GB |
 
@@ -380,7 +397,7 @@ After initial setup, fine-tune with `hermes config set`:
 
 ```bash
 # Set primary model
-hermes config set model anthropic/claude-opus-4-6
+hermes config set model anthropic/claude-sonnet
 
 # Set fallback model (used when primary is rate-limited)
 hermes config set fallback_models '["openrouter/xiaomi/mimo-v2-pro"]'
@@ -1749,7 +1766,8 @@ You've now got the full picture:
 - **[Part 3: LightRAG](#part-3-lightrag--graph-rag-that-actually-works)** — Graph-based knowledge
 - **[Part 4: Telegram](#part-4-telegram-setup-chat-from-anywhere)** — Mobile access
 - **[Part 5: On-the-Fly Skills](#part-5-on-the-fly-skills-let-hermes-build-its-own-playbook)** — Self-improving workflows
-- **[Part 22: Latest Power Moves](./part22-latest-power-moves.md)** — Curator, TUI habits, plugins, and the current upgrade checklist
+- **[Part 22: Latest Power Moves](./part22-latest-power-moves.md)** — Curator, TUI habits, plugins, and context hygiene
+- **[Part 23: Tenacity Stack](./part23-tenacity-stack.md)** — Kanban, `/goal`, Checkpoints v2, no-agent cron, and the current upgrade checklist
 
 Start with setup, add what you need, and let Hermes build the rest.
 

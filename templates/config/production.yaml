@@ -3,7 +3,7 @@
 # ------------------------------------------------------------
 # Full-stack, hardened, observable.
 #   - Multi-provider with task-aware routing
-#   - Telegram + Discord + Slack + email gateways
+#   - Telegram + Discord + Slack + Google Chat + email gateways
 #   - LightRAG + mem0 for cross-device memory
 #   - MCP: GitHub, Postgres, Cloudflare, Linear, filesystem
 #   - Langfuse tracing, cost alerts, eval hooks
@@ -15,11 +15,11 @@ version: 1
 
 models:
   default: anthropic/claude-sonnet
-  classification: google/gemini-2.5-flash
-  long_context: google/gemini-2.5-pro
+  classification: google/gemini-3.1-flash
+  long_context: google/gemini-3.1-pro
   coding: anthropic/claude-sonnet
-  reasoning: openai/reasoning
-  cheap: moonshot/kimi
+  reasoning: openai/gpt-5.5
+  cheap: moonshot/kimi-k2.6
   providers:
     anthropic:
       api_key: ${ANTHROPIC_API_KEY}
@@ -40,17 +40,17 @@ routing:
   # See Part 20 — the rules that drop spend ~90% on typical workloads
   rules:
     - intent: classification
-      model: google/gemini-2.5-flash
+      model: google/gemini-3.1-flash
     - intent: coding
       model: anthropic/claude-sonnet
     - intent: long_context
       when: { tokens_in: { gt: 200000 } }
-      model: google/gemini-2.5-pro
+      model: google/gemini-3.1-pro
     - intent: reasoning
       when: { needs_deep_reasoning: true }
-      model: openai/reasoning
+      model: openai/gpt-5.5
     - intent: bulk_data
-      model: moonshot/kimi
+      model: moonshot/kimi-k2.6
 
 gateways:
   cli: { enabled: true }
@@ -75,6 +75,13 @@ gateways:
     signing_secret: ${SLACK_SIGNING_SECRET}
     bot_token: ${SLACK_BOT_TOKEN}
     trust_label: medium
+  google_chat:
+    enabled: false                    # Enable after Workspace app + allowlists are configured
+    project_id: ${GOOGLE_CLOUD_PROJECT}
+    credentials_json: ${GOOGLE_CHAT_CREDENTIALS_JSON}
+    allowed_spaces:
+      - ${GOOGLE_CHAT_ADMIN_SPACE}
+    trust_label: medium
   email:
     enabled: true
     imap:
@@ -91,7 +98,7 @@ memory:
   backend: lightrag
   lightrag:
     working_dir: ~/.hermes/lightrag
-    llm_model: google/gemini-2.5-flash
+    llm_model: google/gemini-3.1-flash
     embedding_model: openai/text-embedding-3-small
   mem0:
     enabled: true
@@ -99,7 +106,7 @@ memory:
 
 context:
   compress_trigger_tokens: 48000
-  compress_model: google/gemini-2.5-flash
+  compress_model: google/gemini-3.1-flash
   preserve_last_k: 6
 
 mcp_servers:

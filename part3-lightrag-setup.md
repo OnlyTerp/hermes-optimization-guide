@@ -88,7 +88,7 @@ EMBEDDING_API_KEY=<your-fireworks-api-key>
 
 > **Security tip:** Set restrictive permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
 
-> **Tip:** Use `gpt-4.1-mini` or `claude-sonnet-4-20250514` for entity extraction. It doesn't need to be your smartest model — it just needs to reliably identify entities and relationships. Cheaper models save money on ingestion.
+> **Tip:** Use a cheap GPT-5.5-mini/Gemini Flash-class model for entity extraction. It doesn't need to be your smartest model — it just needs to reliably identify entities and relationships. Cheaper models save money on ingestion.
 
 > **Embedding quality matters.** If you have a GPU with 8GB+ VRAM, run `nomic-embed-text` locally via Ollama for free. If you want the best quality, use Fireworks' Qwen3-Embedding-8B (4096 dimensions) — the search accuracy difference is dramatic.
 

@@ -51,7 +51,7 @@ Uses Gemini 2.5 Pro's 1M context to ingest entire lockfiles + advisory databases
          # repo2/uv.lock
          ...
    toolsets: [web]
-   model: gemini-2.5-pro          # 1M context
+   model: gemini-3.1-pro          # 1M context
    max_iterations: 30
    ```
 

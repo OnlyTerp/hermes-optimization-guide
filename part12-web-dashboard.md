@@ -1,6 +1,6 @@
 # Part 12: The Local Web Dashboard (Stop Editing YAML)
 
-*Introduced in v0.9 and substantially upgraded through v0.12. The dashboard is now a browser-based control panel plus an embedded real Hermes TUI, not just a YAML editor.*
+*Introduced in v0.9 and substantially upgraded through v0.13. The dashboard is now a browser-based control panel for config, Chat/TUI, Kanban, plugins, profiles, and analytics — not just a YAML editor.*
 
 ---
 
@@ -19,7 +19,8 @@ The **web dashboard** (`hermes dashboard`) replaces most of that with a single b
 - Log tailer with level/component filters
 - Usage and cost analytics (daily token + cost breakdown, per-model)
 - Cron job management
-- Skills, Curator, plugins, and toolsets browser with enable/disable toggles
+- Kanban boards, worker/task status, comments, blocks, and handoffs
+- Skills, Curator, plugins, profiles, and toolsets browser with enable/disable toggles
 
 Everything runs on `127.0.0.1` — no data leaves your machine.
 
@@ -100,12 +101,13 @@ Form-based editor for `config.yaml`. Fields are auto-discovered from `DEFAULT_CO
 - **model** — default model, provider, base URL, reasoning settings
 - **terminal** — backend (local / docker / ssh / modal), timeouts, shell preferences
 - **display** — skin, tool progress rendering, spinner settings
-- **agent** — max iterations, gateway timeout, `service_tier` (Fast Mode)
+- **agent** — max iterations, gateway timeout, `service_tier` (Fast Mode), `/goal` behavior
 - **delegation** — subagent limits, reasoning effort
 - **memory** — provider, context injection settings
 - **approvals** — dangerous command mode (`ask` / `yolo` / `deny`)
 - **plugins** — enabled/disabled plugin allowlists
 - **curator** — schedule, pruning thresholds, pinned/archived behavior
+- **kanban** — board location, worker profiles, retry budget, stale heartbeat reclaim policy
 
 Dropdowns for known-value fields (terminal backend, skin, approval mode). Toggles for booleans. Text inputs for everything else.
 

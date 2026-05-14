@@ -115,10 +115,10 @@ After initial setup, fine-tune with `hermes config set`:
 
 ```bash
 # Set primary model
-hermes config set model anthropic/claude-sonnet-4-20250514
+hermes config set model anthropic/claude-sonnet
 
 # Set fallback model (used when primary is rate-limited)
-hermes config set fallback_models '["openrouter/anthropic/claude-sonnet-4-20250514"]'
+hermes config set fallback_models '["openrouter/anthropic/claude-sonnet-5"]'
 ```
 
 ### Agent Behavior

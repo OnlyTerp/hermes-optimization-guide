@@ -106,9 +106,17 @@ security:
     # DO NOT ADD: any subagent that reads Telegram, email, webhooks, or scraped web
 ```
 
-### v0.12 Hardline Blocks
+### v0.13 Security Defaults
 
-Hermes now has hardline command blocking for unrecoverable patterns. Treat it as the seatbelt, not the whole car: keep your own denylist, preserve private approval channels, and never route approvals back into the same untrusted group/chat that triggered the action.
+Hermes v0.13 closed another security wave, including 8 P0s. Update your threat model:
+
+- **Secret redaction is ON by default.** Do not disable it for "cleaner logs." If you explicitly opt out, treat logs/debug bundles as secret-bearing artifacts.
+- **Discord role allowlists are guild-scoped.** Re-check any config that reused role IDs across servers; cross-guild role assumptions were the dangerous part.
+- **WhatsApp rejects strangers by default.** Keep it that way unless you intentionally operate a public inbox, and route public messages to quarantine.
+- **auth.json and MCP OAuth TOCTOU windows were closed.** Still keep OAuth tokens scoped and avoid sharing MCP credentials across trust zones.
+- **Gateway debug/log snapshots pass through the redactor.** Verify this before sending debug bundles to anyone else.
+
+Hardline command blocking remains the seatbelt, not the whole car: keep your own denylist, preserve private approval channels, and never route approvals back into the same untrusted group/chat that triggered the action.
 
 ---
 
@@ -121,7 +129,7 @@ security:
   secrets:
     scope: per_tool                  # Env vars only inject into the tool that declared them
     redaction:
-      enabled: true                  # Scrub known-secret patterns from model-visible output
+      enabled: true                  # Default in v0.13; keep it explicit in hardened configs
       patterns:
         - "sk-[a-zA-Z0-9]{20,}"      # OpenAI-style keys
         - "xoxb-[0-9-a-f]{20,}"      # Slack bot tokens
@@ -242,7 +250,7 @@ inherits: default
 model:
   # Cheaper model — quarantine sessions are high-volume, low-stakes
   provider: openrouter
-  model: google/gemini-2.5-flash
+  model: google/gemini-3.1-flash
 security:
   approval:
     require_approval:
