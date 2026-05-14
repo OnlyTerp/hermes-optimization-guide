@@ -36,8 +36,8 @@ Retail list prices; some providers may offer committed-use discounts.
 
 | Model | Cost | p50 | p95 | Pass | Notes |
 |---|---:|---:|---:|---:|---|
-| google/gemini-3.1-flash | $0.018 | 0.9s | 1.6s | 98/100 | Default for this workload |
-| cerebras/qwen-3-32b  | $0.004 | 0.3s | 0.7s | 96/100 | **Fastest**, slightly worse on sarcasm |
+| google/gemini-3.1-flash | $0.018 | 0.9s | 1.6s | 98/100 | Refresh against Gemini 3.1 Flash; was default for this workload |
+| cerebras/qwen-3-32b  | $0.004 | 0.3s | 0.7s | 96/100 | Refresh against Qwen 3 32B; was **fastest**, slightly worse on sarcasm |
 | anthropic/claude-haiku-4 | $0.021 | 1.1s | 2.2s | 98/100 | Overkill |
 | openai/gpt-5.5-mini     | $0.031 | 1.4s | 2.9s | 99/100 | Good but pricier; refresh against GPT-5.5-mini |
 
@@ -47,8 +47,8 @@ Retail list prices; some providers may offer committed-use discounts.
 
 | Model | Cost | p50 | p95 | Pass | Notes |
 |---|---:|---:|---:|---:|---|
-| google/gemini-3.1-pro   | $0.31 | 22s | 38s | ✅ | **Best quality**, 1M context |
-| google/gemini-3.1-flash | $0.08 | 11s | 19s | ✅ | 4x cheaper, acceptable quality |
+| google/gemini-3.1-pro   | $0.31 | 22s | 38s | ✅ | Refresh against Gemini 3.1 Pro; was best quality, 1M context |
+| google/gemini-3.1-flash | $0.08 | 11s | 19s | ✅ | Refresh against Gemini 3.1 Flash; was 4x cheaper, acceptable quality |
 | anthropic/claude-sonnet-5 | $0.72 | 19s | 31s | ✅ | Caps at 200K; refresh against Sonnet 5 |
 | openai/gpt-5.5 | $0.90 | 26s | 45s | ✅ | Refresh against GPT-5.5 |
 
@@ -73,7 +73,7 @@ Retail list prices; some providers may offer committed-use discounts.
 | openai/gpt-5.5              | $0.11 | 18s | 32s | ✅ | Refresh against GPT-5.5 |
 | anthropic/claude-opus-4.7     | $0.42 | 27s | 46s | ✅ | Refresh against Opus 4.7 |
 | zai/glm-5                 | $0.03 | 9s  | 18s | ✅ | Refresh against GLM-5 |
-| google/gemini-3.1-pro       | $0.08 | 14s | 25s | 4/5 | Sometimes skips steps |
+| google/gemini-3.1-pro       | $0.08 | 14s | 25s | 4/5 | Refresh against Gemini 3.1 Pro; sometimes skipped steps |
 
 **Recommendation:** GPT-5.5 when stakes are high, GLM-5 for exploration.
 
@@ -82,8 +82,8 @@ Retail list prices; some providers may offer committed-use discounts.
 | Model | Cost | p50 | p95 | Pass | Notes |
 |---|---:|---:|---:|---:|---|
 | moonshot/kimi-k2.6          | $0.12 | 38s | 74s | 50/50 | Refresh against Kimi K2.6 |
-| google/gemini-3.1-flash     | $0.29 | 46s | 82s | 50/50 | Slightly slower |
-| cerebras/qwen-3-32b      | $0.08 | 12s | 28s | 48/50 | **Fastest**; some schema drift |
+| google/gemini-3.1-flash     | $0.29 | 46s | 82s | 50/50 | Refresh against Gemini 3.1 Flash; was slightly slower |
+| cerebras/qwen-3-32b      | $0.08 | 12s | 28s | 48/50 | Refresh against Qwen 3 32B; was **fastest** with some schema drift |
 
 **Recommendation:** Kimi for correctness, Cerebras when latency > perfection.
 
