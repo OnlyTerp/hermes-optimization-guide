@@ -21,7 +21,7 @@ parameters:
 
 # weekly-dep-audit — Cross-Repo Dependency Audit
 
-Uses Gemini 2.5 Pro's 1M context to ingest entire lockfiles + advisory databases and report actionable findings.
+Uses Gemini 3.1 Pro's 1M context to ingest entire lockfiles + advisory databases and report actionable findings.
 
 ## Procedure
 
@@ -34,7 +34,7 @@ Uses Gemini 2.5 Pro's 1M context to ingest entire lockfiles + advisory databases
    - `go.sum`
    - `Gemfile.lock`
 
-3. **Delegate to Gemini 2.5 Pro.** Build a single `delegate_task` call:
+3. **Delegate to Gemini 3.1 Pro.** Build a single `delegate_task` call:
    ```yaml
    goal: |
      Audit the following lockfiles for security advisories at severity ${SEVERITY_FLOOR} or higher.
@@ -87,4 +87,4 @@ Uses Gemini 2.5 Pro's 1M context to ingest entire lockfiles + advisory databases
 
 ## Cost note
 
-Gemini 2.5 Pro at $1.25/$10 per MTok ingesting 1M of lockfiles ≈ $1.25 per run. Cheaper than GitHub Advanced Security for small orgs, and catches non-GitHub advisories too.
+Gemini 3.1 Pro at $1.50/$12 per MTok ingesting 1M of lockfiles ≈ $1.50 per run. Cheaper than GitHub Advanced Security for small orgs, and catches non-GitHub advisories too.
