@@ -82,7 +82,7 @@ delegate_task(
     goal="Implement the user settings page with React",
     context="Repo at /home/terp/my-app. Use existing component library in src/components/",
     acp_command="claude",
-    acp_args=["--acp", "--stdio", "--model", "claude-sonnet-4-20250514"]
+    acp_args=["--acp", "--stdio", "--model", "claude-sonnet-5"]
 )
 
 # Codex

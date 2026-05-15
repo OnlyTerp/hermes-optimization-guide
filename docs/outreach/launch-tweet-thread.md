@@ -7,7 +7,7 @@
 **1/8**
 I got tired of Hermes guides that explain the architecture but don't give you anything to run, so I shipped the opposite:
 
-23 parts of documentation **plus** 13 installable skills, 5 production configs, 4 reference architectures, a VPS bootstrap script, hardened systemd units, a reproducible cost benchmark, and an in-browser config wizard.
+24 parts of documentation **plus** 13 installable skills, 5 production configs, 4 reference architectures, a VPS bootstrap script, hardened systemd units, a reproducible cost benchmark, and an in-browser config wizard.
 
 github.com/OnlyTerp/hermes-optimization-guide
 

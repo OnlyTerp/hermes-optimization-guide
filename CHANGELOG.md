@@ -2,6 +2,27 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-05-14 — Hermes v0.13.0 Tenacity Refresh
+
+### Added
+- **Part 23 — Tenacity Stack** covering durable Kanban boards, worker lanes, `/goal`, Checkpoints v2, no-agent cron, provider plugins, and the v0.13 upgrade checklist
+- Google Chat coverage in Part 15 as the 20th messaging platform
+- Kanban worker-lane guidance in Part 18 for Codex/Claude/Gemini/OpenCode orchestration
+- v0.13 security-default guidance in Part 19: redaction on by default, guild-scoped Discord role allowlists, WhatsApp stranger rejection, and OAuth/auth.json TOCTOU fixes
+
+### Changed
+- README badges, "What's New", table of contents, architecture copy, and model tables now target Hermes v0.13.0 (v2026.5.7)
+- Part 9 model/provider guidance updated for May 2026 SOTA: Claude Sonnet 5 / Opus 4.7, GPT-5.5, Gemini 3.1, Kimi K2.6, DeepSeek V4, Qwen3.6, provider plugins, and media routing
+- Part 12 updated for dashboard Kanban/profile coverage
+- Part 14 updated for `/goal`
+- Part 16 updated for v0.13 debug/redaction language
+- Part 20 updated for Kanban-aware observability
+- Config templates, cron templates, benchmarks, localized READMEs, roadmap, outreach copy, and wizard defaults refreshed for the 24-part guide
+
+### Removed
+- v0.12-as-current framing from top-level guidance
+- Stale April 2026 model recommendations where May 2026 replacements are now the better default
+
 ## 2026-04-30 — Hermes v0.11/v0.12 Refresh
 
 ### Added

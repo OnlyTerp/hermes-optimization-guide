@@ -1,6 +1,6 @@
 # Part 22: Latest Power Moves — Curator, TUI, Plugins, Context Files
 
-*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first. These are the changes that most improve daily usage.*
+*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13 durability layer — Kanban, `/goal`, Checkpoints v2, and no-agent cron — go next to [Part 23](./part23-tenacity-stack.md).*
 
 ---
 
@@ -142,9 +142,9 @@ cron:
 
 ---
 
-## 7. Upgrade Checklist for Existing Installs
+## 7. v0.12 Upgrade Checklist for Existing Installs
 
-Before moving an older v0.9/v0.10 setup to v0.12:
+Before moving an older v0.9/v0.10 setup to the v0.12 interface/curator stack:
 
 ```bash
 hermes update --check
@@ -161,6 +161,7 @@ Then:
 4. Run `hermes curator run --dry-run`.
 5. Test one gateway message, one tool call, one skill, and one cron job.
 6. Review [Part 19](./part19-security-playbook.md) before enabling broad platform access.
+7. Then run the [v0.13 Tenacity checklist](./part23-tenacity-stack.md#8-upgrade-checklist-from-v012-to-v013).
 
 ---
 

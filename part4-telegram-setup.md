@@ -1,19 +1,20 @@
 # Part 4: Telegram Setup (Chat From Anywhere)
 
-*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 18+ messaging adapters — start here, branch out to the others as needed.*
+*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 20+ messaging adapters — start here, branch out to the others as needed.*
 
 ---
 
-## The 18+ Platform Gateway
+## The 20+ Platform Gateway
 
-As of v0.12.0 (April 2026), the Hermes gateway ships adapters/plugins for **18+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism:
+As of v0.13.0 (May 2026), the Hermes gateway ships adapters/plugins for **20+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism:
 
 | Flagship | New in v0.9 | Enterprise / regional | Self-hosted / generic |
 |----------|-------------|-----------------------|-----------------------|
 | Telegram (this part) | iMessage (BlueBubbles) | DingTalk | Signal |
 | Discord | WeChat / Weixin | Feishu / Lark | Matrix |
 | Slack | WeCom | Mattermost | SMS (Twilio) |
-| WhatsApp | QQBot | Microsoft Teams | Email (IMAP+SMTP) |
+| Google Chat | QQBot | Microsoft Teams | Email (IMAP+SMTP) |
+| WhatsApp | | | |
 | | Tencent Yuanbao | | Home Assistant |
 | | | | Webhook (generic) |
 

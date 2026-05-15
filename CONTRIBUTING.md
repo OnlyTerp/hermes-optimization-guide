@@ -37,7 +37,7 @@ This guide is built in public. PRs welcome.
 ├── ECOSYSTEM.md
 ├── ROADMAP.md
 ├── LICENSE
-├── part1-setup.md … part22-latest-power-moves.md
+├── part1-setup.md … part23-tenacity-stack.md
 ├── diagrams/architecture.md
 ├── skills/
 │   ├── README.md

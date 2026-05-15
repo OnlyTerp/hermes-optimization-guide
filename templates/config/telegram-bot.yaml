@@ -14,7 +14,7 @@ version: 1
 
 models:
   default: anthropic/claude-sonnet
-  classification: google/gemini-2.5-flash
+  classification: google/gemini-3.1-flash
   providers:
     anthropic:
       api_key: ${ANTHROPIC_API_KEY}
@@ -47,7 +47,7 @@ memory:
   backend: lightrag
   lightrag:
     working_dir: ~/.hermes/lightrag
-    llm_model: google/gemini-2.5-flash
+    llm_model: google/gemini-3.1-flash
     embedding_model: openai/text-embedding-3-small
 
 security:
@@ -68,6 +68,8 @@ security:
         sampling: true
     approval_channel: telegram_dm       # Always DM, never group
   secrets:
+    # Redaction is on by default in Hermes v0.13; keep patterns explicit
+    # so hardened deployments know what is being scrubbed.
     redaction_patterns:
       - 'sk-[A-Za-z0-9]{40,}'           # OpenAI / Anthropic style
       - 'xoxb-[A-Za-z0-9-]{40,}'        # Slack bot

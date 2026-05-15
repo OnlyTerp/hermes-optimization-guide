@@ -92,7 +92,7 @@ Generate a human-readable (or machine-readable) cost report from Hermes' usage l
 5. **Recommend savings.** Pattern-match the data:
    - Any single skill > 30% of weekly cost → suggest a cheaper model for that skill
    - Input tokens > 10x output tokens on any provider → suggest prompt caching
-   - Gemini calls without `google/gemini-2.5-flash` on classification-ish intents → suggest routing
+   - Gemini calls without `google/gemini-3.1-flash` on classification-ish intents → suggest routing
 
 6. **Deliver.** Post to private notification channel. Attach the raw JSON if format is json.
 

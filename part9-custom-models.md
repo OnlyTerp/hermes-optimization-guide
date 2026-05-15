@@ -1,14 +1,14 @@
 # Part 9: Custom Model Providers (Use Any Model You Want)
 
-*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Gemini OAuth, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, and Ollama. This is the April 30, 2026 cheat sheet.*
+*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Gemini OAuth, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, Vercel AI Gateway, Ollama, and provider plugins. This is the May 14, 2026 cheat sheet.*
 
-> **What's new since the v0.10 guide refresh** — Gemini OAuth is now built into `hermes model` (no separate CLI install), AWS Bedrock uses the native Converse API, Azure AI Foundry auto-detects OpenAI vs Anthropic transports, LM Studio has `hermes doctor` checks and live `/models`, MiniMax OAuth uses PKCE, and OpenRouter/Nous model pickers update from a remote manifest instead of a hardcoded release snapshot.
+> **What's new since the v0.12 guide refresh** — v0.13 makes providers pluggable, adds media-aware routing such as `video_analyze`, improves MCP media handling, keeps Gemini OAuth inside `hermes model`, and makes OpenRouter/Nous/Vercel model pickers rely on live manifests instead of hardcoded release snapshots.
 
 ---
 
 ## Native Adapters vs Generic OpenAI-Compatible
 
-As of v0.12.0 (April 2026), Hermes ships **native adapters** for a large provider set. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
+As of v0.13.0 (May 2026), Hermes ships **native adapters** for a large provider set, plus a provider-plugin surface for out-of-tree backends. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
 
 | Provider | Native adapter? | Notable feature |
 |----------|-----------------|-----------------|
@@ -19,11 +19,11 @@ As of v0.12.0 (April 2026), Hermes ships **native adapters** for a large provide
 | **AWS Bedrock** | Yes | Converse API, IAM credentials, cross-region inference profiles, Bedrock Guardrails |
 | **Azure AI Foundry** | Yes | Auto-detects OpenAI-style vs Anthropic-style deployments and context length |
 | **LM Studio** | Yes | Local `/models` discovery, optional auth, reasoning transport, `hermes doctor` checks |
-| **xAI (Grok)** | Yes | Native live X search and xAI image/STT/TTS integrations |
+| **xAI (Grok)** | Yes | Native live X search and xAI image/STT/TTS integrations, including Custom Voices |
 | **Xiaomi MiMo** | Yes | Native reasoning modes (`low`/`medium`/`high`) exposed as config |
 | **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](./README.md#part-3-lightrag--graph-rag-that-actually-works)) |
 | **z.ai / GLM** | Yes | Strong open-weight tool-use models; good cheap fallback for planning/exploration |
-| **Google Gemini (direct)** | Yes | 1M context; native prompt caching on Gemini 2.5 Pro |
+| **Google Gemini (direct)** | Yes | 1M context; native prompt caching on Pro; image/video-capable model routing |
 | **Google Gemini (OAuth)** | Yes | Browser PKCE login via `hermes model`; free tier supported; no external `gemini` install |
 | **MiniMax** | Yes | API key or OAuth; native streaming and TTS |
 | **GMI Cloud** | Yes | Hosted open models behind a native provider |
@@ -36,24 +36,25 @@ As of v0.12.0 (April 2026), Hermes ships **native adapters** for a large provide
 | **Hugging Face** | Yes | Any TGI / TEI endpoint (self-hosted or Inference Endpoints) |
 | **OpenRouter** | Yes | Pass-through to 200+ models; respects native adapter quirks when downstream is one |
 | **Ollama** (local) | Generic | OpenAI-compatible, zero auth |
+| **Provider plugin** | Plugin | Drop in a `ProviderProfile` without patching Hermes core |
 | **Anything else** | Generic | Any OpenAI-compatible `base_url` |
 
 Pick the native adapter when one exists — you get the provider-specific features for free. Fall back to the generic OpenAI-compatible path only for endpoints that don't have a native adapter yet.
 
-### Provider Cheat Sheet (April 30, 2026)
+### Provider Cheat Sheet (May 14, 2026)
 
 The exact "best model" moves weekly, so treat this as a routing posture rather than a leaderboard. Use `hermes model` for live picker data, then pin only what you need reproducible.
 
 | Need | Start here | Why |
 |------|------------|-----|
-| Default coding / refactors | Anthropic Sonnet or Codex OAuth | Best reliability for patch-heavy work; Codex OAuth avoids API-key churn |
-| Deep reasoning / high stakes | OpenAI reasoning or Anthropic Opus-class | Use explicitly; do not make it the default for cron/bulk tasks |
-| Long-context repo or document reads | Gemini Pro/Flash or OpenRouter equivalent | Huge window, cheap enough for map/reduce and summarization |
-| Cheap daily driver | Gemini OAuth + Kimi/Moonshot + z.ai/GLM | Good quality/cost mix, especially with auxiliary routing |
+| Default coding / refactors | Anthropic Sonnet 5, Claude Code, or Codex OAuth | Best reliability for patch-heavy work; Codex OAuth avoids API-key churn |
+| Deep reasoning / high stakes | GPT-5.5 reasoning or Anthropic Opus 4.7 | Use explicitly; do not make it the default for cron/bulk tasks |
+| Long-context repo or document reads | Gemini 3.1 Pro/Flash or OpenRouter equivalent | Huge window, cheap enough for map/reduce, video, and summarization |
+| Cheap daily driver | Gemini OAuth + Kimi K2.6 + z.ai/GLM | Good quality/cost mix, especially with auxiliary routing |
 | Enterprise / VPC / compliance | AWS Bedrock or Azure AI Foundry | IAM/Azure auth, guardrails, private deployments, audit controls |
 | Local/privacy/offline | LM Studio or Ollama | No cloud egress; great for extraction, embeddings, and drafts |
 | Ultra-fast interactive turns | Cerebras or Groq | Very high tokens/sec; useful for classification and short-form chat |
-| Current-events search | xAI Grok or tool-backed web search | Grok has native live-X search; Tool Gateway can cover broader web |
+| Current-events search | xAI Grok 4.x or tool-backed web search | Grok has native live-X search; Tool Gateway can cover broader web |
 
 > Pricing and context windows change too quickly to hardcode. Hermes now pulls OpenRouter and Nous Portal picker lists from a remote manifest, while provider APIs supply pricing/context metadata where available.
 
@@ -231,7 +232,7 @@ model_aliases:
     model: cerebras/llama-3.3-70b
     provider: cerebras
   smart:
-    model: claude-opus-4-20250514
+    model: claude-opus-4.7
     provider: anthropic
   local:
     model: nemotron:latest
@@ -264,15 +265,15 @@ Use these as opinionated defaults, then tune with [Part 20's cost-routing playbo
 
 | Task | First choice | Fallback (cheaper) | Fallback (fastest) |
 |------|--------------|--------------------|--------------------|
-| Daily conversation | Anthropic Sonnet | Gemini OAuth or z.ai/GLM | Cerebras Llama/Qwen |
-| Coding delegation | Claude Code / Codex OAuth | OpenCode + Kimi/Moonshot | OpenCode + Cerebras |
-| Long-context reads (>200K) | Gemini 2.5 Pro | Gemini 2.5 Flash | — |
-| Classification / triage | Gemini 2.5 Flash | Cerebras Qwen3 32B | Arcee AFM-4.5 |
-| Reasoning (math, planning) | OpenAI reasoning model | Anthropic Opus-class | z.ai/GLM |
-| Current events / live search | xAI Grok | Gemini with grounding | Tool Gateway web search |
+| Daily conversation | Anthropic Sonnet 5 | Gemini OAuth or z.ai/GLM | Cerebras Llama/Qwen |
+| Coding delegation | Claude Code / Codex OAuth | OpenCode + Kimi K2.6 | OpenCode + Cerebras |
+| Long-context reads (>200K) | Gemini 3.1 Pro | Gemini Flash | — |
+| Classification / triage | Gemini Flash | Cerebras Qwen3 32B | Arcee AFM-4.5 |
+| Reasoning (math, planning) | GPT-5.5 reasoning | Anthropic Opus 4.7 | z.ai/GLM |
+| Current events / live search | xAI Grok 4.x | Gemini with grounding | Tool Gateway web search |
 | Embeddings (LightRAG) | Qwen3-Embedding-8B (Fireworks) | nomic-embed-text (Ollama) | OpenAI `text-embedding-3-small` |
-| TTS (Telegram voice) | OpenAI TTS via Tool Gateway | Gemini 2.5 Flash TTS | Edge TTS (free) |
-| Vision | Gemini 2.5 Flash | GPT-4o | Claude Sonnet 4.5 |
+| TTS (Telegram voice) | xAI Custom Voices or Tool Gateway TTS | Gemini Flash TTS | Edge TTS (free) |
+| Vision / video | Gemini 3.1 Pro/Flash | GPT-5.5 multimodal | Claude Sonnet 5 |
 
 ---
 
@@ -306,10 +307,11 @@ providers:
     api_key: ollama
 ```
 
-**Best local models for Hermes:**
-- **Nemotron 30B** — good all-around, fits in 24GB VRAM
-- **Qwen 2.5 32B** — strong reasoning, needs 24GB+
-- **Llama 3.3 70B Q4** — best quality, needs 40GB+ VRAM
+**Best local/open models for Hermes:**
+- **Qwen3-Coder-Next** — strongest local coding lane if you have 24GB+ VRAM
+- **DeepSeek V4-Flash / V4-Pro** — strong open-weight reasoning/coding if you can host MoE comfortably
+- **Qwen3.6-27B / 32B** — practical single-workstation reasoning/coding balance
+- **Nemotron 30B** — good all-around fallback, fits in 24GB VRAM
 
 **For embeddings (free):**
 
@@ -334,7 +336,7 @@ Hermes supports dedicated models for eight task types. Each can have its own pro
 
 | Task Type | What It Does | Default |
 |-----------|-------------|---------|
-| `vision` | Image analysis, screenshot understanding | auto |
+| `vision` | Image/video analysis, screenshot understanding | auto |
 | `web_extract` | Summarizing scraped web pages | auto |
 | `compression` | Context compression (summarizing old messages) | auto |
 | `session_search` | Searching past conversation transcripts | auto |
@@ -355,10 +357,10 @@ auxiliary_models:
     model: llama-3.3-70b
     timeout: 30
 
-  # Use a vision-capable model for image analysis
+  # Use a multimodal model for image/video analysis
   vision:
     provider: openrouter
-    model: google/gemini-2.5-flash
+    model: google/gemini-3.1-flash
     timeout: 60
 
   # Use local model for session search (free, frequent calls)
@@ -378,7 +380,7 @@ auxiliary_models:
 
 **Why bother:**
 - **Compression** runs on every long session. Using a cheap/fast model saves money without affecting quality (summarization doesn't need Opus).
-- **Vision** needs a multimodal model. If your main model doesn't do images, set this to one that does.
+- **Vision/video** needs a multimodal model. If your main model doesn't do media, set this to one that does.
 - **Session search** is called frequently. A local model makes it free.
 - **Approval** controls auto-execution. A fast model here means less latency on every tool call.
 
@@ -391,7 +393,7 @@ model_fallback:
   - provider: cerebras
     model: llama-3.3-70b
   - provider: openrouter
-    model: anthropic/claude-sonnet-4
+    model: anthropic/claude-sonnet-5
   - provider: local
     model: nemotron:latest
 ```

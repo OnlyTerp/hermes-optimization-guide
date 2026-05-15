@@ -18,7 +18,7 @@ profile: quarantine                     # Default to quarantine; explicit /trust
 profiles:
   quarantine:
     description: Untrusted-input-facing. Cheap model, approval on everything, no memory writes.
-    models: { default: google/gemini-2.5-flash }
+    models: { default: google/gemini-3.1-flash }
     tools_allowlist: [classify, reply, escalate]
     memory: { write: false, read: true }
     security:
@@ -76,6 +76,8 @@ security:
     approval_channel: telegram_dm
     approval_timeout_seconds: 300       # Reject if operator doesn't respond
   secrets:
+    # Redaction is on by default in Hermes v0.13; keep patterns explicit
+    # for auditability and memory/log hygiene.
     redaction_patterns:
       - 'sk-[A-Za-z0-9]{40,}'
       - 'xoxb-[A-Za-z0-9-]{40,}'
@@ -111,3 +113,9 @@ cron:
   - { name: weekly-bypass-audit, schedule: "0 10 * * 1",  task: "/audit-approval-bypass",                  notify: telegram_dm }
   - { name: monthly-rotate,      schedule: "0 4 1 * *",   task: "/rotate-secrets all",                     notify: telegram_dm }
   - { name: daily-log-sweep,     schedule: "0 2 * * *",   task: "/audit-injection-attempts since=24h",     notify: telegram_dm }
+  - name: disk-watchdog
+    schedule: "*/15 * * * *"
+    mode: no_agent                  # v0.13: script-only, no LLM session
+    command: >-
+      df -h / | awk 'NR==2 && $5+0 > 85 {print "Disk usage high: "$5}'
+    notify: telegram_dm

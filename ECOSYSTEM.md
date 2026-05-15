@@ -16,6 +16,7 @@ The canonical "where do I find X for Hermes" directory. Maintained alongside the
 - [`@modelcontextprotocol/server-google-drive`](https://www.npmjs.com/package/@modelcontextprotocol/server-gdrive) — Drive read
 
 ### First-party vendor MCPs
+- [`AWS Labs MCP servers`](https://github.com/awslabs/mcp) — AWS docs, CDK, cost, diagrams, and service-specific helpers
 - [`@cloudflare/mcp-server-cloudflare`](https://github.com/cloudflare/mcp-server-cloudflare) — Workers, KV, D1, R2
 - [`@supabase/mcp-server-supabase`](https://github.com/supabase-community/supabase-mcp/tree/main/packages/mcp-server-supabase) — Postgres + storage + auth
 - [`@stripe/mcp-server-stripe`](https://github.com/stripe/ai/tree/main/tools/modelcontextprotocol) — payments read + restricted writes
@@ -39,13 +40,13 @@ See [Part 17](./part17-mcp-servers.md) for install patterns and trust model guid
 
 ## Coding-agent integrations
 
-- [Claude Code](https://docs.claude.com/en/docs/claude-code) — `claude -p` + ACP
-- [OpenAI Codex CLI](https://github.com/openai/codex) — `codex -p`
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `gemini -p` (free tier via OAuth)
-- [OpenCode](https://github.com/sst/opencode) — multi-model orchestrator
+- [Claude Code](https://docs.claude.com/en/docs/claude-code) — `claude -p` + ACP; best unattended PR lane with Sonnet 5 / Opus 4.7
+- [OpenAI Codex CLI](https://github.com/openai/codex) — `codex -p`; strong sandboxed bug-fix lane with GPT-5.5/Codex models
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `gemini -p` (free tier via OAuth); best repo-scale read/research lane
+- [OpenCode](https://github.com/sst/opencode) — multi-model orchestrator; useful with Kimi K2.6 / GLM budget lanes
 - [Aider](https://aider.chat) — pair-programming REPL
 
-See [Part 18](./part18-coding-agents.md).
+See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.md#2-add-worker-lanes-instead-of-giant-prompt-swarms).
 
 ---
 

@@ -1,6 +1,6 @@
-# Part 20: Observability & Cost Control — Langfuse Plugin, Helicone, /usage, Routing Playbooks
+# Part 20: Observability & Cost Control — Langfuse, Helicone, Kanban, /usage, Routing Playbooks
 
-*You can't optimize what you can't see. Hermes tracks tokens, latency, and errors natively, but once you're running across CLI + Telegram + Discord + cron + coding-agent delegations, you want a real tracing stack. This part sets up Langfuse, Helicone, or OpenTelemetry → Phoenix with one config block, then gives you the cost-routing playbook that dropped our test deployment from $34 to $3 per feature implementation.*
+*You can't optimize what you can't see. Hermes tracks tokens, latency, and errors natively, but once you're running across CLI + Telegram + Discord + Google Chat + cron + Kanban worker lanes, you want a real tracing stack. This part sets up Langfuse, Helicone, or OpenTelemetry → Phoenix with one config block, then gives you the cost-routing playbook that dropped our test deployment from $34 to $3 per feature implementation.*
 
 ---
 
@@ -70,7 +70,7 @@ hermes logs export --since 30d --format jsonl \
 
 ## Level 3 — Langfuse (Recommended Default)
 
-Langfuse is the "everything in one place" option: tracing, prompt management, evals, self-hostable. If you're not sure where to start, start here. In v0.12, Langfuse also ships as a bundled observability plugin, so prefer enabling that over hand-rolled hooks.
+Langfuse is the "everything in one place" option: tracing, prompt management, evals, self-hostable. If you're not sure where to start, start here. Since v0.12, Langfuse also ships as a bundled observability plugin, so prefer enabling that over hand-rolled hooks.
 
 ```bash
 hermes plugins enable observability/langfuse
@@ -118,6 +118,7 @@ Each Hermes turn becomes a trace. Each trace has spans for:
     - nested `llm.call` for sampling-enabled MCP servers
   - `memory.search` (queries and hits)
   - `skill.load` (which skills got pulled in)
+  - `kanban.task` / `kanban.worker` when a durable board lane claims or completes work
 
 Replay any turn, inspect the exact prompt, compare with previous runs, eval completions against datasets. This is how you find the turn that spent $4 on "how should I name this variable".
 
@@ -189,10 +190,10 @@ model_routing:
     provider: anthropic
   routes:
     - match: { intent: [classification, extraction, triage, sum_under_500_tokens] }
-      model: gemini-2.5-flash
+      model: gemini-3.1-flash
       provider: google
     - match: { intent: long_context, tokens_gte: 150000 }
-      model: gemini-2.5-pro
+      model: gemini-3.1-pro
       provider: openrouter
     - match: { intent: [write_code, refactor, debug], complexity: medium }
       model: glm
@@ -210,7 +211,7 @@ Hermes classifies intent via a tiny prompt (~100 tokens) and routes accordingly.
 | Scenario | Naive frontier default | Routed | Savings |
 |----------|----------------------------|--------|---------|
 | Feature implementation (100 calls) | ~$34 | ~$3 (mostly Kimi/GLM) | 91% |
-| Long-doc summarization (10 calls, 200K each) | ~$42 | ~$4 (Gemini 2.5 Pro) | 90% |
+| Long-doc summarization (10 calls, 200K each) | ~$42 | ~$4 (Gemini Pro) | 90% |
 | Daily classification triage | ~$18/day | ~$1/day (Flash) | 94% |
 
 ### Rule 2: Prompt Caching Is Free Money

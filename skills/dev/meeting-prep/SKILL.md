@@ -19,7 +19,7 @@ security:
   notes: |
     Reads your calendar + email + Slack + memory. Does not write. Never
     forwards any of the prep content outside your approved channels.
-model_hint: google/gemini-2.5-flash
+model_hint: google/gemini-3.1-flash
 ---
 
 # meeting-prep — Pre-Meeting Brief
