@@ -143,7 +143,7 @@ When something goes weird, the old flow was: grep through `~/.hermes/logs/`, pas
 ```text
 You → /debug
   Collecting diagnostics…
-  ✓ Agent version: v0.13.0 (v2026.5.7)
+  ✓ Agent version: v0.14.0 (v2026.5.16)
   ✓ Platform: Linux 6.8.0 / Python 3.12.3
   ✓ Gateway: running (3 adapters connected)
   ✓ Last 200 lines of agent.log
@@ -229,9 +229,9 @@ Preserves detail relevant to the topic and aggressively compresses everything el
 
 A handful of hardening changes landed in the "everywhere" + "gateway" releases worth calling out explicitly:
 
-### v0.13 redaction + hardline blocklist
+### v0.13+ redaction + hardline blocklist
 
-Hermes v0.13 turns secret redaction on by default and keeps the hardline blocklist for commands that should not be recoverable through casual approval prompts. Keep your own denylist too, but do not rely on "the model will know this is dangerous" for commands that delete homes, scrape credentials, or hit metadata services.
+Hermes v0.13+ turns secret redaction on by default and keeps the hardline blocklist for commands that should not be recoverable through casual approval prompts. Keep your own denylist too, but do not rely on "the model will know this is dangerous" for commands that delete homes, scrape credentials, or hit metadata services.
 
 Useful custom denylist additions:
 
@@ -307,7 +307,7 @@ You've now seen the backup/debug slice of the current feature surface:
 - [Part 12 — Web Dashboard](./part12-web-dashboard.md)
 - [Part 13 — Nous Tool Gateway](./part13-tool-gateway.md)
 - [Part 14 — Fast Mode & Background Watchers](./part14-fast-mode-watchers.md)
-- [Part 15 — New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md)
+- [Part 15 — New Platforms (Teams, LINE, SimpleX, iMessage, WeChat, Android)](./part15-new-platforms.md)
 - [Part 23 — Tenacity Stack](./part23-tenacity-stack.md)
 
-If you installed fresh on v0.13.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.
+If you installed fresh on v0.14.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.

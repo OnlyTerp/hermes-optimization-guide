@@ -2,6 +2,24 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-05-25 — Hermes v0.14.0 Foundation Refresh
+
+### Added
+- v0.14 Foundation coverage: PyPI install path, lighter lazy-dependency installs, `hermes proxy`, `x_search`, `/handoff`, SuperGrok OAuth, Grok 4.3 1M context, and native Windows beta
+- Part 13 sections for the OpenAI-compatible local proxy and first-class X search
+- Part 15 coverage for Teams end-to-end, LINE, and SimpleX Chat, bringing gateway guidance to 22+ platforms
+- Part 18 May 25 coding-agent update notes for Claude Code Week 20+, Codex v0.133+, Gemini CLI v0.43, Zed ACP Registry, and proxy-backed Aider/Cline/Continue
+
+### Changed
+- README badges, “What's New,” quickstart/setup copy, platform counts, localized README summaries, roadmap, and outreach drafts now target Hermes v0.14.0 (v2026.5.16)
+- Part 9 model/provider guidance refreshed for May 25 SOTA: Grok 4.3, SuperGrok OAuth, OpenRouter/Nous live catalogs, Claude Sonnet 5 / Opus 4.7, GPT-5.5, Gemini 3.1, Kimi K2.6, GLM-5, DeepSeek V4, Qwen3.6, and current routing defaults
+- Config templates, wizard defaults, benchmark matrix, and reference architectures use current model identifiers and Cerebras Qwen 3 instead of older Llama/GPT-4.1/Gemini 2.5 framing
+- Part 23 reframed from v0.13-only Tenacity guidance to the current Foundation + Tenacity operating stack
+
+### Removed
+- v0.13-as-current framing from top-level guidance
+- Stale “Native Windows unsupported,” “20+ platforms,” Cerebras Llama 70B, GPT-4.1, and Gemini 2.5 recommendations where v0.14/May 25 defaults supersede them
+
 ## 2026-05-14 — Hermes v0.13.0 Tenacity Refresh
 
 ### Added

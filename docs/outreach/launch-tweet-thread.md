@@ -59,10 +59,10 @@ Part 19 is the defensive playbook: 7 layers (provenance, approval, secret isolat
 **7/8**
 Cost routing playbook (Part 20) drops a typical workload by ~90%:
 - Triage → Gemini Flash or Cerebras
-- Classification → Cerebras Llama (~free)
+- Classification → Cerebras Qwen 3 (~free)
 - Default coding → Kimi/Moonshot
 - Hard coding → Sonnet (explicit opt-in)
-- Long context → Gemini 2.5 Pro
+- Long context → Gemini 3.1 Pro
 
 Benchmarks + methodology in `benchmarks/`.
 

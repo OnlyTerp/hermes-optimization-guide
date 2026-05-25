@@ -89,10 +89,10 @@ systemctl enable --now hermes@alice.service
 
 Use [`templates/config/production.yaml`](../../templates/config/production.yaml) as the base. Key rules:
 
-- **Triage** (most traffic): Cerebras Llama 70B — free-ish tier
+- **Triage** (most traffic): Cerebras Qwen 3 32B — free-ish tier
 - **Default coding:** Kimi/Moonshot (cheap competent coder)
 - **"Hard" coding / architecture:** Anthropic Sonnet — explicit opt-in
-- **Long-context research:** Gemini 2.5 Pro
+- **Long-context research:** Gemini 3.1 Pro
 - **Deep reasoning:** OpenAI reasoning model (opt-in)
 
 With weekly `cost-report` → Discord ops channel, cost anomalies surface before the invoice.

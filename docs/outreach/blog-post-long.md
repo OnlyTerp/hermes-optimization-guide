@@ -57,9 +57,9 @@ The default advice on cost is "use cheaper models". But you can't just set the c
 Here's what actually works, derived from our benchmarks:
 
 1. **Triage** (~60% of traffic for a personal bot): Gemini Flash. Cheap, fast, huge context. Routes to the right skill or punts to the right model.
-2. **Classification** (tagging, routing, spam-trap): Cerebras Llama 70B on a free tier. Effectively zero cost.
+2. **Classification** (tagging, routing, spam-trap): Cerebras Qwen 3 32B on a free tier. Effectively zero cost.
 3. **Default coding:** Kimi K2.6 / Moonshot. Cheap competent coder, good for routine changes.
-4. **Hard coding / architecture:** Anthropic Sonnet 5 or Opus 4.7. Opt-in (say "use sonnet" or mark the skill with `model: anthropic/claude-sonnet`).
+4. **Hard coding / architecture:** Anthropic Sonnet 5 or Opus 4.7. Opt-in (say "use sonnet" or mark the skill with `model: anthropic/claude-sonnet-5`).
 5. **Long-context research:** Gemini 3.1 Pro. 1M context + reasoning + media.
 
 With prompt caching on (Anthropic, OpenAI), `prefer_cached: true` as a default, and Fast Mode *off* unless you explicitly need it — the typical user month drops from $150 to $20–40.

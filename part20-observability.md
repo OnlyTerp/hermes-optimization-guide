@@ -1,6 +1,6 @@
 # Part 20: Observability & Cost Control — Langfuse, Helicone, Kanban, /usage, Routing Playbooks
 
-*You can't optimize what you can't see. Hermes tracks tokens, latency, and errors natively, but once you're running across CLI + Telegram + Discord + Google Chat + cron + Kanban worker lanes, you want a real tracing stack. This part sets up Langfuse, Helicone, or OpenTelemetry → Phoenix with one config block, then gives you the cost-routing playbook that dropped our test deployment from $34 to $3 per feature implementation.*
+*You can't optimize what you can't see. Hermes tracks tokens, latency, and errors natively, but once you're running across CLI + Telegram + Discord + Google Chat + LINE + SimpleX + Teams + cron + Kanban worker lanes, you want a real tracing stack. This part sets up Langfuse, Helicone, or OpenTelemetry → Phoenix with one config block, then gives you the cost-routing playbook that dropped our test deployment from $34 to $3 per feature implementation.*
 
 ---
 
@@ -186,7 +186,7 @@ Most Hermes cost bloat comes from using your most expensive frontier model for t
 ```yaml
 model_routing:
   default:
-    model: claude-sonnet
+    model: claude-sonnet-5
     provider: anthropic
   routes:
     - match: { intent: [classification, extraction, triage, sum_under_500_tokens] }
@@ -199,7 +199,7 @@ model_routing:
       model: glm
       provider: zai
     - match: { intent: [write_code, refactor, debug], complexity: high }
-      model: claude-sonnet
+      model: claude-sonnet-5
       provider: anthropic
     - match: { intent: [reasoning, math], complexity: high }
       model: reasoning
@@ -228,7 +228,20 @@ prompt_caching:
   min_cache_tokens: 1024             # Anthropic's minimum
 ```
 
-Anthropic's prompt caching discount is ~90% on cached reads. For a 5K-token system prompt used 100 times a day, that's a real $2–5 a day saved.
+v0.14 extends Claude prompt-prefix caching across sessions for up to 1 hour, so repeated skills/SOUL/memory prefixes get faster and cheaper after `/new` too. Anthropic's prompt caching discount is ~90% on cached reads. For a 5K-token system prompt used 100 times a day, that's a real $2–5 a day saved.
+
+### Rule 2B: Track Browser/CDP Latency Separately
+
+v0.14's persistent CDP path makes browser-console and dashboard automation much faster, but only if you can see when it falls back to cold browser startup. Add a browser lane to traces when you rely on computer/browser tools:
+
+```yaml
+telemetry:
+  spans:
+    browser_cdp: true
+    computer_use: true
+```
+
+Alert on repeated cold CDP starts; it usually means Chrome died, the profile changed, or a sandbox reset removed the persisted connection.
 
 ### Rule 3: Use Fast Mode Surgically
 
@@ -299,7 +312,7 @@ hermes evals dataset create telegram-support-flows
 hermes evals dataset add telegram-support-flows ~/.hermes/traces/support/*.json
 
 # Run on every release
-hermes evals run telegram-support-flows --model anthropic/claude-sonnet
+hermes evals run telegram-support-flows --model anthropic/claude-sonnet-5
 hermes evals run telegram-support-flows --model zai/glm     # Check if cheaper model still passes
 hermes evals compare
 ```

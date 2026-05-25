@@ -6,12 +6,15 @@
 
 ## The Install
 
-One command. That's it.
+One command. That's it. v0.14 also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path.
 
 ### Linux / macOS / WSL2
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+
+# Lean v0.14+ path when you already manage Python yourself:
+pip install hermes-agent
 ```
 
 > **Security tip:** Piping scripts directly from the internet to bash executes them sight-unseen. If you prefer to inspect first:
@@ -21,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scri
 > bash install.sh
 > ```
 
-> **Windows users:** Native Windows is not supported. Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run the command from inside WSL. It works perfectly.
+> **Windows users:** Native Windows is in beta in v0.14. Use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) for production/stable gateway work; try native Windows only after backing up config and expecting PTY/dashboard quirks.
 
 ### What the Installer Does
 
@@ -31,7 +34,7 @@ The installer handles everything automatically:
 - Installs **Python 3.11** via uv (no sudo needed)
 - Installs **Node.js v22** (for browser automation)
 - Installs **ripgrep** (fast file search) and **ffmpeg** (audio conversion)
-- Clones the Hermes repo
+- Installs the PyPI package or clones the Hermes repo when you choose source mode
 - Sets up the virtual environment
 - Creates the global `hermes` command
 - Runs the setup wizard for LLM provider configuration
@@ -62,11 +65,11 @@ Supported providers:
 | Provider | Best For | Env Variable |
 |----------|----------|-------------|
 | Anthropic (Claude) | Highest quality, best at complex tasks | `ANTHROPIC_API_KEY` |
-| OpenAI (GPT-4.1/o3) | Strong tool use, fast | `OPENAI_API_KEY` |
+| OpenAI (GPT-5.5/Codex) | Strong tool use, sandboxed coding, deep reasoning | `OPENAI_API_KEY` |
 | OpenRouter | Access 100+ models from one key | `OPENROUTER_API_KEY` |
 | Cerebras | Fast inference, good for simple tasks | `CEREBRAS_API_KEY` |
 | Groq | Very fast, limited context | `GROQ_API_KEY` |
-| xAI (Grok) | Good balance of speed/quality | `XAI_API_KEY` |
+| xAI (Grok / SuperGrok OAuth) | Live X search, Grok 4.3 1M context, Custom Voices | `XAI_API_KEY` or OAuth |
 | Google (Gemini) | Huge context, cheap | `GEMINI_API_KEY` |
 
 You can configure **multiple providers** with automatic fallback. If one goes down, Hermes switches to the next.
@@ -115,7 +118,7 @@ After initial setup, fine-tune with `hermes config set`:
 
 ```bash
 # Set primary model
-hermes config set model anthropic/claude-sonnet
+hermes config set model anthropic/claude-sonnet-5
 
 # Set fallback model (used when primary is rate-limited)
 hermes config set fallback_models '["openrouter/anthropic/claude-sonnet-5"]'

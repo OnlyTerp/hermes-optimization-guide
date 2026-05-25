@@ -1,6 +1,6 @@
-# Part 13: The Nous Tool Gateway (One Subscription, Four Tools, Zero Extra Keys)
+# Part 13: Tool Gateway, Local Proxy, and Live Search
 
-*If you have a paid Nous Portal subscription, you already have web search, image generation, text-to-speech, and browser automation — you just haven't turned them on yet.*
+*If you have a paid Nous Portal or OAuth-backed provider subscription, Hermes can turn it into tools: managed web/image/TTS/browser calls, an OpenAI-compatible local proxy, and first-class live X search.*
 
 ---
 
@@ -154,6 +154,35 @@ web:
 ```
 
 When you pick a non-gateway provider in `hermes tools`, `use_gateway` is automatically set to `false` to prevent contradictory config.
+
+---
+
+## OpenAI-Compatible Local Proxy
+
+v0.14 adds `hermes proxy`: a local OpenAI-compatible endpoint backed by whichever OAuth provider you are signed into — Claude Pro, ChatGPT Pro/Codex, or SuperGrok. This is the clean way to let Codex CLI, Aider, Cline, Continue, or internal scripts reuse subscriptions without copying API keys.
+
+```bash
+hermes model          # sign in to Claude / OpenAI / xAI OAuth first
+hermes proxy --host 127.0.0.1 --port 11435
+```
+
+Then point OpenAI-compatible clients at `http://127.0.0.1:11435/v1` with a local dummy key. Keep it loopback-only unless you add real auth in front.
+
+---
+
+## `x_search`: First-Class X Search
+
+Use `x_search` when the source of truth is a live X/Twitter thread, launch post, or maintainer account. It supports X OAuth or API-key auth, and pairs naturally with Grok 4.3 / SuperGrok OAuth.
+
+```yaml
+tools:
+  x_search:
+    enabled: true
+    auth: oauth        # or api_key
+    max_results: 25
+```
+
+Use broader web search for docs/blogs; use `x_search` for real-time social signal.
 
 ---
 

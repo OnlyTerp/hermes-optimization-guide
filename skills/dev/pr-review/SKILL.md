@@ -38,7 +38,7 @@ Pulls a PR, hands it to Claude Code with a minimal read-only tool set, posts str
 3. **Decide depth:**
    - `quick`: title + description only, ≤ 200 tokens of review
    - `standard`: full diff, up to 5 issues flagged
-   - `deep`: full diff + repo context (via Gemini 2.5 Pro for 1M-context ingest), up to 15 issues + architectural comments
+   - `deep`: full diff + repo context (via Gemini 3.1 Pro for 1M-context ingest), up to 15 issues + architectural comments
 
 4. **Delegate to Claude Code** with write tools **disabled**:
    ```yaml

@@ -71,7 +71,7 @@ systemctl edit hermes-gateway
 ```yaml
 model_fallback:
   - provider: cerebras
-    model: llama-3.3-70b
+    model: qwen-3-32b
   - provider: openrouter
     model: anthropic/claude-sonnet-5
   - provider: local

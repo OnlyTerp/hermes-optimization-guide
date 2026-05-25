@@ -2,7 +2,7 @@
 
 > [英語版はこちら](./README.md) · このページは入口の要約。本文の章は英語のまま。
 
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（v0.13.0 まで反映）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。
+[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（v0.14.0 まで反映）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。
 
 ## ワンコマンドで起動
 
@@ -15,7 +15,7 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 ## 主なコンテンツ
 
-- **24 章の本文**（README 内の章 + `part6`〜`part23`） — Kanban、`/goal`、Checkpoints v2、Curator、TUI、プラグイン、LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
+- **24 章の本文**（README 内の章 + `part6`〜`part23`） — v0.14 Foundation、Grok OAuth、`hermes proxy`、LINE/SimpleX、Kanban、`/goal`、Checkpoints v2、Curator、TUI、プラグイン、LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
 - **13 個のインストール可能 Skill**（`skills/`） — 監査、バックアップ、依存スキャン、コストレポート、Telegram トリアージ、PR レビュー、受信トレイ整理、Hermes 週報、スパムフィルタ、会議準備 など
 - **5 つのプロダクション設定テンプレ**（`templates/config/`） — minimum / telegram-bot / production / cost-optimized / security-hardened
 - **インフラ一式**（`templates/compose/`, `templates/caddy/`, `templates/systemd/`, `scripts/`） — Langfuse セルフホスト、Caddy リバースプロキシ、systemd 強化、VPS ブートストラップ

@@ -1,6 +1,6 @@
 # Part 22: Latest Power Moves — Curator, TUI, Plugins, Context Files
 
-*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13 durability layer — Kanban, `/goal`, Checkpoints v2, and no-agent cron — go next to [Part 23](./part23-tenacity-stack.md).*
+*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13/v0.14 durability + foundation layer — Kanban, `/goal`, `/handoff`, Checkpoints v2, no-agent cron, PyPI installs, proxy, and new platforms — go next to [Part 23](./part23-tenacity-stack.md).*
 
 ---
 
@@ -161,7 +161,7 @@ Then:
 4. Run `hermes curator run --dry-run`.
 5. Test one gateway message, one tool call, one skill, and one cron job.
 6. Review [Part 19](./part19-security-playbook.md) before enabling broad platform access.
-7. Then run the [v0.13 Tenacity checklist](./part23-tenacity-stack.md#8-upgrade-checklist-from-v012-to-v013).
+7. Then run the [v0.14 Foundation checklist](./part23-tenacity-stack.md#8-upgrade-checklist-from-v013-to-v014).
 
 ---
 

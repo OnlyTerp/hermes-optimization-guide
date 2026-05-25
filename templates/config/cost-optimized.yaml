@@ -16,7 +16,7 @@ models:
   classification: cerebras/qwen-3-32b
   long_context: google/gemini-3.1-pro
   coding: moonshot/kimi-k2.6            # Fallback to Claude only for hard coding
-  coding_complex: anthropic/claude-sonnet
+  coding_complex: anthropic/claude-sonnet-5
   reasoning: zai/glm
   providers:
     google:
@@ -40,7 +40,7 @@ routing:
       model: cerebras/qwen-3-32b
     - intent: coding
       when: { complexity: high }
-      model: anthropic/claude-sonnet
+      model: anthropic/claude-sonnet-5
     - intent: coding
       model: moonshot/kimi-k2.6
     - intent: long_context

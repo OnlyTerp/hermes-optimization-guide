@@ -18,7 +18,7 @@ Front-line filter for public-facing Telegram bots. Runs cheap classification, an
 
 ## Procedure
 
-1. **Classify.** Use a cheap model (Gemini 2.5 Flash) to assign one of:
+1. **Classify.** Use a cheap model (Gemini 3.1 Flash) to assign one of:
    - `greeting` — "hi", "yo", "whats up"
    - `faq` — commonly asked question (list below)
    - `support` — bug report, complaint, feature request
