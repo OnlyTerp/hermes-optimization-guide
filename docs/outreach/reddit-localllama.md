@@ -18,7 +18,7 @@ I built a Hermes (Nous Research's agent framework) optimization guide that goes 
 
 - **Homelab reference architecture** — full setup for running Hermes + LightRAG + self-hosted Langfuse on your own box, with Ollama as the default provider and routing only the hard stuff to Sonnet. Tailscale instead of port-forwarding. Scaling ceilings + honest tradeoffs (latency, quality, etc.) included.
 
-- **5 production config templates** — one of them is `cost-optimized.yaml`, which uses Gemini Flash + Cerebras Llama for most traffic and only escalates to Sonnet on explicit opt-in. Typical spend is $0.05–0.30/active-hour.
+- **5 production config templates** — one of them is `cost-optimized.yaml`, which uses Gemini Flash + Cerebras Qwen 3 for most traffic and only escalates to Sonnet on explicit opt-in. Typical spend is $0.05–0.30/active-hour.
 
 - **Reproducible benchmarks** — 12 flagship models × 5 tasks (triage / summarize / codefix / deepreason / bulk-extract), methodology + `hermes evals run` command to reproduce.
 

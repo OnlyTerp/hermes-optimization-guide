@@ -1,5 +1,5 @@
 # benchmarks/matrix.yaml — the provider x task matrix Hermes evals crank through.
-# Prices are a dated 2026-05-14 snapshot from provider docs/aggregators;
+# Prices are a dated 2026-05-25 snapshot from provider docs/aggregators;
 # `hermes evals run` should rehydrate live prices at runtime before publishing.
 
 models:
@@ -51,10 +51,10 @@ models:
     price_per_mtok_in: 0.60
     price_per_mtok_out: 0.60
     context_tokens: 128000
-  - id: xai/grok-4
+  - id: xai/grok-4.3
     price_per_mtok_in: 3.00
     price_per_mtok_out: 15.00
-    context_tokens: 256000
+    context_tokens: 1048576
 
 tasks:
   - id: T1_triage

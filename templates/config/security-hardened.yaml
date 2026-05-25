@@ -29,10 +29,10 @@ profiles:
           - { tool: "*", actions: [exec, write, send, create, update, delete] }
   trusted:
     description: Admin-only. Full capability.
-    models: { default: anthropic/claude-sonnet }
+    models: { default: anthropic/claude-sonnet-5 }
 
 models:
-  default: anthropic/claude-sonnet
+  default: anthropic/claude-sonnet-5
   providers:
     anthropic:
       api_key: "${ANTHROPIC_API_KEY}"
@@ -76,7 +76,7 @@ security:
     approval_channel: telegram_dm
     approval_timeout_seconds: 300       # Reject if operator doesn't respond
   secrets:
-    # Redaction is on by default in Hermes v0.13; keep patterns explicit
+    # Redaction is on by default in Hermes v0.13+; keep patterns explicit
     # for auditability and memory/log hygiene.
     redaction_patterns:
       - 'sk-[A-Za-z0-9]{40,}'

@@ -1,12 +1,12 @@
-# Part 15: Messaging Platforms (Google Chat, iMessage, WeChat, QQBot, Yuanbao, Teams, Android)
+# Part 15: Messaging Platforms (Teams, LINE, SimpleX, Google Chat, iMessage, WeChat, Android)
 
-*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 adds Google Chat and reinforces platform adapters as opt-in plugins.*
+*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wires Teams end-to-end and adds LINE + SimpleX Chat.*
 
 ---
 
-## The 20+ Platform Lineup
+## The 22+ Platform Lineup
 
-As of v0.13, the gateway ships built-in adapters plus plugin-shipped platforms:
+As of v0.14, the gateway ships built-in adapters plus plugin-shipped platforms:
 
 | Platform | Mode | Notes |
 |----------|------|-------|
@@ -14,13 +14,15 @@ As of v0.13, the gateway ships built-in adapters plus plugin-shipped platforms:
 | Discord | WebSocket (bot) | Slash commands, voice/media, DMs + servers |
 | Slack | Socket / Events API | Threads, file uploads, blocks |
 | **Google Chat** | App / webhook | **New in v0.13**, Workspace-native chat surface |
+| **LINE** | Messaging API | **New in v0.14**, Japan/Korea/Taiwan mobile-first surface |
+| **SimpleX Chat** | Decentralized chat | **New in v0.14**, privacy-first chat with no user IDs |
 | WhatsApp | Web API | QR-code login, requires always-on node |
 | **iMessage (BlueBubbles)** | Webhook | **New in v0.9** |
 | **Weixin (WeChat personal)** | Long-poll | **New in v0.9** |
 | **WeCom (Enterprise WeChat)** | Webhook | **New in v0.9** |
 | **QQBot** | WebSocket/Webhook | Added after the original v0.9 platform sweep |
 | **Tencent Yuanbao** | Native gateway | **New in v0.12**, text + media delivery |
-| **Microsoft Teams** | Plugin | **New in v0.12**, first plugin-shipped gateway platform |
+| **Microsoft Teams** | Graph + webhook + runtime + delivery | End-to-end in v0.14 |
 | Signal | REST via signal-cli | Self-hosted bridge |
 | DingTalk | Webhook | Corporate IM, China/APAC |
 | Feishu / Lark | Webhook | Corporate IM, ByteDance |
@@ -39,13 +41,58 @@ All of them respect:
 - The shared session database (Part 7)
 - Pre-dispatch plugin hooks
 
-This part covers the v0.9 adapters, the newer v0.12/v0.13 surfaces, and **Android / Termux** — running the agent itself on a phone.
+This part covers the v0.9 adapters, the newer v0.12–v0.14 surfaces, and **Android / Termux** — running the agent itself on a phone.
 
-## 2026 Update: Google Chat, QQBot, Yuanbao, and Teams
+## 2026 Update: Teams, LINE, SimpleX, Google Chat, QQBot, and Yuanbao
+
+### Microsoft Teams
+
+Teams is no longer just a proof of the v0.12 plugin architecture. In v0.14 the Graph auth, webhook listener, pipeline runtime, and outbound delivery are wired together, so Teams can be a real enterprise chat surface.
+
+```yaml
+gateways:
+  teams:
+    enabled: true
+    tenant_id: ${MICROSOFT_TENANT_ID}
+    client_id: ${MICROSOFT_TEAMS_CLIENT_ID}
+    client_secret: ${MICROSOFT_TEAMS_CLIENT_SECRET}
+    allowed_teams:
+      - ${MICROSOFT_TEAMS_ADMIN_TEAM}
+    trust_label: medium
+```
+
+Keep approvals in a private admin channel, not in the same team/channel where untrusted requests arrive.
+
+### LINE
+
+Use LINE when your users are in Japan, Korea, Taiwan, or a consumer/mobile-first workflow. Treat it like Telegram operationally: one admin bot/channel for approvals, strict allowed user IDs, and no write tools in public rooms.
+
+```yaml
+gateways:
+  line:
+    enabled: true
+    channel_access_token: ${LINE_CHANNEL_ACCESS_TOKEN}
+    channel_secret: ${LINE_CHANNEL_SECRET}
+    allowed_user_ids:
+      - ${LINE_ADMIN_USER_ID}
+```
+
+### SimpleX Chat
+
+SimpleX is the privacy-first choice: no global user IDs, no central identity graph. That is good for privacy and harder for ops. Require pairing, persist local contact labels, and do not use it as the only approval channel until restore/backup is tested.
+
+```yaml
+gateways:
+  simplex:
+    enabled: true
+    profile: simplex-admin
+    require_pairing: true
+    trust_label: medium
+```
 
 ### Google Chat
 
-Google Chat is the cleanest v0.13 choice for Google Workspace teams that do not want a separate Slack/Discord surface. Treat spaces as group chats: use allowlists, never approve sensitive actions in the same room that requested them, and route production approvals to a private admin DM/channel.
+Google Chat is the cleanest Workspace choice for Google Workspace teams that do not want a separate Slack/Discord surface. Treat spaces as group chats: use allowlists, never approve sensitive actions in the same room that requested them, and route production approvals to a private admin DM/channel.
 
 Typical posture:
 
@@ -70,19 +117,6 @@ Use QQBot when your community already lives in QQ and you want the same approval
 
 Yuanbao is now a native gateway adapter with text and media delivery. It belongs in the same bucket as Weixin/WeCom: powerful in China/APAC workflows, but operationally different from Western SaaS bots. Verify media size limits and identity mapping before using it for production approvals.
 
-### Microsoft Teams Plugin
-
-Teams proves the v0.12 gateway-plugin architecture: new platforms no longer need to land inside `gateway/platforms/` to be usable. Enable only trusted platform plugins:
-
-```bash
-hermes plugins list
-hermes plugins enable teams
-hermes gateway setup
-```
-
-Keep project-local plugins disabled unless the repository is trusted (`HERMES_ENABLE_PROJECT_PLUGINS=true` is intentionally opt-in).
-
----
 
 ## iMessage via BlueBubbles
 

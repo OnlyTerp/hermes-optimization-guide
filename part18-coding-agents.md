@@ -10,11 +10,11 @@ Hermes is excellent at reasoning, memory, conversation, and workflow. It is *not
 
 | Agent | Strengths | Auth model |
 |-------|-----------|------------|
-| **Claude Code** | Best unattended PR work, large refactors, tests, reviews; pair with Sonnet 5/Opus 4.7 | Pro/Max OAuth or `ANTHROPIC_API_KEY` |
-| **Codex** (OpenAI) | Fast sandboxed feedback loop, bug hunts, small/medium edits; strong with GPT-5.5/Codex models | OAuth via `openai` CLI or `OPENAI_API_KEY` |
-| **Gemini CLI** | 1M context and multimodal repo/document sweeps; strongest "read everything first" lane | OAuth via `gemini auth`; Hermes' own Gemini OAuth covers normal model-provider use |
+| **Claude Code** | Best unattended PR work, large refactors, tests, reviews; Week 20+ agent view, `/goal`, and fast Opus 4.7 mode make it the premium lane | Pro/Max OAuth or `ANTHROPIC_API_KEY` |
+| **Codex** (OpenAI) | Fast sandboxed feedback loop, bug hunts, small/medium edits; v0.133+ goals default well and runs cleanly behind `hermes proxy` | OAuth via `openai` CLI, `OPENAI_API_KEY`, or `hermes proxy` |
+| **Gemini CLI** | 1M context and multimodal repo/document sweeps; v0.43 improves surgical edits, session import/export, and OAuth behavior on headless Linux | OAuth via `gemini auth`; Hermes' own Gemini OAuth covers normal model-provider use |
 | **OpenCode** (anomalyco) | Open-source, routes to Kimi K2.6 / GLM / MiMo cheaply | Bring any provider key |
-| **Aider** | Surgical git-based edits, smallest token footprint | Bring any provider key |
+| **Aider** | Surgical git-based edits, smallest token footprint; works well through `hermes proxy` | Bring any provider key or local proxy |
 
 Hermes keeps state, memory, conversation, approvals, Kanban lifecycle, and platform integration; each specialist does what it does best. You get one control plane, many agents.
 
@@ -165,6 +165,16 @@ From that point:
 The same binding works for Codex, Gemini CLI, OpenCode, and any ACP-compatible coding agent.
 
 **Remote execution bonus:** combine with the [remote sandbox feature](./part21-remote-sandboxes.md) and the coding agent runs on a Modal/Daytona/SSH host — your phone drives, a beefy remote does the work.
+
+---
+
+## Agent Tooling Updates (May 25, 2026)
+
+- **Claude Code Week 20+**: agent view, `/goal`, and faster Opus 4.7 make it the best premium worker lane for high-stakes PRs.
+- **Codex v0.133+**: goals are enabled by default; point it at `hermes proxy` when you want ChatGPT/Codex OAuth without another API key.
+- **Gemini CLI v0.43**: better surgical edit steering, session export/import, and headless OAuth fixes make it safer as a repo-scale reader.
+- **Zed ACP Registry**: v0.14 exposes Hermes through `uvx`/ACP so Zed and other ACP-aware editors can drive Hermes directly.
+- **Aider/Cline/Continue**: all benefit from `hermes proxy` because they only need an OpenAI-compatible base URL.
 
 ---
 

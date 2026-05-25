@@ -282,7 +282,7 @@ Without a topic, it runs with its default heuristics. With one, the summarizer p
 
 ## `/goal` — Persistent Target Locking
 
-v0.13 adds `/goal` for the long-loop version of this problem: not "compress this context," but "keep working until this observable objective is done."
+v0.13 added `/goal`, and v0.14 pairs it with live `/handoff` for model/profile transfers for the long-loop version of this problem: not "compress this context," but "keep working until this observable objective is done."
 
 ```text
 /goal Migrate the gateway to Google Chat, run checks, and leave a PR link.
@@ -295,5 +295,5 @@ Use it when the agent should continue across tool calls and intermediate updates
 ## What's Next
 
 - **Save keys + streamline setup:** [Part 13 — Nous Tool Gateway](./part13-tool-gateway.md)
-- **Expand reach:** [Part 15 — New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md)
+- **Expand reach:** [Part 15 — New Platforms (Teams, LINE, SimpleX, iMessage, WeChat, Android)](./part15-new-platforms.md)
 - **Disaster recovery:** [Part 16 — Backup, Debug, and Pluggable Context](./part16-backup-debug.md)

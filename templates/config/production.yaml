@@ -3,7 +3,7 @@
 # ------------------------------------------------------------
 # Full-stack, hardened, observable.
 #   - Multi-provider with task-aware routing
-#   - Telegram + Discord + Slack + Google Chat + email gateways
+#   - Telegram + Discord + Slack + Google Chat + LINE + Teams + email gateways
 #   - LightRAG + mem0 for cross-device memory
 #   - MCP: GitHub, Postgres, Cloudflare, Linear, filesystem
 #   - Langfuse tracing, cost alerts, eval hooks
@@ -14,12 +14,13 @@
 version: 1
 
 models:
-  default: anthropic/claude-sonnet
+  default: anthropic/claude-sonnet-5
   classification: google/gemini-3.1-flash
   long_context: google/gemini-3.1-pro
-  coding: anthropic/claude-sonnet
+  coding: anthropic/claude-sonnet-5
   reasoning: openai/gpt-5.5
   cheap: moonshot/kimi-k2.6
+  live_search: xai/grok-4.3
   providers:
     anthropic:
       api_key: ${ANTHROPIC_API_KEY}
@@ -35,6 +36,9 @@ models:
       api_key: ${ZAI_API_KEY}
     cerebras:
       api_key: ${CEREBRAS_API_KEY}
+    xai:
+      api_key: ${XAI_API_KEY}
+      oauth_enabled: true            # SuperGrok OAuth when available
 
 routing:
   # See Part 20 — the rules that drop spend ~90% on typical workloads
@@ -42,7 +46,7 @@ routing:
     - intent: classification
       model: google/gemini-3.1-flash
     - intent: coding
-      model: anthropic/claude-sonnet
+      model: anthropic/claude-sonnet-5
     - intent: long_context
       when: { tokens_in: { gt: 200000 } }
       model: google/gemini-3.1-pro
@@ -51,6 +55,8 @@ routing:
       model: openai/gpt-5.5
     - intent: bulk_data
       model: moonshot/kimi-k2.6
+    - intent: live_search
+      model: xai/grok-4.3
 
 gateways:
   cli: { enabled: true }
@@ -81,6 +87,26 @@ gateways:
     credentials_json: ${GOOGLE_CHAT_CREDENTIALS_JSON}
     allowed_spaces:
       - ${GOOGLE_CHAT_ADMIN_SPACE}
+    trust_label: medium
+  teams:
+    enabled: false                    # v0.14 end-to-end Graph/listener/delivery path
+    tenant_id: ${MICROSOFT_TENANT_ID}
+    client_id: ${MICROSOFT_TEAMS_CLIENT_ID}
+    client_secret: ${MICROSOFT_TEAMS_CLIENT_SECRET}
+    allowed_teams:
+      - ${MICROSOFT_TEAMS_ADMIN_TEAM}
+    trust_label: medium
+  line:
+    enabled: false
+    channel_access_token: ${LINE_CHANNEL_ACCESS_TOKEN}
+    channel_secret: ${LINE_CHANNEL_SECRET}
+    allowed_user_ids:
+      - ${LINE_ADMIN_USER_ID}
+    trust_label: medium
+  simplex:
+    enabled: false
+    profile: simplex-admin
+    require_pairing: true
     trust_label: medium
   email:
     enabled: true

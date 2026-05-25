@@ -75,11 +75,12 @@
       <legend>2. Default model</legend>
       <p class="hint">Can be overridden per-skill.</p>
       <select name="default_model">
-        <option value="anthropic/claude-sonnet">Anthropic Claude Sonnet 5 (balanced default)</option>
-        <option value="anthropic/claude-opus">Anthropic Claude Opus 4.7 (max capability)</option>
+        <option value="anthropic/claude-sonnet-5">Anthropic Claude Sonnet 5 (balanced default)</option>
+        <option value="anthropic/claude-opus-4.7">Anthropic Claude Opus 4.7 (max capability)</option>
         <option value="google/gemini-3.1-flash">Google Gemini 3.1 Flash (cheap + fast + huge context)</option>
         <option value="google/gemini-3.1-pro">Google Gemini 3.1 Pro (1M context + reasoning/media)</option>
         <option value="openai/gpt-5.5">OpenAI GPT-5.5 (deep reasoning)</option>
+        <option value="xai/grok-4.3">xAI Grok 4.3 (1M context + live X search)</option>
         <option value="moonshot/kimi-k2.6">Moonshot Kimi K2.6 (cheap + strong coding)</option>
         <option value="zai/glm">z.ai GLM (very cheap)</option>
       </select>
@@ -187,7 +188,7 @@ function select(name) {
    rest of the form is pre-filled so Question 1 actually drives output. */
 const PERSONA_PRESETS = {
   'minimum': {
-    default_model: 'anthropic/claude-sonnet',
+    default_model: 'anthropic/claude-sonnet-5',
     memory: 'vector',
     gateways: { cli: true, telegram: false, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: false, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
@@ -196,7 +197,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: false, deps: false, cost: false, mcp: false },
   },
   'telegram-bot': {
-    default_model: 'anthropic/claude-sonnet',
+    default_model: 'anthropic/claude-sonnet-5',
     memory: 'lightrag',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
@@ -205,7 +206,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'production': {
-    default_model: 'anthropic/claude-sonnet',
+    default_model: 'anthropic/claude-sonnet-5',
     memory: 'lightrag',
     gateways: { cli: true, telegram: true, discord: true, slack: true, email: true, webhook: true },
     mcps:     { github: true, postgres: true, cloudflare: true, linear: true, filesystem: true, mem0: false },
@@ -223,7 +224,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'security-hardened': {
-    default_model: 'anthropic/claude-sonnet',
+    default_model: 'anthropic/claude-sonnet-5',
     memory: 'vector',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: true },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
@@ -308,12 +309,13 @@ function generate() {
     moonshot:  'MOONSHOT_API_KEY',
     zai:       'ZAI_API_KEY',
     cerebras:  'CEREBRAS_API_KEY',
+    xai:       'XAI_API_KEY',
   };
   // Providers required by each persona's routing rules (must be superset of
   // models referenced in routing blocks later in this function).
   const EXTRA_PROVIDERS = {
     'cost-optimized': ['anthropic', 'google', 'moonshot', 'cerebras'],
-    'production':     ['anthropic', 'google'],
+    'production':     ['anthropic', 'google', 'xai'],
     'security-hardened': ['anthropic'],
   };
   const providersToEmit = new Set([model.split('/')[0]]);
@@ -508,7 +510,7 @@ function generate() {
     lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/qwen-3-32b" }`);
     lines.push(`    - { when: "context.tokens > 200000",        use: "google/gemini-3.1-pro" }`);
     lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi-k2.6" }`);
-    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet" }`);
+    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet-5" }`);
     lines.push(`    - { else: true,                              use: "google/gemini-3.1-flash" }`);
     lines.push(``);
   }

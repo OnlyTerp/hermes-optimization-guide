@@ -77,7 +77,7 @@ Now try:
 
 ## Step 7 — Level up
 
-- **More platforms:** [Part 4 (Telegram deep-dive)](../part4-telegram-setup.md), [Part 15 (iMessage/WeChat/Android)](../part15-new-platforms.md)
+- **More platforms:** [Part 4 (Telegram deep-dive)](../part4-telegram-setup.md), [Part 15 (Teams/LINE/SimpleX/iMessage/WeChat/Android)](../part15-new-platforms.md)
 - **Latest features:** [Part 22 (Curator, TUI, plugins)](../part22-latest-power-moves.md), [Part 23 (Kanban, `/goal`, Checkpoints v2)](../part23-tenacity-stack.md)
 - **Memory that reasons:** [Part 3 (LightRAG)](../part3-lightrag-setup.md)
 - **Tools:** [Part 17 (MCP servers)](../part17-mcp-servers.md)

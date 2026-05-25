@@ -2,7 +2,7 @@
 
 > [English 完整版](./README.md) · 本页是入口摘要，章节正文仍为英文。
 
-实用指南 + 可安装制品（Skills、配置模板、基础设施脚本），针对 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（当前覆盖到 v0.13.0）。
+实用指南 + 可安装制品（Skills、配置模板、基础设施脚本），针对 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（当前覆盖到 v0.14.0）。
 
 ## 一键起步
 
@@ -15,7 +15,7 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 ## 内容一览
 
-- **24 章正文**（README 内章节 + `part6` 到 `part23`） — Kanban、`/goal`、Checkpoints v2、Curator、TUI、插件、LightRAG、Telegram、MCP、安全、可观测性、远程沙箱
+- **24 章正文**（README 内章节 + `part6` 到 `part23`） — v0.14 Foundation、Grok OAuth、`hermes proxy`、LINE/SimpleX、Kanban、`/goal`、Checkpoints v2、Curator、TUI、插件、LightRAG、Telegram、MCP、安全、可观测性、远程沙箱
 - **13 个可安装 Skill**（`skills/`） — 审计、备份、依赖扫描、成本报告、Telegram 分类、PR 审查、收件箱分类、Hermes 周报、垃圾过滤、会议准备 等
 - **5 套生产配置模板**（`templates/config/`） — minimum / telegram-bot / production / cost-optimized / security-hardened
 - **基础设施**（`templates/compose/`, `templates/caddy/`, `templates/systemd/`, `scripts/`） — Langfuse 自托管、Caddy 反代、systemd 硬化、VPS 引导脚本

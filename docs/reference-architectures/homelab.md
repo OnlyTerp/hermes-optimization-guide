@@ -83,9 +83,9 @@ models:
 
   routing:
     - when: task == "reasoning"
-      use: anthropic/claude-sonnet
+      use: anthropic/claude-sonnet-5
     - when: task == "coding" && complexity == "high"
-      use: anthropic/claude-sonnet
+      use: anthropic/claude-sonnet-5
 
 gateways:
   cli:
