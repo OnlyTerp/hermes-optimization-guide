@@ -1,12 +1,12 @@
 # Part 4: Telegram Setup (Chat From Anywhere)
 
-*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 20+ messaging adapters — start here, branch out to the others as needed.*
+*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 22+ messaging adapters — start here, branch out to the others as needed.*
 
 ---
 
-## The 20+ Platform Gateway
+## The 22+ Platform Gateway
 
-As of v0.13.0 (May 2026), the Hermes gateway ships adapters/plugins for **20+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism:
+As of v0.14.0 (May 2026), the Hermes gateway ships adapters/plugins for **22+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. v0.14 also improves Discord history/search fetches, so large server channels are more useful as context sources instead of one-message-only triggers.
 
 | Flagship | New in v0.9 | Enterprise / regional | Self-hosted / generic |
 |----------|-------------|-----------------------|-----------------------|
@@ -14,11 +14,11 @@ As of v0.13.0 (May 2026), the Hermes gateway ships adapters/plugins for **20+ pl
 | Discord | WeChat / Weixin | Feishu / Lark | Matrix |
 | Slack | WeCom | Mattermost | SMS (Twilio) |
 | Google Chat | QQBot | Microsoft Teams | Email (IMAP+SMTP) |
-| WhatsApp | | | |
+| LINE | SimpleX Chat | WhatsApp | |
 | | Tencent Yuanbao | | Home Assistant |
 | | | | Webhook (generic) |
 
-- For **iMessage, WeChat, and Android/Termux**, see [Part 15](./part15-new-platforms.md).
+- For **LINE, SimpleX, Teams, iMessage, WeChat, and Android/Termux**, see [Part 15](./part15-new-platforms.md).
 - For **gateway crash recovery** and health checks across all platforms, see [Part 11](./part11-gateway-recovery.md).
 - For the browser UI that manages every platform's state, see [Part 12](./part12-web-dashboard.md).
 

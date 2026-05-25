@@ -1,14 +1,14 @@
 # Part 9: Custom Model Providers (Use Any Model You Want)
 
-*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Gemini OAuth, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, Vercel AI Gateway, Ollama, and provider plugins. This is the May 14, 2026 cheat sheet.*
+*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Gemini OAuth, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, Vercel AI Gateway, Ollama, and provider plugins. This is the May 25, 2026 cheat sheet.*
 
-> **What's new since the v0.12 guide refresh** — v0.13 makes providers pluggable, adds media-aware routing such as `video_analyze`, improves MCP media handling, keeps Gemini OAuth inside `hermes model`, and makes OpenRouter/Nous/Vercel model pickers rely on live manifests instead of hardcoded release snapshots.
+> **What's new since the v0.13 guide refresh** — v0.14 adds SuperGrok OAuth with Grok 4.3 at 1M context, `hermes proxy` for OpenAI-compatible access to OAuth-backed Claude/ChatGPT/SuperGrok subscriptions, first-class `x_search`, cross-session 1-hour Claude prompt caching, OpenRouter Pareto Code routing, and provider-agnostic `computer_use` support.
 
 ---
 
 ## Native Adapters vs Generic OpenAI-Compatible
 
-As of v0.13.0 (May 2026), Hermes ships **native adapters** for a large provider set, plus a provider-plugin surface for out-of-tree backends. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
+As of v0.14.0 (May 2026), Hermes ships **native adapters** for a large provider set, plus a provider-plugin surface for out-of-tree backends. Native adapters know about provider-specific features that a generic OpenAI-compatible wrapper can't:
 
 | Provider | Native adapter? | Notable feature |
 |----------|-----------------|-----------------|
@@ -19,7 +19,7 @@ As of v0.13.0 (May 2026), Hermes ships **native adapters** for a large provider 
 | **AWS Bedrock** | Yes | Converse API, IAM credentials, cross-region inference profiles, Bedrock Guardrails |
 | **Azure AI Foundry** | Yes | Auto-detects OpenAI-style vs Anthropic-style deployments and context length |
 | **LM Studio** | Yes | Local `/models` discovery, optional auth, reasoning transport, `hermes doctor` checks |
-| **xAI (Grok)** | Yes | Native live X search and xAI image/STT/TTS integrations, including Custom Voices |
+| **xAI / SuperGrok** | Yes | SuperGrok OAuth, Grok 4.3 1M context, `x_search`, and xAI image/STT/TTS integrations including Custom Voices |
 | **Xiaomi MiMo** | Yes | Native reasoning modes (`low`/`medium`/`high`) exposed as config |
 | **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](./README.md#part-3-lightrag--graph-rag-that-actually-works)) |
 | **z.ai / GLM** | Yes | Strong open-weight tool-use models; good cheap fallback for planning/exploration |
@@ -39,9 +39,31 @@ As of v0.13.0 (May 2026), Hermes ships **native adapters** for a large provider 
 | **Provider plugin** | Plugin | Drop in a `ProviderProfile` without patching Hermes core |
 | **Anything else** | Generic | Any OpenAI-compatible `base_url` |
 
+### SuperGrok OAuth + Grok 4.3
+
+v0.14 makes xAI a first-class Hermes provider instead of just another OpenAI-compatible key. Use SuperGrok OAuth when you already pay for it; use `XAI_API_KEY` for service-account automation. Grok 4.3 is the live-search/default-current-events lane now because it combines 1M context, X-native retrieval, and voice/image integrations.
+
+```bash
+hermes model     # choose xAI / SuperGrok OAuth
+```
+
+```yaml
+models:
+  research_live:
+    provider: xai
+    model: grok-4.3
+    context_tokens: 1048576
+tools:
+  x_search:
+    enabled: true
+    auth: oauth
+```
+
+Keep it out of cheap cron loops; route it explicitly for live events, X threads, and million-token synthesis.
+
 Pick the native adapter when one exists — you get the provider-specific features for free. Fall back to the generic OpenAI-compatible path only for endpoints that don't have a native adapter yet.
 
-### Provider Cheat Sheet (May 14, 2026)
+### Provider Cheat Sheet (May 25, 2026)
 
 The exact "best model" moves weekly, so treat this as a routing posture rather than a leaderboard. Use `hermes model` for live picker data, then pin only what you need reproducible.
 
@@ -49,12 +71,12 @@ The exact "best model" moves weekly, so treat this as a routing posture rather t
 |------|------------|-----|
 | Default coding / refactors | Anthropic Sonnet 5, Claude Code, or Codex OAuth | Best reliability for patch-heavy work; Codex OAuth avoids API-key churn |
 | Deep reasoning / high stakes | GPT-5.5 reasoning or Anthropic Opus 4.7 | Use explicitly; do not make it the default for cron/bulk tasks |
-| Long-context repo or document reads | Gemini 3.1 Pro/Flash or OpenRouter equivalent | Huge window, cheap enough for map/reduce, video, and summarization |
+| Long-context repo or document reads | Gemini 3.1 Pro/Flash, Grok 4.3, or OpenRouter equivalent | Huge window, cheap enough for map/reduce, video, and summarization |
 | Cheap daily driver | Gemini OAuth + Kimi K2.6 + z.ai/GLM | Good quality/cost mix, especially with auxiliary routing |
 | Enterprise / VPC / compliance | AWS Bedrock or Azure AI Foundry | IAM/Azure auth, guardrails, private deployments, audit controls |
 | Local/privacy/offline | LM Studio or Ollama | No cloud egress; great for extraction, embeddings, and drafts |
 | Ultra-fast interactive turns | Cerebras or Groq | Very high tokens/sec; useful for classification and short-form chat |
-| Current-events search | xAI Grok 4.x or tool-backed web search | Grok has native live-X search; Tool Gateway can cover broader web |
+| Current-events / X search | xAI Grok 4.3, `x_search`, or tool-backed web search | Grok has native live-X search; Tool Gateway can cover broader web |
 
 > Pricing and context windows change too quickly to hardcode. Hermes now pulls OpenRouter and Nous Portal picker lists from a remote manifest, while provider APIs supply pricing/context metadata where available.
 
@@ -136,7 +158,7 @@ Models are configured in `~/.hermes/config.yaml`:
 
 ```yaml
 # Default model
-model: claude-sonnet
+model: claude-sonnet-5
 provider: anthropic
 
 # Provider configurations
@@ -161,6 +183,7 @@ providers:
 
   xai:
     api_key: ${XAI_API_KEY}
+    oauth_enabled: true               # SuperGrok OAuth when available
     live_search: true                 # Grok's live X/Twitter search
 
   xiaomi:
@@ -229,7 +252,7 @@ Add aliases to switch models without typing full names:
 ```yaml
 model_aliases:
   fast:
-    model: cerebras/llama-3.3-70b
+    model: cerebras/qwen-3-32b
     provider: cerebras
   smart:
     model: claude-opus-4.7
@@ -242,7 +265,7 @@ model_aliases:
 Use in chat:
 
 ```
-/model fast      # Switch to Cerebras Llama 70B
+/model fast      # Switch to Cerebras Qwen 3 32B
 /model smart     # Switch to Claude Opus
 /model local     # Switch to local Ollama model
 ```
@@ -265,12 +288,12 @@ Use these as opinionated defaults, then tune with [Part 20's cost-routing playbo
 
 | Task | First choice | Fallback (cheaper) | Fallback (fastest) |
 |------|--------------|--------------------|--------------------|
-| Daily conversation | Anthropic Sonnet 5 | Gemini OAuth or z.ai/GLM | Cerebras Llama/Qwen |
+| Daily conversation | Anthropic Sonnet 5 | Gemini OAuth or z.ai/GLM | Cerebras Qwen 3 |
 | Coding delegation | Claude Code / Codex OAuth | OpenCode + Kimi K2.6 | OpenCode + Cerebras |
 | Long-context reads (>200K) | Gemini 3.1 Pro | Gemini Flash | — |
 | Classification / triage | Gemini Flash | Cerebras Qwen3 32B | Arcee AFM-4.5 |
 | Reasoning (math, planning) | GPT-5.5 reasoning | Anthropic Opus 4.7 | z.ai/GLM |
-| Current events / live search | xAI Grok 4.x | Gemini with grounding | Tool Gateway web search |
+| Current events / live search | xAI Grok 4.3 + `x_search` | Gemini with grounding | Tool Gateway web search |
 | Embeddings (LightRAG) | Qwen3-Embedding-8B (Fireworks) | nomic-embed-text (Ollama) | OpenAI `text-embedding-3-small` |
 | TTS (Telegram voice) | xAI Custom Voices or Tool Gateway TTS | Gemini Flash TTS | Edge TTS (free) |
 | Vision / video | Gemini 3.1 Pro/Flash | GPT-5.5 multimodal | Claude Sonnet 5 |
@@ -293,7 +316,7 @@ providers:
   cerebras:
     api_key: ${CEREBRAS_API_KEY}
     base_url: https://api.cerebras.ai/v1
-    # Models: llama-3.3-70b, llama-4-scout-17b-16e-instruct, qwen-3-32b
+    # Models: qwen-3-32b, llama-4-scout-17b-16e-instruct
 ```
 
 ## Local Models (Ollama)
@@ -325,7 +348,7 @@ embedding:
 ## Switching at Runtime
 
 ```
-/model cerebras/llama-3.3-70b    # Full model path
+/model cerebras/qwen-3-32b      # Full model path
 /model fast                       # Alias
 /model                            # Show current model
 ```
@@ -354,7 +377,7 @@ auxiliary_models:
   # Use a fast cheap model for compression — it's just summarizing
   compression:
     provider: cerebras
-    model: llama-3.3-70b
+    model: qwen-3-32b
     timeout: 30
 
   # Use a multimodal model for image/video analysis
@@ -391,7 +414,7 @@ Configure automatic fallback if the primary model fails:
 ```yaml
 model_fallback:
   - provider: cerebras
-    model: llama-3.3-70b
+    model: qwen-3-32b
   - provider: openrouter
     model: anthropic/claude-sonnet-5
   - provider: local

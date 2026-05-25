@@ -60,7 +60,7 @@ sudo systemctl start hermes hermes-dashboard
 
 ## Why `cost-optimized.yaml` is the right default
 
-See [`templates/config/cost-optimized.yaml`](../../templates/config/cost-optimized.yaml). Defaults to Gemini Flash (cheapest smart model), uses Cerebras Llama for classification (near-free), and only escalates to Sonnet for high-stakes coding. With prompt caching + Fast Mode disabled by default, typical cost is $0.05–0.30 per active hour.
+See [`templates/config/cost-optimized.yaml`](../../templates/config/cost-optimized.yaml). Defaults to Gemini Flash (cheapest smart model), uses Cerebras Qwen 3 for classification (near-free), and only escalates to Sonnet for high-stakes coding. With prompt caching + Fast Mode disabled by default, typical cost is $0.05–0.30 per active hour.
 
 If you need max quality for a specific task, just say "use sonnet" in chat — the router honors explicit user overrides.
 

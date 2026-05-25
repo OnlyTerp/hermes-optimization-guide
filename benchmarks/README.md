@@ -51,8 +51,9 @@ Retail list prices; some providers may offer committed-use discounts.
 | google/gemini-3.1-flash | $0.08 | 11s | 19s | ✅ | Refresh against Gemini 3.1 Flash; was 4x cheaper, acceptable quality |
 | anthropic/claude-sonnet-5 | $0.72 | 19s | 31s | ✅ | Caps at 200K; refresh against Sonnet 5 |
 | openai/gpt-5.5 | $0.90 | 26s | 45s | ✅ | Refresh against GPT-5.5 |
+| xai/grok-4.3 | re-run | re-run | re-run | re-run | New v0.14 1M-context lane; do not quote until refreshed |
 
-**Recommendation:** Flash by default, Pro when you need the extra precision.
+**Recommendation:** Flash by default, Pro when you need precision, Grok 4.3 when live X context matters.
 
 ### T3: Code fix in 5K-line repo
 
@@ -91,7 +92,7 @@ Retail list prices; some providers may offer committed-use discounts.
 
 ## Delta from last snapshot
 
-- 2026-05-14: `benchmarks/matrix.yaml` updated with current frontier IDs (GPT-5.5, Claude Sonnet 5 / Opus 4.7, Gemini 3.1, Kimi K2.6, DeepSeek V4-Pro, Qwen3.6). Results above remain the dated 2026-04-17 run until `hermes evals run` is executed again.
+- 2026-05-25: `benchmarks/matrix.yaml` updated for the v0.14 refresh with Grok 4.3 1M context plus current frontier IDs (GPT-5.5, Claude Sonnet 5 / Opus 4.7, Gemini 3.1, Kimi K2.6, DeepSeek V4-Pro, Qwen3.6). Results above remain the dated 2026-04-17 run until `hermes evals run` is executed again.
 
 ---
 

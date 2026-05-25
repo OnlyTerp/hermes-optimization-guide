@@ -73,8 +73,8 @@ Create `~/.hermes/lightrag/.env`:
 ```bash
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
-LLM_MODEL=gpt-4.1-mini
-LLM_BINDING_API_KEY=<your-openai-api-key>
+LLM_MODEL=google/gemini-3.1-flash
+LLM_BINDING_API_KEY=<your-gemini-api-key-or-oauth-token>
 
 # Embedding model (for vector storage)
 EMBEDDING_BINDING=fireworks
@@ -391,7 +391,7 @@ cd ~/.hermes/lightrag/LightRAG && lightrag-server --port 9623
 ### Slow ingestion
 
 Entity extraction is LLM-bound. Speed it up:
-- Use a faster model for ingestion (GPT-4.1-mini, Claude Haiku)
+- Use a faster model for ingestion (Gemini 3.1 Flash, Kimi K2.6, or Claude Haiku)
 - Process documents in parallel batches
 - Use a local model if you have GPU capacity
 

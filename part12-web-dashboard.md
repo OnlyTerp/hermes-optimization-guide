@@ -1,6 +1,6 @@
 # Part 12: The Local Web Dashboard (Stop Editing YAML)
 
-*Introduced in v0.9 and substantially upgraded through v0.13. The dashboard is now a browser-based control panel for config, Chat/TUI, Kanban, plugins, profiles, and analytics — not just a YAML editor.*
+*Introduced in v0.9 and substantially upgraded through v0.14. The dashboard is now a browser-based control panel for config, Chat/TUI, Kanban, plugins, profiles, and analytics — not just a YAML editor.*
 
 ---
 
@@ -90,7 +90,7 @@ Requirements:
 
 - Node.js for the Ink TUI bundle
 - `ptyprocess` via `pip install 'hermes-agent[pty]'`
-- POSIX PTY support: Linux, macOS, or WSL; native Windows Python is not supported for the embedded PTY
+- POSIX PTY support: Linux, macOS, or WSL for the embedded PTY; native Windows is beta in v0.14 and may still need WSL for dashboard Chat
 
 Tip: launch from the Sessions page with the play icon to resume a past session directly into `/chat?resume=<id>`.
 
@@ -364,4 +364,4 @@ Config is read at session start and gateway start. For an active CLI session, ru
 
 - **Save on API keys:** [Part 13 — Nous Tool Gateway](./part13-tool-gateway.md)
 - **Speed up responses:** [Part 14 — Fast Mode & Background Watchers](./part14-fast-mode-watchers.md)
-- **Expand reach:** [Part 15 — New Platforms (iMessage, WeChat, Android)](./part15-new-platforms.md)
+- **Expand reach:** [Part 15 — New Platforms (Teams, LINE, SimpleX, iMessage, WeChat, Android)](./part15-new-platforms.md)

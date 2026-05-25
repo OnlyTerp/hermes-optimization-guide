@@ -12,7 +12,7 @@
 version: 1
 
 models:
-  default: anthropic/claude-sonnet
+  default: anthropic/claude-sonnet-5
   providers:
     anthropic:
       api_key: ${ANTHROPIC_API_KEY}

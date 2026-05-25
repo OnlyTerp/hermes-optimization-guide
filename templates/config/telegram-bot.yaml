@@ -13,7 +13,7 @@
 version: 1
 
 models:
-  default: anthropic/claude-sonnet
+  default: anthropic/claude-sonnet-5
   classification: google/gemini-3.1-flash
   providers:
     anthropic:
@@ -68,7 +68,7 @@ security:
         sampling: true
     approval_channel: telegram_dm       # Always DM, never group
   secrets:
-    # Redaction is on by default in Hermes v0.13; keep patterns explicit
+    # Redaction is on by default in Hermes v0.13+; keep patterns explicit
     # so hardened deployments know what is being scrubbed.
     redaction_patterns:
       - 'sk-[A-Za-z0-9]{40,}'           # OpenAI / Anthropic style
