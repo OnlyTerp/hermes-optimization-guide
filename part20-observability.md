@@ -70,32 +70,36 @@ hermes logs export --since 30d --format jsonl \
 
 ## Level 3 — Langfuse (Recommended Default)
 
-Langfuse is the "everything in one place" option: tracing, prompt management, evals, self-hostable. If you're not sure where to start, start here. Since v0.12, Langfuse also ships as a bundled observability plugin, so prefer enabling that over hand-rolled hooks.
-
-```bash
-hermes plugins enable observability/langfuse
-```
+Langfuse is the "everything in one place" option: tracing, prompt management, evals, self-hostable. If you're not sure where to start, start here. Since v0.12, Langfuse ships as a bundled Hermes plugin, so prefer enabling that over hand-rolled hooks.
 
 ### Setup (Hosted Cloud)
 
-```yaml
-# ~/.hermes/config.yaml
-observability:
-  langfuse:
-    enabled: true
-    host: https://cloud.langfuse.com
-    public_key: ${LANGFUSE_PUBLIC_KEY}
-    secret_key: ${LANGFUSE_SECRET_KEY}
-    sample_rate: 1.0                # Reduce for very high volume
-    traced_tools:                    # Which tool calls to capture
-      - terminal
-      - github
-      - claude-code
-      - gemini-cli
-    redact_payloads: true            # Redacts before sending (matches your security.secrets.patterns)
+```bash
+pip install langfuse
+hermes plugins enable observability/langfuse
 ```
 
-Get the keys from https://cloud.langfuse.com → Settings → API Keys. Free tier covers most individual users.
+Then put the keys in `~/.hermes/.env` (the plugin reads env vars, not a YAML
+block — there is no `observability:` key in `config.yaml`):
+
+```bash
+# ~/.hermes/.env  (chmod 600)
+HERMES_LANGFUSE_PUBLIC_KEY=pk-lf-...
+HERMES_LANGFUSE_SECRET_KEY=sk-lf-...
+HERMES_LANGFUSE_BASE_URL=https://cloud.langfuse.com   # or your self-hosted URL
+
+# Optional knobs
+HERMES_LANGFUSE_ENV=production            # tags traces with an environment
+HERMES_LANGFUSE_RELEASE=v0.14.0           # tags traces with a release
+HERMES_LANGFUSE_SAMPLE_RATE=0.5           # 0.0–1.0; lower for very high volume
+HERMES_LANGFUSE_MAX_CHARS=12000           # per-field cap before truncation
+HERMES_LANGFUSE_DEBUG=true                # verbose plugin logging
+```
+
+Get the keys from https://cloud.langfuse.com → Settings → API Keys. Free tier
+covers most individual users. Without the SDK or credentials the plugin
+fails-open (hooks no-op silently). Verify with `hermes plugins list` — the row
+for `observability/langfuse` should show `enabled`.
 
 ### Self-Hosted Langfuse
 
@@ -158,97 +162,157 @@ Pick Helicone over Langfuse when:
 
 ## Level 3 — OpenTelemetry → Phoenix (Standards-First)
 
-If you already run OpenTelemetry (Grafana, Datadog, Honeycomb), wire Hermes into your existing pipeline:
+If you already run OpenTelemetry (Grafana, Datadog, Honeycomb), point an OTLP
+collector at Hermes's standard `OTEL_*` environment variables. Hermes does not
+have an `observability: otel:` config block — wiring is done via the OpenTelemetry
+SDK's standard env vars in `~/.hermes/.env`:
 
-```yaml
-observability:
-  otel:
-    enabled: true
-    endpoint: https://otel.yourdomain.com:4318
-    protocol: http/protobuf
-    headers:
-      authorization: Bearer ${OTEL_TOKEN}
-    attributes:
-      service.name: hermes-prod
-      deployment.environment: production
+```bash
+# ~/.hermes/.env
+OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.yourdomain.com:4318
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_HEADERS=authorization=Bearer ${OTEL_TOKEN}
+OTEL_SERVICE_NAME=hermes-prod
+OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production
 ```
 
-Hermes emits `gen_ai.*` spans following the [OpenInference](https://github.com/Arize-ai/openinference) conventions. Point them at [Arize Phoenix](https://phoenix.arize.com) (self-hosted or cloud) for an LLM-specific view; or at your existing Grafana/Tempo for a "one pane of glass" view.
+If you want LLM-shaped `gen_ai.*` spans (OpenInference conventions), enable
+Langfuse's plugin and point its OTLP exporter at your collector via the Langfuse
+self-hosted route; or run [Arize Phoenix](https://phoenix.arize.com) as your
+collector and let it ingest the raw OTLP stream.
 
 ---
 
 ## Cost Routing Playbook (The One That Actually Saves Money)
 
-### Rule 1: Route by Task Complexity, Not Default
+> **Heads-up (2026-04):** Hermes used to ship a `smart_model_routing:` config
+> block that routed short turns to a cheap model. It was removed upstream in
+> commit `424e9f36b` ("refactor: remove smart_model_routing feature", #12732)
+> after the heuristic proved too coarse in practice. Current Hermes has **no
+> built-in intent/complexity classifier** — there is no `model_routing:` block
+> with `intent:`, `complexity:`, or `match:` keys. The advice below uses the
+> primitives that actually exist: the primary `model:` / `provider:`, the
+> per-task `auxiliary:` block, `provider_routing:` for OpenRouter, and
+> `hermes fallback` for failover. If you see a config example elsewhere that
+> looks like a routing DSL, treat it as a feature request, not a feature.
 
-Most Hermes cost bloat comes from using your most expensive frontier model for tasks Gemini Flash, Kimi/Moonshot, GLM, MiniMax, Cerebras, or a local model would handle identically. Set up a **task-aware default**:
+### Rule 1: Pick a Smart Primary, Then Push Side-Tasks to Cheaper Models
+
+Most Hermes cost bloat is not the main agent — it's the auxiliary calls
+(vision OCR, web extraction, context compression, summarization, image
+classification) silently running on whatever your primary model happens to be.
+Set the primary once, then point each `auxiliary:` task at a fast/cheap model
+that's good enough for that specific job:
 
 ```yaml
-model_routing:
-  default:
-    model: claude-sonnet-5
-    provider: anthropic
-  routes:
-    - match: { intent: [classification, extraction, triage, sum_under_500_tokens] }
-      model: gemini-3.1-flash
-      provider: google
-    - match: { intent: long_context, tokens_gte: 150000 }
-      model: gemini-3.1-pro
-      provider: openrouter
-    - match: { intent: [write_code, refactor, debug], complexity: medium }
-      model: glm
-      provider: zai
-    - match: { intent: [write_code, refactor, debug], complexity: high }
-      model: claude-sonnet-5
-      provider: anthropic
-    - match: { intent: [reasoning, math], complexity: high }
-      model: reasoning
-      provider: openai
+# ~/.hermes/config.yaml
+# Primary — the model that drives your tool-calling loop.
+model: claude-sonnet-5
+provider: anthropic
+
+# Per-task auxiliary models. Empty model = provider default.
+# These are independent of the primary; setting one here does NOT change
+# how your interactive turns are routed.
+auxiliary:
+  vision:
+    provider: openrouter
+    model: google/gemini-3-flash
+  web_extract:
+    provider: openrouter
+    model: google/gemini-3-flash
+  compression:
+    provider: openrouter
+    model: google/gemini-3-flash
+  summarization:
+    provider: openrouter
+    model: google/gemini-3-flash
+
+# Failover chain — tried in order when the primary fails with rate-limit /
+# overload / connection errors. Manage interactively with `hermes fallback`.
+# (Edit via the command, not by hand — it lives in a separate state file.)
 ```
 
-Hermes classifies intent via a tiny prompt (~100 tokens) and routes accordingly. Empirically:
+Empirically on this maintainer's setup:
 
-| Scenario | Naive frontier default | Routed | Savings |
-|----------|----------------------------|--------|---------|
-| Feature implementation (100 calls) | ~$34 | ~$3 (mostly Kimi/GLM) | 91% |
-| Long-doc summarization (10 calls, 200K each) | ~$42 | ~$4 (Gemini Pro) | 90% |
-| Daily classification triage | ~$18/day | ~$1/day (Flash) | 94% |
+| What dominated the bill before | What fixed it | Approx. savings |
+|---|---|---|
+| Compression on every long turn running through Claude Sonnet | `auxiliary.compression` → `google/gemini-3-flash` | ~80% on compression-heavy sessions |
+| Web-extract tool calling Sonnet for every fetched page | `auxiliary.web_extract` → `google/gemini-3-flash` | ~90% on research-heavy days |
+| Vision OCR on screenshots running through the primary | `auxiliary.vision` → `google/gemini-3-flash` | ~85% on dashboard/screenshot workflows |
 
-### Rule 2: Prompt Caching Is Free Money
+For the primary itself, the lever Hermes gives you is your choice of
+`model:` + `provider:`. If you want OpenRouter to prefer cheaper providers
+for that same model, use `provider_routing:` (the only routing DSL Hermes
+actually reads):
 
-Every stable chunk (system prompt, skill, SOUL.md, memory digest) should be cached:
+```yaml
+provider_routing:
+  sort: price              # or "throughput" / "latency"
+  # only: [anthropic, google]
+  # ignore: [deepinfra]
+  # order: [anthropic, google, together]
+  # require_parameters: true
+  # data_collection: deny
+```
+
+### Rule 2: Use the Caching You Actually Get
+
+Two cache layers exist in current Hermes; neither needs a per-tool allow-list.
+
+**Anthropic prompt caching** (Claude via the native Anthropic API or OpenRouter)
+— configured globally with one key:
 
 ```yaml
 prompt_caching:
-  enabled: true
-  providers: [anthropic, openai, helicone]
-  cache_system_prompt: true          # Biggest win
-  cache_skills: true
-  cache_memory_digest: true
-  min_cache_tokens: 1024             # Anthropic's minimum
+  cache_ttl: "5m"          # or "1h" — those are the only two Anthropic tiers
 ```
 
-v0.14 extends Claude prompt-prefix caching across sessions for up to 1 hour, so repeated skills/SOUL/memory prefixes get faster and cheaper after `/new` too. Anthropic's prompt caching discount is ~90% on cached reads. For a 5K-token system prompt used 100 times a day, that's a real $2–5 a day saved.
+Hermes auto-marks stable prefixes (system prompt, skills, SOUL.md, persistent
+memory) as cacheable. Cached reads are ~90% off, so for a 5K-token system
+prompt re-used 100×/day you save a real $2–5/day on Sonnet-class models.
+Per-component toggles like `cache_system_prompt:` / `cache_skills:` /
+`min_cache_tokens:` are **not** real config keys — don't paste them.
 
-### Rule 2B: Track Browser/CDP Latency Separately
-
-v0.14's persistent CDP path makes browser-console and dashboard automation much faster, but only if you can see when it falls back to cold browser startup. Add a browser lane to traces when you rely on computer/browser tools:
+**OpenRouter response caching** (separate mechanism — keys identical requests
+to the same response, billed at zero):
 
 ```yaml
-telemetry:
-  spans:
-    browser_cdp: true
-    computer_use: true
+openrouter:
+  response_cache: true
+  response_cache_ttl: 300  # seconds; 1–86400
 ```
 
-Alert on repeated cold CDP starts; it usually means Chrome died, the profile changed, or a sandbox reset removed the persisted connection.
+### Rule 2B: Watch Cold Browser Starts in Logs, Not Spans
+
+The browser/CDP-vs-computer-use distinction the previous rev described
+(`telemetry: spans: browser_cdp: true`) was not a real config block. To catch
+cold browser startups today, grep the logs:
+
+```bash
+hermes logs tail -f --level WARNING | grep -iE 'cdp|browser_use|chrome'
+```
+
+…or set a Langfuse alert on the `browser_use` / `computer_use` tool spans the
+plugin already emits with their duration. The thing to actually watch for is
+repeated multi-second `browser_use.launch` spans, which usually mean Chrome
+died, the profile changed, or a sandbox reset blew away the persisted
+connection.
 
 ### Rule 3: Use Fast Mode Surgically
 
-[Fast Mode](./part14-fast-mode-watchers.md) (`/fast`) costs more per token but reduces queue latency. Use it for:
+[Fast Mode](./part14-fast-mode-watchers.md) (`/fast`) costs more per token but
+reduces queue latency. It's a **runtime toggle**, not a YAML block — there is
+no `fast_mode:` key in `config.yaml`. Use the slash command:
 
-- Interactive CLI sessions where you're watching the output
-- Telegram conversations where the user is waiting
+```
+/fast on        # opt the current session into Priority Processing / Fast Mode
+/fast off       # back to normal
+/fast status    # show the current state
+```
+
+Use it for:
+
+- Interactive CLI / Telegram / Discord sessions where someone is watching
 - Real-time voice flows
 
 Don't use it for:
@@ -257,67 +321,74 @@ Don't use it for:
 - Nightly analysis jobs
 - Long bulk operations
 
-```yaml
-fast_mode:
-  defaults:
-    cli: on
-    telegram: on
-    discord: on
-    cron: off
-    webhooks: off
-  user_override: true                # User can toggle with /fast
-```
+For non-interactive gateways (cron, webhooks), just don't run `/fast on` from
+those entry points and you'll stay on normal pricing.
 
 ### Rule 4: Context Is the Real Cost — Use `/compress`
 
-Most sessions' 100th turn costs 10x the 10th turn. [`/compress <topic>`](./part14-fast-mode-watchers.md#compress-topic--guided-compression) plus the pluggable context engine can cap per-turn cost:
+Most sessions' 100th turn costs 10× the 10th turn. Hermes ships automatic
+context compression keyed on percentage-of-context, not absolute tokens. The
+real keys are:
 
 ```yaml
 compression:
-  auto:
-    enabled: true
-    at_tokens: 48000                 # Compress when session exceeds this
-    preserve:
-      - last_n_turns: 10
-      - tool_results_matching: "error|ERROR|failed"
-    topics_from: active_skill         # Use active skill name as compression topic
+  enabled: true            # default true; set false to manage context manually
+  threshold: 0.50          # trigger when session uses this % of the model's context
+  target_ratio: 0.20       # fraction of the threshold kept as recent tail
+  protect_last_n: 20       # always preserve the last N messages (≈10 turns) intact
 ```
+
+For guided compression on demand, use the slash command:
+[`/compress <topic>`](./part14-fast-mode-watchers.md#compress-topic--guided-compression).
+Keys like `compression.auto.at_tokens` / `preserve.tool_results_matching` /
+`topics_from` from earlier revs are not real — don't paste them.
+
+If compression-on-every-long-turn is what's burning your bill, route the
+compression call itself off the primary model via `auxiliary.compression`
+(see Rule 1).
 
 ### Rule 5: Alert on Cost Anomalies
 
-```yaml
-alerts:
-  cost_spike:
-    window: 1h
-    threshold_usd: 5                 # Alert if > $5 in an hour
-    channel: telegram_private
-  token_anomaly:
-    window: 10m
-    threshold_tokens_per_turn: 30000
-    channel: telegram_private
-```
+Hermes doesn't have a built-in `alerts:` block — `cost_spike` / `token_anomaly`
+config keys don't exist in the loader. There are two real options:
 
-Catches runaway loops (a skill stuck in a retry tornado) and prompt injection attempts (attacker trying to burn your tokens).
+1. **Set the alerts in your tracing layer.** Langfuse, Helicone, and Phoenix
+   all support per-project cost / token-rate alerts that fire to webhook,
+   email, or Slack. This is the right place for them — your tracing backend
+   sees every call, including async ones the CLI doesn't.
+
+2. **Roll your own from logs.** If you'd rather stay local, tail
+   `~/.hermes/logs/agent.log` (or `hermes logs tail -f`) into a small script
+   that windows over cost / tokens-per-turn and shells out to `hermes send
+   telegram …` when a threshold trips. The Telegram gateway from
+   [Part 4](./part4-telegram-setup.md) is the most common destination.
+
+Either way, the two patterns worth catching are runaway loops (a skill stuck
+in a retry tornado, usually visible as a sudden spike in `tool.call` count per
+turn) and prompt-injection attempts that try to burn your tokens by inflating
+input length.
 
 ---
 
 ## Eval-Driven Regression Prevention
 
-Once you have Langfuse, add a dataset + evals for your critical paths:
+Hermes does not ship a built-in `hermes evals` subcommand — that's a Langfuse
+workflow, not a Hermes one. Once Langfuse is wired up, do the eval loop on the
+Langfuse side:
 
-```bash
-# One-time setup
-hermes evals init
-hermes evals dataset create telegram-support-flows
-hermes evals dataset add telegram-support-flows ~/.hermes/traces/support/*.json
+1. In the Langfuse UI, build a **dataset** from real traces you want to
+   protect (e.g. last week's successful Telegram support turns).
+2. Define a small **evaluator** (LLM-as-judge or programmatic) for the
+   property you care about — "answers the user's question", "doesn't
+   hallucinate a price", "calls the right tool".
+3. Re-run the dataset against alternate models from Langfuse's Playground or
+   via Langfuse's Python SDK and compare scores before flipping a cheap model
+   into production.
 
-# Run on every release
-hermes evals run telegram-support-flows --model anthropic/claude-sonnet-5
-hermes evals run telegram-support-flows --model zai/glm     # Check if cheaper model still passes
-hermes evals compare
-```
-
-This is how you confidently swap a $10/Mtok model for a $0.30/Mtok one — empirically, not by vibes.
+This is how you confidently swap a $10/Mtok model for a $0.30/Mtok one —
+empirically, not by vibes. See
+[Langfuse Datasets & Experiments](https://langfuse.com/docs/datasets/overview)
+for the current API.
 
 ---
 
