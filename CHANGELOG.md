@@ -2,6 +2,12 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-05-27 — Ecosystem Directory Update
+
+### Added
+- Hermes Tweet native plugin entry in `ECOSYSTEM.md`, applied onto current
+  `main` without reverting newer MCP / coding-agent ecosystem entries.
+
 ## 2026-05-27 — Part 20 routing schema fixes
 
 ### Fixed
