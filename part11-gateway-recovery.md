@@ -180,7 +180,7 @@ if ! pgrep -f "hermes.*gateway" > /dev/null; then
     exit 1
 fi
 
-# Can we reach the API?
+# Can we reach the API? (gateway should only listen on localhost)
 if ! curl -s http://localhost:8642/health > /dev/null 2>&1; then
     echo "CRITICAL: Gateway not responding"
     exit 1
