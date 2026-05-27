@@ -47,7 +47,7 @@ try:
     compressed_context = summary
 except Exception as e:
     logger.warning(f"Context compression failed: {e}, preserving original context")
-    return original_context  # Don't compress, don't lose data
+    compressed_context = messages_to_compress  # Don't compress, don't lose data
 ```
 
 **The rule:** If compression can't succeed, keep the uncompressed context. A slower response is better than a wrong one.
