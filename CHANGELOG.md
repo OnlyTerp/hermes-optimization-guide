@@ -2,6 +2,25 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-05-27 — Part 20 routing schema fixes
+
+### Fixed
+- **Part 20 — Cost Routing Playbook**: rewrote Rules 1, 2, 2B, 3, 4, 5 and the
+  Langfuse / OTel / eval sections to match real Hermes config keys. The
+  previous rev described an `intent`/`complexity`/`match`-based
+  `model_routing:` DSL, a `prompt_caching:` allow-list, a `telemetry: spans:`
+  block, a `fast_mode:` config block, `compression.auto.*` keys, an `alerts:`
+  block, an `observability: langfuse:` block, an `observability: otel:`
+  block, and a `hermes evals` subcommand — none of which exist in Hermes.
+  Replaced with the actual primitives: `auxiliary:` per-task models,
+  `provider_routing:` for OpenRouter, `hermes fallback` for failover, real
+  `prompt_caching: cache_ttl:`, real `compression:` keys
+  (`enabled`/`threshold`/`target_ratio`/`protect_last_n`), the `/fast` slash
+  command, `HERMES_LANGFUSE_*` env vars, and standard `OTEL_*` env vars.
+  Resolves [#13](https://github.com/OnlyTerp/hermes-optimization-guide/issues/13).
+  Also notes that `smart_model_routing` was removed upstream in commit
+  `424e9f36b` (#12732) so readers don't try to bring it back.
+
 ## 2026-05-25 — Hermes v0.14.0 Foundation Refresh
 
 ### Added
