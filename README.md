@@ -787,8 +787,8 @@ LightRAG does vector DB + knowledge graph **in parallel** during ingestion. One 
 ### Prerequisites
 
 - Python 3.11+
-- An LLM API key (for entity extraction during ingestion — OpenAI, Anthropic, or any OpenAI-compatible provider)
-- An embedding API key (Fireworks recommended for high-quality 4096-dim embeddings, or use local Ollama)
+- An LLM API key for entity extraction during ingestion — **Kimi K2.6** (quality), **Cerebras GPT OSS 120B** (speed), or any OpenAI-compatible provider
+- An embedding API key — **Fireworks + Qwen3-Embedding-8B** for high-quality 4096-dim embeddings, or local **Ollama + nomic-embed-text** for free
 
 ### Install LightRAG
 
@@ -809,23 +809,53 @@ pip install -e ".[api]"
 
 Create `~/.hermes/lightrag/.env`:
 
+**Option A — Kimi K2.6 + Fireworks (quality default):**
+
 ```bash
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
-LLM_MODEL=kimi-2.5                    # What we actually use — great quality/cost ratio
-LLM_BINDING_API_KEY=<your-api-key>
+LLM_MODEL=kimi-k2.6
+LLM_BINDING_HOST=https://api.moonshot.ai/v1
+LLM_BINDING_API_KEY=<your-moonshot-api-key>
 
 # Embedding model (for vector storage)
 EMBEDDING_BINDING=fireworks
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
 EMBEDDING_API_KEY=<your-fireworks-api-key>
+```
 
-# Or use local Ollama (free, no API key needed):
-# EMBEDDING_BINDING=ollama
-# EMBEDDING_MODEL=nomic-embed-text
+**Option B — Cerebras GPT OSS 120B + Fireworks (speed default):**
+
+```bash
+# LLM for entity extraction (during ingestion)
+LLM_BINDING=openai
+LLM_MODEL=gpt-oss-120b
+LLM_BINDING_HOST=https://api.cerebras.ai/v1
+LLM_BINDING_API_KEY=<your-cerebras-api-key>
+
+# Embedding model (for vector storage)
+EMBEDDING_BINDING=fireworks
+EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
+EMBEDDING_API_KEY=<your-fireworks-api-key>
+```
+
+**Option C — local Ollama (free, quality varies):**
+
+```bash
+# LLM for entity extraction
+LLM_BINDING=ollama
+LLM_MODEL=qwen3:32b
+LLM_BINDING_HOST=http://localhost:11434
+
+# Embedding model
+EMBEDDING_BINDING=ollama
+EMBEDDING_BINDING_HOST=http://localhost:11434
+EMBEDDING_MODEL=nomic-embed-text
 ```
 
 > **Security tip:** Set restrictive permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
+
+> **Where to get API keys:** Kimi/Moonshot uses [platform.kimi.ai](https://platform.kimi.ai) and the international base URL `https://api.moonshot.ai/v1`; Cerebras uses [cloud.cerebras.ai](https://cloud.cerebras.ai); Fireworks uses [fireworks.ai](https://fireworks.ai).
 
 ### Entity Extraction Model — What to Use
 
@@ -833,13 +863,11 @@ This is the LLM that reads your documents and pulls out entities and relationshi
 
 | Model | Speed | Quality | Cost | Recommendation |
 |-------|-------|---------|------|----------------|
-| **Kimi 2.5** | Fast | Excellent | Cheap | **What we use.** Great balance of quality, speed, and cost for entity extraction |
-| **Cerebras + Qwen 3** | Blazing fast | Very good | Very cheap | **Fastest option in the world.** Cerebras inference at 2000+ tok/s makes bulk ingestion fly |
-| Gemini 3.1 Flash | Fast | Good | Cheap | Solid fallback, huge context |
-| Claude Sonnet 4 | Medium | Excellent | Mid-range | Overkill for ingestion but works great |
-| **Ollama local** | Depends on GPU | Unpredictable | Free | Untested for this use case — might mess up entity extraction quality. Use at your own risk |
-
-> **Our recommendation:** Kimi 2.5 for quality, Cerebras + Qwen 3 if you're ingesting a lot of documents and speed matters. Both are cheap and reliable. We haven't tested local Ollama for entity extraction — it's free but the extraction quality is unverified and you might get a messy graph.
+| **Kimi K2.6** | Fast | Excellent | Cheap | Best quality/cost default for entity extraction via Moonshot's OpenAI-compatible API |
+| **Cerebras GPT OSS 120B** | Blazing fast | Very good | Very cheap | Fastest current Cerebras production default; use when bulk ingestion speed matters most |
+| Gemini 3.1 Flash | Fast | Good | Cheap | Solid fallback with huge context |
+| Claude Sonnet 5 | Medium | Excellent | Mid/high | Overkill for ingestion but useful for very messy documents |
+| **Ollama local** | Depends on GPU | Unpredictable | Free | Viable for private/local ingestion; validate graph quality before trusting it |
 
 > **Embedding quality matters.** If you have a GPU with 8GB+ VRAM, run `nomic-embed-text` locally via Ollama for free. If you want the best quality, use Fireworks' Qwen3-Embedding-8B (4096 dimensions) — the search accuracy difference is dramatic.
 
@@ -1148,7 +1176,7 @@ cd ~/.hermes/lightrag/LightRAG && lightrag-server --port 9623
 ### Slow ingestion
 
 Entity extraction is LLM-bound. Speed it up:
-- Use a faster model for ingestion (Cerebras + Qwen 3 is the fastest option, or Kimi 2.5)
+- Use a faster model for ingestion (Cerebras GPT OSS 120B for speed, Kimi K2.6 for quality, Gemini 3.1 Flash as a cheap fallback)
 - Process documents in parallel batches
 - Use a local model if you have GPU capacity
 

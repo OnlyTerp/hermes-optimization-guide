@@ -2,6 +2,17 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-05-27 — LightRAG model setup refresh
+
+### Changed
+- Updated the LightRAG setup examples in `part3-lightrag-setup.md` and the
+  combined `README.md` to use current model endpoints: Kimi K2.6 via the
+  international Moonshot API (`https://api.moonshot.ai/v1`) for quality,
+  Cerebras `gpt-oss-120b` for speed, Fireworks Qwen3-Embedding-8B for
+  embeddings, and local Ollama as the free/private option. This replaces the
+  stale PR #1 examples that referenced `kimi-2.5`, the China-only
+  `api.moonshot.cn` endpoint, and deprecated Cerebras `qwen-3-32b`.
+
 ## 2026-05-27 — Ecosystem Directory Update
 
 ### Added
