@@ -38,6 +38,16 @@ See [Part 17](./part17-mcp-servers.md) for install patterns and trust model guid
 
 ---
 
+## Voice backends
+
+- [Kesha Voice Kit](https://github.com/drakulavich/kesha-voice-kit) — local command-provider backend for
+  Hermes STT and TTS; ships copy-paste config for `HERMES_LOCAL_STT_COMMAND` and
+  `tts.providers.<name>.type: command`.
+
+See [Kesha's Hermes guide](https://github.com/drakulavich/kesha-voice-kit/blob/main/docs/hermes.md) for install and configuration.
+
+---
+
 ## Native Hermes plugins
 
 - [`hermes-tweet`](https://github.com/Xquik-dev/hermes-tweet) — X/Twitter search, reads, and gated account actions for Hermes Agent through Xquik
