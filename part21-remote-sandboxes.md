@@ -257,7 +257,7 @@ Each project has its own workspace with its own deps, env, and git state. Hermes
 
 ### Pattern C: Sandboxed MCP Servers
 
-Route untrusted MCP servers (see [Part 19](./part19-security-playbook.md#mcp-server-trust-model)) into a sandbox:
+Route untrusted MCP servers (see [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust)) into a sandbox:
 
 ```yaml
 mcp_servers:

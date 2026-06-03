@@ -198,7 +198,7 @@ mcp_servers:
     sampling_model: gpt-5-mini        # Optional: pin a cheaper model for sampling
 ```
 
-**Security note:** Sampling means an MCP server can burn your tokens. Only enable it for servers you trust. See [Part 19](./part19-security-playbook.md#mcp-server-trust-model).
+**Security note:** Sampling means an MCP server can burn your tokens. Only enable it for servers you trust. See [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust).
 
 ---
 

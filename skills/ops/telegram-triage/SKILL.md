@@ -80,5 +80,5 @@ gateways:
 
 ## See also
 
-- [Part 19 provenance labels](../../../part19-security-playbook.md#layer-1-input-origin-labeling)
+- [Part 19: user authorization](../../../part19-security-playbook.md#layer-1-user-authorization--who-can-talk-to-the-agent)
 - [Part 4 Telegram setup](../../../part4-telegram-setup.md)

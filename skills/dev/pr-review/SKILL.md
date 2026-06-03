@@ -87,4 +87,4 @@ Never combine. The Claude Code sub-session only sees the read PAT in its env, an
 ## See also
 
 - [Part 18: Coding Agents](../../../part18-coding-agents.md)
-- [Part 19: GitHub MCP trust model](../../../part19-security-playbook.md#layer-6-mcp-server-trust-model)
+- [Part 19: MCP and plugin trust](../../../part19-security-playbook.md#layer-5-mcp-and-plugin-trust)
