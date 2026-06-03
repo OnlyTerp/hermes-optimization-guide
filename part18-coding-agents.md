@@ -243,7 +243,7 @@ delegation:
       - "curl * | bash"
 ```
 
-See [Part 19](./part19-security-playbook.md#approval-and-denylist-layers) for the full story. Approval bypass inheritance landed in v0.10 ([Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents)) — use it for trusted specialists, not for every agent.
+See [Part 19](./part19-security-playbook.md#layer-2-dangerous-command-approval) for the full story. Approval bypass inheritance landed in v0.10 ([Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents)) — use it for trusted specialists, not for every agent.
 
 ---
 

@@ -2,6 +2,28 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-06-03 — Part 19 security schema fixes
+
+### Fixed
+- **Part 19 — Security Playbook**: rewrote the configuration examples to match
+  the real Hermes Agent schema. The previous rev documented a top-level
+  `security:` block with `provenance` trust-labeling, `approval.require_approval`
+  regex + `denylist`, `approval_channels`, `bypass_subagents`, `secrets.scope` /
+  `secrets.env_access`, and a `security.network.egress_allowlist` — **none of
+  which exist in Hermes**. Replaced with the actual primitives: top-level
+  `approvals:` (`mode: manual|smart|off`, `timeout`, `cron_mode`,
+  `mcp_reload_confirm`, `destructive_slash_confirm`), the native
+  `tools/approval.py` dangerous-command detector, the always-on
+  `UNRECOVERABLE_BLOCKLIST`, `command_allowlist:` (human-readable pattern
+  descriptions), `.env` user allowlists (`TELEGRAM_ALLOWED_USERS`,
+  `GATEWAY_ALLOWED_USERS`, …) + DM pairing, `security.redact_secrets`, optional
+  `security.tirith_*` scanning, automatic credential scoping for subprocesses,
+  `terminal.backend` isolation, and `mcp_servers.<name>.tools.include/exclude`.
+  Added the SECURITY.md framing that OS-level isolation (terminal-backend or
+  whole-process wrapping via Docker/Compose or NVIDIA OpenShell — where real
+  network egress control lives) is the only boundary; in-process controls are
+  heuristics. Resolves [#19](https://github.com/OnlyTerp/hermes-optimization-guide/issues/19).
+
 ## 2026-05-27 — LightRAG model setup refresh
 
 ### Changed
