@@ -56,8 +56,9 @@ After=network-online.target
 Type=simple
 User=%i
 WorkingDirectory=/home/%i
-ExecStart=/usr/local/bin/hermes run
+ExecStart=/usr/bin/env hermes gateway run
 EnvironmentFile=-/home/%i/.hermes/.env
+Environment=PATH=/home/%i/.local/bin:/home/%i/.cargo/bin:/usr/local/bin:/usr/bin:/bin
 # ... all the hardening bits from templates/systemd/hermes.service
 
 [Install]
@@ -80,10 +81,10 @@ systemctl enable --now hermes@alice.service
 ## Per-client separation
 
 - **`profile:`** in the Hermes config — `quarantine` (untrusted input for a public bot) vs `trusted` (the dev's admin DM)
-- **Approval channels** — the dev's DM is the only trusted approval source; client support channels are *never* trusted
+- **Approval channels** — the dev's DM is the only trusted approval source; client support channels are _never_ trusted
 - **LightRAG dirs** — `~/.hermes/lightrag-<client>/` per client; never mix
 - **MCP** — per-client read-only PATs (`GITHUB_PAT_CLIENT_A`, `GITHUB_PAT_CLIENT_B`)
-- **Audit log** — append-only JSONL per session, centralized to a single append-only bucket the dev can *read* but not *delete* (makes client reviews easy)
+- **Audit log** — append-only JSONL per session, centralized to a single append-only bucket the dev can _read_ but not _delete_ (makes client reviews easy)
 
 ## Cost routing at agency scale
 

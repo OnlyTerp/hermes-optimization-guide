@@ -91,9 +91,8 @@ security:
     require_signature: true
     max_body_bytes: 524288
     ttl_seconds: 300                    # Reject webhooks older than 5 min
-  mcp:
-    default_trust: untrusted            # Must be explicitly elevated per-server
-    require_allowlist: true
+  # MCP servers are managed with `hermes mcp add` / `hermes mcp configure`.
+  # Keep this home lean: register only reviewed servers and expose only audited tools.
 
 telemetry:
   level: info

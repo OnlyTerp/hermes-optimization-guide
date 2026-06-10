@@ -1,307 +1,240 @@
-# Part 21: Remote Sandboxes & Bulk File Sync — SSH, Modal, Daytona, Vercel
+# Part 21: Remote Execution & Workspace Isolation
 
-*Running Hermes on a $5 VPS is great for chat. Running heavy coding work there is not. This part sets up the "phone drives, beefy remote does the work" pattern: Hermes lives on your small VPS, delegates execution to a disposable sandbox on SSH/Modal/Daytona/Vercel, syncs files both ways, and tears it down when idle.*
+_Hermes can still do the "phone drives, beefy machine does the work" pattern, but the current runtime does not expose a native sandbox subsystem. There is no sandbox-profile config block, no sandbox CLI subcommand, and no sandbox slash command. Use terminal backends, git worktrees, Kanban worker lanes, MCP servers, and skills instead._
 
 ---
 
-## The Pattern
+## The Current Pattern
 
+```text
+Your phone / chat client
+        |
+        v
+Hermes driver on a small VPS
+- gateways and approvals
+- conversation state
+- memory, skills, MCP config
+- Kanban board
+        |
+        v
+Execution target
+- local shell
+- Docker or Singularity container
+- SSH host
+- Modal or Daytona terminal backend, when supported by your installed build
+- external runtime reached through a CLI, MCP server, or custom skill
 ```
-Your phone (Telegram)
-        │
-        ▼
-Hermes on $5 VPS  ─────────────►  Remote sandbox ($0 when idle)
-- Memory                            - Whole workspace in /home/runner/
-- Skills                            - Coding agents (Claude/Codex/etc)
-- Conversation state                - Build tools, Docker, GPU
-        ▲                                │
-        │                                │
-        └─── bulk file sync on teardown ─┘
-```
 
-Hermes uploads your workspace on task start, delegates work, then downloads only the diff back on teardown. The sandbox dies, Hermes keeps the state — and your $5 VPS never needed the 32GB of RAM the sandbox ran in.
+Hermes stays the coordinator. The execution target is where LLM-emitted shell and file-tool operations run. For coding work, use git branches or worktrees as the state boundary, then push a reviewable diff. Do not rely on a Hermes-managed remote sandbox lifecycle or automatic diff-back sync; those are not current CLI/config surfaces.
 
 ---
 
-## Pick Your Backend
+## Pick The Right Execution Boundary
 
-| Backend | Billing | Idle cost | Best for |
-|---------|---------|-----------|----------|
-| **SSH** | Your infra | Whatever your host costs | Homelab / always-on dev box |
-| **Modal** | Per-second compute | $0 (hibernate) | Bursty coding tasks, GPU work |
-| **Daytona** | Per-second workspace | $0 (hibernate) | Long-lived dev workspaces |
-| **Vercel Sandbox** | Per-run / platform billing | $0 when unused | Webapp builds and isolated `execute_code` tasks |
-| **Fly Machines** | Per-second | $0 (stop) | Regional sandboxes near your users |
-| **E2B** | Per-second | $0 | Quick throwaway Python sandboxes |
-| **Local Docker** | Your hardware | N/A | Testing / development |
+| Pattern           | Hermes surface                                                              | Best for                                                             | Caveat                                                                                         |
+| ----------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Local shell       | `terminal.backend: local` or default config                                 | Trusted personal projects on the driver host                         | No OS isolation from the host                                                                  |
+| Local container   | `terminal.backend: docker` or `singularity`                                 | Risky shell commands, dependency-heavy builds, repeatable toolchains | Only shell/file-tool paths are isolated; in-process plugins/MCP still run with the agent       |
+| Remote host       | `terminal.backend: ssh`                                                     | Homelab boxes, beefy workstations, GPU hosts, existing dev servers   | You own lifecycle, updates, and source checkout                                                |
+| Modal / Daytona   | `terminal.backend: modal` or `daytona`, where your Hermes build supports it | Bursty remote compute or persistent cloud workspaces                 | Configure only keys your installed build exposes; do not create a legacy sandbox-profile block |
+| Git worktree      | `hermes --worktree` or Kanban `--workspace worktree`                        | Parallel local coding sessions and worker lanes                      | Isolation is source-tree isolation, not a remote runtime                                       |
+| External runtimes | Vendor CLI/API through MCP or a skill                                       | Vercel builds, Fly Machines, E2B notebooks, CI runners               | Hermes orchestrates them; they are not native Hermes-managed execution backends                |
 
-Hermes ships native support for SSH, Modal, Daytona, and Vercel Sandbox. Fly Machines and E2B work via thin plugins.
+For untrusted input, remember the security model from [Part 19](./part19-security-playbook.md): a terminal backend confines shell/file-tool activity, not every in-process code path. Use whole-process wrapping when the whole agent must be isolated.
 
 ---
 
-## SSH Backend (Homelab / Always-On Dev Box)
+## Configure A Terminal Backend
 
-### Prereqs
+Hermes terminal backends live under the top-level `terminal:` config key.
 
-- SSH access to the remote host with key auth (no password prompts)
-- Remote has `python3`, `rsync`, `tar`, `git`
-- Your SSH config uses `ControlMaster` + `ControlPath` for connection reuse (shown below)
-
-### Config
+### Local
 
 ```yaml
 # ~/.hermes/config.yaml
-sandboxes:
-  dev-box:
-    backend: ssh
-    host: dev.local
-    user: hermes
-    identity_file: ~/.ssh/hermes_ed25519
-    workdir: /home/hermes/sandboxes
-    control_master: auto              # Reuses connection for bulk sync
-    control_persist: 600
-    sync:
-      push: ~/.hermes                 # Uploaded at sandbox create
-      pull_on_teardown: true
-      pull_paths:
-        - .hermes
-        - projects                    # Grabs any code changes made in-sandbox
-      ignore:
-        - .git
-        - node_modules
-        - __pycache__
-        - "*.log"
+terminal:
+  backend: local
+  cwd: /home/hermes/projects/myapp
 ```
 
-### Use It
+Use this for the simplest driver-box workflow. Pair it with `hermes --worktree` for isolated coding sessions.
 
+### Docker Or Singularity
+
+```yaml
+# ~/.hermes/config.yaml
+terminal:
+  backend: docker # local | docker | singularity | modal | daytona | ssh
+  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  cwd: /workspace
+  docker_mount_cwd_to_workspace: false # opt in only when you want the host cwd mounted
+  container_persistent: false # false resets the container filesystem per session
 ```
-/sandbox start dev-box
-/claude-code refactor src/auth/ to use JWT rotation
-/sandbox stop dev-box                # Syncs changes back, then stops
+
+Switch `backend` to `singularity` in environments where Singularity is the supported container runtime. Keep host secrets in `~/.hermes/.env`; do not bake them into the image.
+
+### SSH Host
+
+```yaml
+# ~/.hermes/config.yaml
+terminal:
+  backend: ssh
+  ssh_host: devbox.example.com
+  ssh_user: hermes
+  ssh_port: 22
+  ssh_key: ~/.ssh/id_ed25519
 ```
 
-Under the hood on teardown:
+This is the most practical "small VPS drives a bigger machine" setup. Put the repo on the SSH host, run the worker there, and use git to move reviewed changes back through branches and PRs.
 
-1. Hermes runs `tar cf - -C ~/.hermes .` on the remote
-2. Pipes it over the SSH ControlMaster to the local box
-3. Unpacks into a staging dir
-4. Diffs against SHA-256 hashes of what was originally pushed
-5. Applies only changed files back to `~/.hermes`, with `fcntl.flock` serialization if another sandbox runs concurrently
-6. SIGINT-safe — pressing Ctrl-C during sync rolls back cleanly
+### Modal Or Daytona
 
-This is the hardening that made remote sandboxes safe enough for real coding work. Before diff-based sync-back, you either rsynced everything every time (slow) or lost remote-made edits on teardown.
+Current docs list Modal and Daytona as terminal backend choices, but provider-specific fields can vary by Hermes build. Treat them as terminal backends, not named sandbox profiles:
 
----
+```yaml
+# ~/.hermes/config.yaml
+terminal:
+  backend: modal # or daytona, when supported by your installed build
+```
 
-## Modal Backend (Bursty / Serverless)
-
-Modal hibernates sandboxes to zero between runs and spins up in ~2 seconds. Ideal for bursty coding-agent use.
+After changing backend config, run:
 
 ```bash
-pip install modal
-modal token new
+hermes config check
+hermes doctor
 ```
 
-```yaml
-sandboxes:
-  modal-big:
-    backend: modal
-    image:
-      from: python:3.12
-      apt_install: [git, ripgrep, build-essential]
-      pip_install: [claude-code-cli, aider-chat]
-    cpu: 4
-    memory: 16384
-    gpu: null                        # Set to "T4" / "A10G" / "H100" if you need one
-    timeout: 3600
-    sync:
-      push: ~/.hermes
-      pull_on_teardown: true
-      pull_paths: [.hermes, projects]
-```
-
-Sync uses Modal's `exec tar cf -` → `proc.stdout.read()` → local file pattern — same diff/apply logic as SSH.
-
-Cost tip: set `timeout: 300` and a short `idle_shutdown:` for chat-driven sandboxes; Modal bills per second of actual runtime.
-
-### GPU Sandboxes for Voice / Image Tasks
-
-If you've disabled the [Tool Gateway](./part13-tool-gateway.md) and run your own image-gen or voice pipeline, a GPU sandbox is cheaper than keeping a GPU VPS live:
-
-```yaml
-sandboxes:
-  gpu-a10g:
-    backend: modal
-    image:
-      from: nvcr.io/nvidia/pytorch:24.10-py3
-      pip_install: [diffusers, transformers]
-    gpu: "A10G"
-    timeout: 600
-    commands:
-      - /generate_image    # Route image gen to this sandbox
-      - /speech_synth
-```
-
-Hermes routes the tool calls transparently — the user has no idea the sandbox span is happening.
+If your installed Hermes build does not expose that backend, fall back to Docker or SSH, or wrap the vendor API with a skill/MCP integration.
 
 ---
 
-## Daytona Backend (Long-Lived Workspaces)
+## Isolated Local Sessions With `--worktree`
 
-Daytona is the "it's like GitHub Codespaces for your own code" option. Pair with Hermes when you want the workspace to persist across sessions:
+For a one-off coding pass from a git repo:
 
-```yaml
-sandboxes:
-  workspace:
-    backend: daytona
-    workspace_id: hermes-dev
-    auto_create: true                # Create if it doesn't exist
-    image: daytonaio/workspace-project:latest
-    hibernate_after: 900
-    sync:
-      push: ~/.hermes
-      pull_on_teardown: false        # Work persists, no need to sync every time
-      pull_on_command: "/sync-home"  # Manual sync when you want it
+```bash
+cd ~/projects/myapp
+hermes --worktree --tui
 ```
 
-Pair with the [Gemini OAuth provider](./part9-custom-models.md#gemini-oauth--free-tier-friendly) for free-tier-friendly long-context reads inside the sandbox.
+For a scripted prompt:
+
+```bash
+cd ~/projects/myapp
+hermes --worktree -z "Run the test suite, fix the auth null-check failure, and summarize the diff."
+```
+
+`--worktree` gives the session a separate git worktree so parallel agents do not edit the same checkout. It is ideal when the driver host has enough CPU/RAM and you mainly need source isolation.
 
 ---
 
-## Vercel Sandbox (Web Builds / Isolated Code Execution)
+## Durable Worker Lanes With Kanban
 
-Vercel Sandbox is now a native backend for `execute_code` and terminal-style runs. Use it when the task is webapp-shaped: install dependencies, run a build, inspect generated output, and throw the environment away.
+For work that should survive restarts, handoffs, review, or retries, put it on the Kanban board and assign a worker profile:
 
-```yaml
-sandboxes:
-  vercel-web:
-    backend: vercel
-    project: my-webapp
-    timeout: 1800
-    sync:
-      push: ~/projects/my-webapp
-      pull_on_teardown: true
-      pull_paths:
-        - .
-      ignore:
-        - node_modules
-        - .next
-        - dist
+```bash
+hermes kanban create "Fix the auth null-check and open a PR" \
+  --assignee codex-worker \
+  --workspace worktree \
+  --branch wt/auth-null-check
+
+hermes kanban dispatch --max 1
 ```
 
-It is not a replacement for Daytona if you want a persistent dev workspace. Treat it as a clean execution target for builds, tests, and short isolated scripts.
+Useful commands while it runs:
+
+```bash
+hermes kanban list
+hermes kanban show <task-id>
+hermes kanban runs <task-id>
+hermes kanban log <task-id>
+```
+
+The worker uses the configured terminal backend for shell/file operations and the Kanban workspace setting for source isolation. Keep "worker exited" and "work is done" separate: require tests, review, and a clean git diff before closing the card.
 
 ---
 
-## Fly Machines (Regional / Low-Latency)
+## Coding Agents On Remote Targets
 
-For users in specific regions, Fly Machines deliver sub-100ms latency from a nearby PoP:
+The coding-agent layer from [Part 18](./part18-coding-agents.md) still applies: Claude Code, Codex, Gemini CLI, OpenCode, and ACP-compatible runtimes can sit behind Hermes as worker lanes or interactive sessions. For this chapter, the important rule is that shell/file operations land wherever `terminal.backend` points.
 
-```yaml
-sandboxes:
-  fly-sin:
-    backend: fly_machines             # Plugin, not core
-    app: hermes-sandbox
-    region: sin                       # Singapore
-    size: performance-2x
-    auto_stop: true
-    stopped_shutdown_at: 120
-```
+A common road-warrior setup is:
 
-Useful when you want the sandbox physically near your iOS / Telegram users for lower round-trip.
+1. Hermes gateway and memory run on the small VPS.
+2. `terminal.backend: ssh` points shell/file work at a stronger dev box.
+3. Coding-agent work is assigned through Kanban with `--workspace worktree`.
+4. The worker pushes a branch or opens a PR instead of syncing opaque files back to the driver.
 
 ---
 
-## E2B (Disposable Python Sandboxes)
+## External Runtimes: Vercel, Fly, E2B, CI
 
-E2B gives you a clean Linux sandbox in ~500ms. Best for data analysis / running unknown code:
+Vercel, Fly Machines, E2B, and CI runners can be very useful execution targets, but in the current Hermes surface they should be modeled as external integrations.
 
-```yaml
-sandboxes:
-  e2b-scratch:
-    backend: e2b
-    template: python                  # E2B template
-    metadata:
-      purpose: data-analysis
-    timeout: 300
-```
+| Runtime       | Recommended integration shape                                                                                                                               |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vercel builds | Use the Vercel CLI/API from a Docker or SSH terminal backend, or expose a Vercel MCP/tool skill that runs build/deploy commands and returns logs/artifacts  |
+| Fly Machines  | Use `flyctl` from a skill or MCP server to start/stop a machine; if you want Hermes shell execution there, expose SSH and configure `terminal.backend: ssh` |
+| E2B           | Use an E2B MCP server or custom tool for notebook-style execution; pass source through git/artifacts, not a native Hermes execution profile                 |
+| CI runners    | Have Hermes open a PR, trigger CI, then read status/logs through GitHub/GitLab MCP or CLI tools                                                             |
 
-Hermes routes any tool call marked `/sandbox e2b` into this template. Teardown is automatic.
+A good custom skill for an external runtime should:
 
----
-
-## Cross-Sandbox Patterns
-
-### Pattern A: Primary-Replica Dev Box + Ephemeral Sandboxes
-
-- **Primary:** SSH dev box with your long-lived workspace
-- **Replica:** Modal sandbox spun up per delegation
-
-```
-/sandbox start dev-box
-/delegate (runs in modal-big, reads from dev-box via git)
-/sandbox stop dev-box
-```
-
-Works great when each coding-agent delegation runs a git-backed feature branch. Sandboxes are stateless; dev-box is the source of truth.
-
-### Pattern B: Per-Project Daytona Workspaces
-
-```
-/project open myapp       → daytona workspace "myapp"
-/project open sideproject → daytona workspace "sideproject"
-```
-
-Each project has its own workspace with its own deps, env, and git state. Hermes remembers which is active per Telegram topic.
-
-### Pattern C: Sandboxed MCP Servers
-
-Route untrusted MCP servers (see [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust)) into a sandbox:
-
-```yaml
-mcp_servers:
-  random-scraper:
-    trust: untrusted
-    run_in_sandbox: e2b-scratch       # Isolate execution
-```
-
-Sandbox catches any malicious behavior — even if the scraper is compromised, it can't touch your host.
+1. State the target runtime and repo/branch it will use.
+2. Create or reuse an isolated checkout.
+3. Run the vendor CLI/API with explicit timeouts.
+4. Return logs, artifact URLs, and exit status.
+5. Avoid writing provider secrets to `config.yaml`, logs, or the repo.
 
 ---
 
-## Observability: `hermes sandbox status`
+## File Movement And Source Of Truth
 
-```
-$ hermes sandbox status
-NAME         BACKEND   STATE      AGE      CPU   MEM      COST
-dev-box      ssh       connected  3h 12m   0.4   2.1 GB   $0 (your infra)
-modal-big    modal     running    0m 42s   3.8   14.2 GB  $0.09
-workspace    daytona   hibernated 0m 0s    -     -        $0
+Use git as the primary sync mechanism:
+
+- Work in a branch or worktree.
+- Push changes to the remote repository.
+- Review and merge through the normal PR path.
+- Pull artifacts explicitly from the external runtime when needed.
+
+If you need raw file copy for an SSH host, use explicit `rsync`, `scp`, or a skill that names source, destination, ignore patterns, and conflict behavior. Do not describe it as Hermes automatic sandbox teardown sync.
+
+---
+
+## Observability
+
+There is no sandbox-status subcommand. Use the surfaces that actually exist:
+
+```bash
+hermes status
+hermes doctor
+hermes config check
+hermes logs -f
+hermes kanban list
+hermes kanban show <task-id>
+hermes kanban runs <task-id>
 ```
 
-The [Web Dashboard](./part12-web-dashboard.md) has a Sandboxes panel with the same info plus: streaming logs, per-sandbox cost totals for the month, sync history, and a one-click "sync back and stop" button.
+The [Web Dashboard](./part12-web-dashboard.md) is useful for config editing, chat/TUI access, sessions, and Kanban state. Vendor runtimes keep their own logs and billing dashboards; surface those back through MCP/skills when you need them in Hermes.
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| "sandbox teardown timed out during sync" | Increase `sync.timeout: 600` — big workspaces over slow SSH |
-| "sync conflict: host file also changed" | Last-write-wins by default; set `sync.conflict: prompt` to interactively resolve |
-| "SSH ControlMaster socket in use" | Another Hermes process on the box is running; `hermes sandbox ps` to find it |
-| "Modal sandbox cold-start keeps timing out" | Pre-warm with `hermes sandbox warm modal-big` before interactive work |
-| "Daytona hibernate → resume corrupts git state" | Put `.git` in `pull_paths` so Hermes holds the canonical copy |
-| "File-sync uploads .venv every time" | Add it to `ignore:` — missed by default in some templates |
-
-Enable `HERMES_SANDBOX_LOG=debug` to get full tar/ssh command traces.
+| Symptom                                                  | Fix                                                                                                                               |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `hermes: invalid choice: sandbox`                        | Expected on current Hermes. Use `terminal.backend`, `hermes --worktree`, or `hermes kanban ... --workspace worktree`.             |
+| Config with a legacy sandbox-profile block has no effect | Remove it. Configure `terminal:` or external runtime skills/MCP servers instead.                                                  |
+| Modal/Daytona backend is unavailable                     | Check `hermes config check` and `hermes doctor`; use Docker/SSH or a custom integration if your build does not ship that backend. |
+| Remote worker edited the wrong checkout                  | Use Kanban `--workspace worktree`, name branches with `--branch`, and review `git status` before completion.                      |
+| External runtime needs secrets                           | Put secrets in the vendor's secret store or a protected local env path; do not write them into the repo or `config.yaml`.         |
+| Need full-agent containment                              | Terminal backend isolation is not enough; use the whole-process isolation guidance in Part 19.                                    |
 
 ---
 
 ## What's Next
 
-- [Part 18: Coding Agents](./part18-coding-agents.md) — delegate Claude Code / Codex / Gemini CLI *into* these sandboxes
-- [Part 19: Security Playbook](./part19-security-playbook.md) — isolate untrusted MCPs in sandboxes
-- [Part 20: Observability & Cost](./part20-observability.md) — track sandbox-hour costs alongside LLM spend
-- [Part 1: Setup](./README.md#part-1-setup-stop-fumbling-with-installation) — the base VPS install these extend
+- [Part 18: Coding Agents](./part18-coding-agents.md) - delegate Claude Code / Codex / Gemini CLI through Hermes.
+- [Part 19: Security Playbook](./part19-security-playbook.md) - understand terminal-backend isolation versus whole-process containment.
+- [Part 23: Tenacity Stack](./part23-tenacity-stack.md) - use Kanban, worktrees, checkpoints, and durable worker lanes.
+- [Part 17: MCP Servers](./part17-mcp-servers.md) - connect external runtimes and vendor APIs as tool integrations.

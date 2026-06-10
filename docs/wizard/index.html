@@ -397,54 +397,35 @@ function generate() {
     lines.push(``);
   }
 
-  // MCP servers
+  // MCP servers are CLI-managed. The wizard emits comment-only companion
+  // commands so Hermes owns the persisted MCP registry/config shape.
   const anyMcp = Object.values(mcps).some(Boolean);
   if (anyMcp) {
-    lines.push(`mcp_servers:`);
+    lines.push(`# MCP servers are managed with Hermes CLI commands.`);
+    lines.push(`# Run selected commands after saving this file:`);
     if (mcps.github) {
-      lines.push(`  github:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@modelcontextprotocol/server-github"]`);
-      lines.push(`    env:`);
-      lines.push(`      GITHUB_PERSONAL_ACCESS_TOKEN: "$\{GITHUB_PAT\}"`);
-      lines.push(`    trust: trusted`);
-      lines.push(`    allow_sampling: false`);
+      lines.push(`#   hermes mcp add github --command npx --env GITHUB_PERSONAL_ACCESS_TOKEN=$\{GITHUB_PAT\} --args -y @modelcontextprotocol/server-github`);
     }
     if (mcps.postgres) {
-      lines.push(`  postgres:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@modelcontextprotocol/server-postgres", "$\{DATABASE_URL\}"]`);
-      lines.push(`    trust: trusted`);
-      lines.push(`    allow_sampling: false`);
+      lines.push(`#   hermes mcp add postgres --command npx --args -y @modelcontextprotocol/server-postgres "$\{DATABASE_URL\}"`);
     }
     if (mcps.cloudflare) {
-      lines.push(`  cloudflare:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@cloudflare/mcp-server-cloudflare"]`);
-      lines.push(`    env:`);
-      lines.push(`      CLOUDFLARE_API_TOKEN: "$\{CLOUDFLARE_API_TOKEN\}"`);
-      lines.push(`    trust: trusted`);
+      lines.push(`#   hermes mcp add cloudflare --command npx --env CLOUDFLARE_API_TOKEN=$\{CLOUDFLARE_API_TOKEN\} --args -y @cloudflare/mcp-server-cloudflare`);
     }
     if (mcps.linear) {
-      lines.push(`  linear:`);
-      lines.push(`    url: https://mcp.linear.app/mcp`);
-      lines.push(`    # OAuth is completed by the MCP client on first connection.`);
-      lines.push(`    trust: trusted`);
-      lines.push(`    allow_sampling: false`);
+      lines.push(`#   hermes mcp add linear --url https://mcp.linear.app/mcp --auth oauth`);
     }
     if (mcps.filesystem) {
-      lines.push(`  filesystem:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@modelcontextprotocol/server-filesystem", "/home/hermes/scratch"]`);
-      lines.push(`    trust: trusted`);
+      lines.push(`#   hermes mcp add filesystem --command npx --args -y @modelcontextprotocol/server-filesystem /home/hermes/scratch`);
     }
     if (mcps.mem0) {
-      lines.push(`  mem0:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@mem0ai/mcp-server-mem0"]`);
-      lines.push(`    env:`);
-      lines.push(`      MEM0_API_KEY: "$\{MEM0_API_KEY\}"`);
+      lines.push(`#   hermes mcp add mem0 --command npx --env MEM0_API_KEY=$\{MEM0_API_KEY\} --args -y @mem0ai/mcp-server-mem0`);
     }
+    lines.push(`# Configure auth/tool filters as needed:`);
+    lines.push(`#   hermes mcp configure NAME`);
+    lines.push(`# Verify registrations:`);
+    lines.push(`#   hermes mcp test NAME`);
+    lines.push(`#   hermes mcp list`);
     lines.push(``);
   }
 
@@ -473,18 +454,6 @@ function generate() {
   lines.push(`      - '169\\.254\\.169\\.254'`);
   lines.push(`      - 'cat\\s+~?/?\\.?ssh/'`);
 
-  // Persona-specific security blocks
-  if (persona === 'security-hardened') {
-    lines.push(`  mcp:`);
-    lines.push(`    default_trust: untrusted`);
-    lines.push(`    require_allowlist: true`);
-    lines.push(`    allow_sampling: false`);
-  } else if (anyMcp) {
-    lines.push(`  mcp:`);
-    lines.push(`    default_trust: trusted`);
-    lines.push(`    allow_sampling: false`);
-  }
-
   if (persona === 'security-hardened' || persona === 'production') {
     lines.push(`  webhook:`);
     lines.push(`    max_body_bytes: 1048576`);
@@ -495,10 +464,9 @@ function generate() {
     lines.push(``);
     lines.push(`profiles:`);
     lines.push(`  quarantine:`);
-    lines.push(`    # Low-trust gateways route here: no memory writes, no MCP, read-only tools`);
+    lines.push(`    # Low-trust gateways route here: no memory writes, read-only tools`);
     lines.push(`    allow_memory_write: false`);
     lines.push(`    allow_send: false`);
-    lines.push(`    mcp_servers: []`);
     lines.push(`    toolsets: [classify]`);
   }
   lines.push(``);

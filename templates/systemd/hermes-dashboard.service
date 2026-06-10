@@ -10,11 +10,12 @@ Type=simple
 User=hermes
 Group=hermes
 WorkingDirectory=/home/hermes
-ExecStart=/usr/local/bin/hermes dashboard --listen 127.0.0.1:8765
+ExecStart=/usr/bin/env hermes dashboard --host 127.0.0.1 --port 8765 --no-open --skip-build
 Restart=on-failure
 RestartSec=5
 
 EnvironmentFile=-/home/hermes/.hermes/.env
+Environment=PATH=/home/hermes/.local/bin:/home/hermes/.cargo/bin:/usr/local/bin:/usr/bin:/bin
 Environment=HOME=/home/hermes
 
 StandardOutput=journal

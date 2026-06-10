@@ -1,6 +1,6 @@
 # Part 19: Security Playbook — Locking Down an Agent That Reads Untrusted Text
 
-*April 15, 2026 published [Comment and Control](https://oddguan.com/blog/comment-and-control-prompt-injection-credential-theft-claude-code-gemini-cli-github-copilot/) — cross-vendor prompt injection that steals GitHub Actions secrets from Claude Code, Gemini CLI, and Copilot Agent via PR titles. Your Hermes bot reads messages from Telegram, Discord, email, webhooks, and SMS — every one of them an injection vector. This part is the defensive posture that stops your agent from becoming someone else's command-and-control channel.*
+_April 15, 2026 published [Comment and Control](https://oddguan.com/blog/comment-and-control-prompt-injection-credential-theft-claude-code-gemini-cli-github-copilot/) — cross-vendor prompt injection that steals GitHub Actions secrets from Claude Code, Gemini CLI, and Copilot Agent via PR titles. Your Hermes bot reads messages from Telegram, Discord, email, webhooks, and SMS — every one of them an injection vector. This part is the defensive posture that stops your agent from becoming someone else's command-and-control channel._
 
 > **Schema note (2026-05-31):** Earlier revisions of this part documented a `security:` config block with `provenance`, `approval.require_approval` regex, `secrets.scope`, and `network.egress_allowlist` keys. **None of those exist in Hermes Agent.** This rev is rewritten against the real schema — top-level [`approvals:`](https://hermes-agent.nousresearch.com/docs/user-guide/security), a native dangerous-command detector, `command_allowlist:`, `.env` user allowlists, and OS-level isolation. See the [official Security guide](https://hermes-agent.nousresearch.com/docs/user-guide/security) and [SECURITY.md trust model](https://github.com/NousResearch/hermes-agent/blob/main/SECURITY.md).
 
@@ -10,19 +10,19 @@
 
 Hermes is uniquely exposed because it takes input from **many** surfaces and has **many** capabilities:
 
-| Surface | Attacker controls | Risk |
-|---------|-------------------|------|
-| Telegram DM | Message body, filename, image caption | Injection → tool calls |
-| Discord channel | Embed text, webhook payloads, usernames | Injection → tool calls |
-| Email inbox | Headers, body, attachment filenames | Multi-stage (HTML + links) |
-| SMS / Twilio | Message body + webhook payloads | Injection → tool calls |
-| GitHub MCP | PR titles, issue bodies, comments | Comment-and-Control pattern |
-| Web-scraped content | Page HTML the agent reads | "Read then act" injections |
-| Voice transcript | STT transcription | "Say the magic phrase" attacks |
-| MCP/plugin package | Tool schema, stdout, hook behavior | Supply-chain prompt injection / token burn |
-| Dashboard plugin | Browser UI + backend endpoints | Local secret/config exposure |
+| Surface             | Attacker controls                       | Risk                                       |
+| ------------------- | --------------------------------------- | ------------------------------------------ |
+| Telegram DM         | Message body, filename, image caption   | Injection → tool calls                     |
+| Discord channel     | Embed text, webhook payloads, usernames | Injection → tool calls                     |
+| Email inbox         | Headers, body, attachment filenames     | Multi-stage (HTML + links)                 |
+| SMS / Twilio        | Message body + webhook payloads         | Injection → tool calls                     |
+| GitHub MCP          | PR titles, issue bodies, comments       | Comment-and-Control pattern                |
+| Web-scraped content | Page HTML the agent reads               | "Read then act" injections                 |
+| Voice transcript    | STT transcription                       | "Say the magic phrase" attacks             |
+| MCP/plugin package  | Tool schema, stdout, hook behavior      | Supply-chain prompt injection / token burn |
+| Dashboard plugin    | Browser UI + backend endpoints          | Local secret/config exposure               |
 
-The goal isn't to eliminate these channels — Hermes is *for* reading them. The goal is to make sure untrusted text can't cross a trust boundary into secrets, writes, or shell.
+The goal isn't to eliminate these channels — Hermes is _for_ reading them. The goal is to make sure untrusted text can't cross a trust boundary into secrets, writes, or shell.
 
 ---
 
@@ -36,8 +36,8 @@ Every in-process control below (approval prompts, secret redaction, skill scanni
 
 Hermes supports two OS-level isolation postures — choose deliberately:
 
-- **Terminal-backend isolation.** A non-default `terminal.backend` (Docker, Singularity, Modal, Daytona, SSH) runs LLM-emitted shell *and* file-tool operations inside a container/remote host. Confines anything the agent does *through the shell*. Does **not** confine the agent's own Python process (code-execution tool, MCP subprocesses, plugins, hooks, skills).
-- **Whole-process wrapping.** Runs the entire agent process tree in a sandbox so *every* path — shell, code-exec, MCP, file tools, plugins, hooks — is subject to one filesystem/network/process policy. Hermes supports this via its own Docker/Compose setup, or via [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) for declarative filesystem + **L7 network egress** + syscall + inference-routing policy.
+- **Terminal-backend isolation.** A non-default `terminal.backend` (Docker, Singularity, Modal, Daytona, SSH) runs LLM-emitted shell _and_ file-tool operations inside a container/remote host. Confines anything the agent does _through the shell_. Does **not** confine the agent's own Python process (code-execution tool, MCP subprocesses, plugins, hooks, skills).
+- **Whole-process wrapping.** Runs the entire agent process tree in a sandbox so _every_ path — shell, code-exec, MCP, file tools, plugins, hooks — is subject to one filesystem/network/process policy. Hermes supports this via its own Docker/Compose setup, or via [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) for declarative filesystem + **L7 network egress** + syscall + inference-routing policy.
 
 If your agent ingests content from surfaces you don't control (the open web, inbound email, multi-user channels, untrusted MCP servers), **whole-process wrapping is the supported posture.** Running the default local backend against untrusted input is operating outside Hermes' supported security model. The layers below harden a real deployment; they are not a substitute for the boundary.
 
@@ -45,7 +45,7 @@ If your agent ingests content from surfaces you don't control (the open web, inb
 
 ## Layer 1: User Authorization — Who Can Talk to the Agent
 
-The first gate is *who is even allowed to reach the agent*. On every messaging gateway, Hermes is **default-deny**: if no allowlist is configured and `GATEWAY_ALLOW_ALL_USERS` is unset, all users are rejected.
+The first gate is _who is even allowed to reach the agent_. On every messaging gateway, Hermes is **default-deny**: if no allowlist is configured and `GATEWAY_ALLOW_ALL_USERS` is unset, all users are rejected.
 
 Set per-platform allowlists in `~/.hermes/.env` (comma-separated IDs):
 
@@ -70,9 +70,9 @@ Per-platform hardening worth setting:
 ```yaml
 # ~/.hermes/config.yaml
 discord:
-  require_mention: true          # Bot only responds when @mentioned in channels (default)
-  free_response_channels: ""     # Channel IDs exempt from the mention requirement
-group_sessions_per_user: true    # Each group participant gets an isolated session
+  require_mention: true # Bot only responds when @mentioned in channels (default)
+  free_response_channels: "" # Channel IDs exempt from the mention requirement
+group_sessions_per_user: true # Each group participant gets an isolated session
 ```
 
 ---
@@ -86,20 +86,20 @@ Configure the policy with the top-level `approvals:` block:
 ```yaml
 # ~/.hermes/config.yaml
 approvals:
-  mode: manual                    # manual | smart | off
-  timeout: 60                     # seconds to wait before fail-closed deny
-  cron_mode: deny                 # deny | approve — behavior when a cron job hits a dangerous command
-  mcp_reload_confirm: true        # /reload-mcp confirms before invalidating the MCP tool cache
+  mode: manual # manual | smart | off
+  timeout: 60 # seconds to wait before fail-closed deny
+  cron_mode: deny # deny | approve — behavior when a cron job hits a dangerous command
+  mcp_reload_confirm: true # /reload-mcp confirms before invalidating the MCP tool cache
   destructive_slash_confirm: true # /clear, /new, /reset, /undo confirm before discarding state
 ```
 
-| Mode | Behavior |
-|------|----------|
-| **manual** (default) | Always prompt on a dangerous command |
-| **smart** | An auxiliary LLM assesses risk first — auto-approves clearly low-risk matches, auto-denies clearly dangerous ones, escalates the uncertain middle to a manual prompt |
-| **off** | Skip all approval prompts (equivalent to `--yolo`) |
+| Mode                 | Behavior                                                                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **manual** (default) | Always prompt on a dangerous command                                                                                                                                 |
+| **smart**            | An auxiliary LLM assesses risk first — auto-approves clearly low-risk matches, auto-denies clearly dangerous ones, escalates the uncertain middle to a manual prompt |
+| **off**              | Skip all approval prompts (equivalent to `--yolo`)                                                                                                                   |
 
-When a prompt fires in the CLI you get four choices — **once / session / always / deny** (deny is the default if you time out). On messaging platforms the prompt is delivered as a message (inline buttons on Telegram/Discord/Slack); reply *yes/approve* or *no/deny*.
+When a prompt fires in the CLI you get four choices — **once / session / always / deny** (deny is the default if you time out). On messaging platforms the prompt is delivered as a message (inline buttons on Telegram/Discord/Slack); reply _yes/approve_ or _no/deny_.
 
 ### `command_allowlist` — the "always approve" list
 
@@ -107,11 +107,11 @@ Choosing **always** writes a human-readable pattern description to the top-level
 
 ```yaml
 command_allowlist:
-  - recursive delete                       # matches the "rm -r" detector category
+  - recursive delete # matches the "rm -r" detector category
   - shell command via -c/-lc flag
 ```
 
-Entries are description strings that match the detector's pattern categories — they are **not** raw regex. Be conservative: allowing `recursive delete` means *every* `rm -r`, including paths you didn't intend, runs without a prompt. Edit `~/.hermes/config.yaml` (or `hermes config edit`) to remove entries.
+Entries are description strings that match the detector's pattern categories — they are **not** raw regex. Be conservative: allowing `recursive delete` means _every_ `rm -r`, including paths you didn't intend, runs without a prompt. Edit `~/.hermes/config.yaml` (or `hermes config edit`) to remove entries.
 
 ### YOLO mode — what it does and doesn't bypass
 
@@ -127,11 +127,11 @@ A small set of catastrophic, irreversible commands is refused **regardless** of 
 - `dd if=/dev/zero of=/dev/sd*`
 - Piping untrusted URLs to `sh` at the rootfs top level
 
-The blocklist trips *before* the approval layer sees the command. It's the seatbelt, not the whole car.
+The blocklist trips _before_ the approval layer sees the command. It's the seatbelt, not the whole car.
 
 ### Two caveats that matter
 
-- **Container backends skip approval entirely.** When `terminal.backend` is `docker`, `singularity`, `modal`, or `daytona`, dangerous-command checks are bypassed because the container *is* the boundary (Layer "OS isolation" above). That's the intended trade — unrestricted execution inside a disposable box.
+- **Container backends skip approval entirely.** When `terminal.backend` is `docker`, `singularity`, `modal`, or `daytona`, dangerous-command checks are bypassed because the container _is_ the boundary (Layer "OS isolation" above). That's the intended trade — unrestricted execution inside a disposable box.
 - **Approvals route to the channel the message came from.** There is no separate "approval channel" config. The defense against "trick the bot into approving itself" is your **allowlist** (Layer 1): keep the public-facing bot's allowlist tight, and drive privileged actions from a separate, owner-only bot or DM that untrusted users can't reach.
 
 ### Optional: tirith pre-exec scanning
@@ -143,7 +143,7 @@ security:
   tirith_enabled: true
   tirith_path: tirith
   tirith_timeout: 5
-  tirith_fail_open: true   # allow commands if tirith is unavailable
+  tirith_fail_open: true # allow commands if tirith is unavailable
 ```
 
 A tirith `warn` is folded into the same approval prompt; a tirith `block` rejects the command outright.
@@ -152,7 +152,7 @@ A tirith `warn` is folded into the same approval prompt; a tirith `block` reject
 
 ## Layer 3: Secrets and Credential Scoping
 
-The Comment-and-Control attack class succeeds by exfiltrating credentials. Hermes' defenses here reduce *casual* leakage — pair them with isolation for real containment.
+The Comment-and-Control attack class succeeds by exfiltrating credentials. Hermes' defenses here reduce _casual_ leakage — pair them with isolation for real containment.
 
 **On-disk hygiene (automatic):**
 
@@ -164,14 +164,14 @@ The Comment-and-Control attack class succeeds by exfiltrating credentials. Herme
 ```yaml
 # ~/.hermes/config.yaml
 security:
-  redact_secrets: true   # default on — redacts secret-like patterns from tool output and logs
+  redact_secrets: true # default on — redacts secret-like patterns from tool output and logs
 ```
 
 Leave it on. `~/.hermes/logs/` is redacted by default; only set `redact_secrets: false` to debug an auth issue, and treat the resulting logs as secret-bearing.
 
 **Credential scoping (automatic):** Hermes filters the environment it hands to its lower-trust in-process children — shell subprocesses, MCP subprocesses, and the code-execution child. Provider API keys and gateway tokens are **stripped by default**; only variables an operator or a loaded skill explicitly declares are passed through. You don't configure per-tool secret scoping — it's the default behavior.
 
-> **The honest caveat (from SECURITY.md §2.3):** this reduces casual exfiltration; it is *not* containment. Anything running *inside* the agent process — skills, plugins, hook handlers — can read whatever the agent can, including in-memory credentials. The mitigation for a hostile in-process component is operator review before install (Layer 5), not env scrubbing.
+> **The honest caveat (from SECURITY.md §2.3):** this reduces casual exfiltration; it is _not_ containment. Anything running _inside_ the agent process — skills, plugins, hook handlers — can read whatever the agent can, including in-memory credentials. The mitigation for a hostile in-process component is operator review before install (Layer 5), not env scrubbing.
 
 ---
 
@@ -184,11 +184,11 @@ Pick a non-default terminal backend so LLM-emitted shell and file-tool operation
 ```yaml
 # ~/.hermes/config.yaml
 terminal:
-  backend: docker                         # local | docker | singularity | modal | daytona | ssh
+  backend: docker # local | docker | singularity | modal | daytona | ssh
   docker_image: nikolaik/python-nodejs:python3.11-nodejs20
   cwd: /workspace
-  docker_mount_cwd_to_workspace: false    # off by default — opt in to mount host cwd
-  container_persistent: true              # persist FS across sessions; false = reset each session
+  docker_mount_cwd_to_workspace: false # off by default — opt in to mount host cwd
+  container_persistent: true # persist FS across sessions; false = reset each session
 ```
 
 What a container backend buys you:
@@ -208,7 +208,7 @@ terminal:
   ssh_key: ~/.ssh/id_rsa
 ```
 
-For **true egress allowlisting** (block private ranges, block the metadata IP `169.254.169.254`, restrict outbound domains), wrap the *whole process* with [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell), which enforces hot-reloadable L7 network policy across every code path — including MCP subprocesses and the code-execution child that a terminal-only backend leaves exposed. For a home-lab / [Home Assistant](./part15-new-platforms.md#home-assistant) setup, an explicit OpenShell egress allowlist beats hoping a config key blocks SSRF (it doesn't exist).
+For **true egress allowlisting** (block private ranges, block the metadata IP `169.254.169.254`, restrict outbound domains), wrap the _whole process_ with [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell), which enforces hot-reloadable L7 network policy across every code path — including MCP subprocesses and the code-execution child that a terminal-only backend leaves exposed. For a home-lab / [Home Assistant](./part15-new-platforms.md#home-assistant) setup, an explicit OpenShell egress allowlist beats hoping a config key blocks SSRF (it doesn't exist).
 
 ---
 
@@ -216,34 +216,26 @@ For **true egress allowlisting** (block private ranges, block the metadata IP `1
 
 MCP servers and plugins are third-party code you give tool access to. Hermes does **not** have per-server `trust:` levels, `allow_sampling`, or `max_concurrent_calls` config knobs. The real controls are credential filtering, tool filtering, and **operator review before install**.
 
-Configure servers with the documented [MCP schema](https://hermes-agent.nousresearch.com/docs/reference/mcp-config-reference) and use `tools.include` / `tools.exclude` to expose only the tools you audited:
+Register servers with the Hermes MCP CLI and verify each one before use:
 
-```yaml
-# ~/.hermes/config.yaml
-mcp_servers:
-  github:
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-github"]
-    env:
-      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_RO_TOKEN}   # read-only, scoped PAT
-    enabled: true
-    timeout: 120
-    tools:
-      include: []          # empty = all; or list exactly the tools you trust
-      exclude: []
+```bash
+hermes mcp add github --command npx --env GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_RO_TOKEN} --args -y @modelcontextprotocol/server-github
+hermes mcp configure github
+hermes mcp test github
 
-  scraper-mcp:
-    command: npx
-    args: ["-y", "some-web-scraper-mcp"]
-    enabled: true
-    tools:
-      include: [read_docs]  # lock an untrusted-content server to read-only tools you audited
+hermes mcp add scraper-mcp --command npx --args -y some-web-scraper-mcp
+hermes mcp configure scraper-mcp
+hermes mcp test scraper-mcp
+
+hermes mcp list
 ```
+
+Use `hermes mcp configure NAME` to set auth, environment values, roots, or tool filters when the CLI exposes those controls. If a server ingests untrusted content and you cannot restrict its tool surface, do not register it in the production Hermes home.
 
 Trust is enforced by review and isolation, not a config flag:
 
-- **Credential filtering** strips provider keys/gateway tokens from MCP subprocess environments by default (Layer 3). Pass only what a server genuinely needs, via its `env:`.
-- **Skills run arbitrary Python at import time; plugins run with full agent privileges.** "Reviewing" a skill or plugin means reading its Python and scripts, not just its `SKILL.md`. **Skills Guard** scans installable skill content for injection patterns — treat it as a review *aid*, not a boundary.
+- **Credential filtering** strips provider keys/gateway tokens from MCP subprocess environments by default (Layer 3). Pass only what a server genuinely needs, via `hermes mcp add --env KEY=VALUE` or `hermes mcp configure NAME`.
+- **Skills run arbitrary Python at import time; plugins run with full agent privileges.** "Reviewing" a skill or plugin means reading its Python and scripts, not just its `SKILL.md`. **Skills Guard** scans installable skill content for injection patterns — treat it as a review _aid_, not a boundary.
 - Never give a server that ingests untrusted content (web scrapers, email parsers) a broad tool surface or sensitive env. Run those flows under whole-process isolation.
 
 See [Part 17](./part17-mcp-servers.md) for install patterns.
@@ -274,7 +266,7 @@ Aonan Guan's writeup has the exploit chain in full. Patch, don't just read.
 
 ## Diagnostic Bundle Safety
 
-Logs under `~/.hermes/logs/` pass through the secret redactor when `security.redact_secrets` is on (the default). Before sharing *any* debug output or log bundle with someone else:
+Logs under `~/.hermes/logs/` pass through the secret redactor when `security.redact_secrets` is on (the default). Before sharing _any_ debug output or log bundle with someone else:
 
 1. Review it first — redaction is pattern-based and not exhaustive.
 2. Never share output from a session that touched production secrets over a public link.
@@ -291,7 +283,7 @@ Cron the audits (these skills ship in this guide's `skills/security/` hub). Reme
 ```yaml
 # ~/.hermes/cron.yaml
 - name: weekly-mcp-audit
-  schedule: "0 9 * * 1"              # Weekly Monday
+  schedule: "0 9 * * 1" # Weekly Monday
   task: |
     /audit-mcp
     List every MCP, its env, its tools include/exclude, and last update from npm/github.
@@ -303,7 +295,7 @@ Cron the audits (these skills ship in this guide's `skills/security/` hub). Reme
 
 - name: weekly-approval-bypass-review
   schedule: "0 10 * * 1"
-  task: /audit-approval-bypass         # flags YOLO/off/cron-approve and container-bypass surfaces
+  task: /audit-approval-bypass # flags YOLO/off/cron-approve and container-bypass surfaces
 ```
 
 Install with `hermes skills install security/audit-mcp` and `security/audit-approval-bypass`.

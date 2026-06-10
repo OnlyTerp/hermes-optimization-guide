@@ -5,7 +5,7 @@
 #   - Multi-provider with task-aware routing
 #   - Telegram + Discord + Slack + Google Chat + LINE + Teams + email gateways
 #   - LightRAG + mem0 for cross-device memory
-#   - MCP: GitHub, Postgres, Cloudflare, Linear, filesystem
+#   - CLI-managed MCP: GitHub, Postgres, Cloudflare, filesystem
 #   - Langfuse tracing, cost alerts, eval hooks
 #   - Hardened approval posture
 #   - All scheduled skills wired to cron
@@ -135,41 +135,16 @@ context:
   compress_model: google/gemini-3.1-flash
   preserve_last_k: 6
 
-mcp_servers:
-  github:
-    command: npx
-    args: [-y, "@modelcontextprotocol/server-github"]
-    env:
-      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PAT}
-    trust: trusted
-    allow_sampling: false
-    tools_allowlist:
-      - get_pull_request
-      - list_pull_requests
-      - get_pull_request_diff
-      - create_issue
-      - add_issue_comment
-      - create_pull_request_review
-  postgres:
-    command: npx
-    args: [-y, "@modelcontextprotocol/server-postgres", "${POSTGRES_URL}"]
-    trust: trusted
-    allow_sampling: false
-  cloudflare:
-    command: npx
-    args: [-y, "@cloudflare/mcp-server-cloudflare"]
-    env:
-      CLOUDFLARE_API_TOKEN: "${CLOUDFLARE_API_TOKEN}"
-    trust: trusted
-    allow_sampling: false
-  filesystem:
-    command: npx
-    args:
-      - -y
-      - "@modelcontextprotocol/server-filesystem"
-      - ${HOME}/Documents
-      - ${HOME}/Projects
-    trust: trusted
+# MCP servers are CLI-managed. Let `hermes mcp add` write the current persisted
+# MCP registry/config shape instead of hand-authoring stale YAML.
+# Register and verify them after writing the config:
+#   hermes mcp add github --command npx --env GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PAT} --args -y @modelcontextprotocol/server-github
+#   hermes mcp add postgres --command npx --args -y @modelcontextprotocol/server-postgres "${POSTGRES_URL}"
+#   hermes mcp add cloudflare --command npx --env CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN} --args -y @cloudflare/mcp-server-cloudflare
+#   hermes mcp add filesystem --command npx --args -y @modelcontextprotocol/server-filesystem ${HOME}/Documents ${HOME}/Projects
+#   hermes mcp configure NAME
+#   hermes mcp test NAME
+#   hermes mcp list
 
 security:
   approval:

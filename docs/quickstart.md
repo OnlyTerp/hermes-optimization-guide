@@ -54,7 +54,9 @@ chmod 600 ~/.hermes/.env
 ## Step 5 — Start it
 
 ```bash
-hermes run &
+hermes gateway install
+hermes gateway start
+hermes gateway status
 ```
 
 DM your bot. It should reply in seconds.
@@ -87,9 +89,9 @@ Now try:
 
 ## Common first-hour issues
 
-| Symptom | Fix |
-|---|---|
-| Bot doesn't respond | `journalctl --user -u hermes` — 99% of the time it's a missing env var |
-| 401 from Anthropic | Check `ANTHROPIC_API_KEY` has no trailing newline: `cat -A ~/.hermes/.env` |
-| "skill not found: /cost-report" | `hermes /reload` after symlinking skills |
-| Replies are slow | You're on Anthropic free tier — rate-limited. Upgrade or route to Gemini Flash via the `cost-optimized` template |
+| Symptom                         | Fix                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Bot doesn't respond             | `hermes gateway status` — 99% of the time it's a missing env var                                                 |
+| 401 from Anthropic              | Check `ANTHROPIC_API_KEY` has no trailing newline: `cat -A ~/.hermes/.env`                                       |
+| "skill not found: /cost-report" | `hermes /reload` after symlinking skills                                                                         |
+| Replies are slow                | You're on Anthropic free tier — rate-limited. Upgrade or route to Gemini Flash via the `cost-optimized` template |
