@@ -51,47 +51,32 @@ Then customize:
 
 ```yaml
 # /home/hermes/.hermes/config.yaml
-version: 1
+_config_version: 28
 
-models:
+model:
+  provider: gemini
   default: google/gemini-3.1-flash          # Cheap + fast for "plan the work" phase
-  providers:
-    google:
-      api_key: "${GOOGLE_API_KEY}"
-    anthropic:
-      api_key: "${ANTHROPIC_API_KEY}"       # Used by sandboxed Claude Code
 
-gateways:
-  cli: { enabled: true }
-  telegram:
-    enabled: true
-    bots:
-      admin:
-        token: "${TELEGRAM_ADMIN_BOT_TOKEN}"
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
+fallback_providers:
+  - provider: anthropic
+    model: anthropic/claude-sonnet-5        # Premium fallback for hard coding turns
 
-# The money section
-remote_sandbox:
-  default_backend: modal          # Or daytona / fly / e2b / ssh
-  backends:
-    modal:
-      token_id: "${MODAL_TOKEN_ID}"
-      token_secret: "${MODAL_TOKEN_SECRET}"
-      image: "python:3.12-slim"
-      timeout_idle: 600           # 10m idle → auto-shutdown
-    ssh:                          # your home beast, if any
-      host: "beast.tailnet-xxx.ts.net"
-      user: "hermes"
-      identity_file: "~/.ssh/id_ed25519"
+telegram:
+  # Token/user allowlists live in ~/.hermes/.env or are written by:
+  #   hermes gateway setup
+  allowed_chats: "${TELEGRAM_ALLOWED_CHATS}"
+  reactions: true
 
-# Hermes loads skills from here; these let you orchestrate from Telegram
+# Pick one current terminal backend for remote execution.
+terminal:
+  backend: modal                            # local | docker | ssh | modal | daytona | singularity
+  modal_image: python:3.12-slim
+  timeout: 600
+
+# Hermes loads shared guide skills from here; install/sync them first.
 skills:
-  allowlist:
-    - pr-review
-    - release-notes
-    - cost-report
-    - remote-run          # triggers a sandbox
+  external_dirs:
+    - /opt/hermes-optimization-guide/skills
 ```
 
 ## The workflow
@@ -125,8 +110,9 @@ for s in /opt/hermes-optimization-guide/skills/*/*/; do
 done
 
 # Write a tiny remote-run skill (paste into ~/.hermes/skills/remote-run/SKILL.md)
-# that wraps `hermes sandbox run --repo acme/app -- claude -p "$@"`
-hermes /reload
+# that switches terminal.backend to modal/daytona/ssh for the run, invokes the
+# coding agent, then restores the driver defaults.
+# Restart Hermes, start a new session, or run /reload-skills inside an active chat.
 ```
 
 ## Safety rails

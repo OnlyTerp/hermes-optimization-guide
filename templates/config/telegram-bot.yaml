@@ -1,86 +1,75 @@
 # ------------------------------------------------------------
 # Hermes — TELEGRAM BOT config
 # ------------------------------------------------------------
-# Opinionated setup for a personal Telegram assistant:
-#   - Anthropic primary + Gemini Flash for classification
-#   - OpenAI embeddings for LightRAG memory
-#   - Telegram gateway with a private admin DM + (optional) public bot
-#   - LightRAG memory backend
-#   - Sensible approval defaults
-#   - Ready for the telegram-triage skill on public bot
+# Current Hermes config.yaml schema (schema version 28).
+# Opinionated setup for a private Telegram assistant.
+#
+# Configure the Telegram token/allowed users with:
+#   hermes gateway setup
+# or put secrets in ~/.hermes/.env:
+#   TELEGRAM_BOT_TOKEN=...
+#   TELEGRAM_ALLOWED_USERS=...
 # ------------------------------------------------------------
 
-version: 1
+_config_version: 28
 
-models:
+model:
+  provider: anthropic
   default: anthropic/claude-sonnet-5
-  classification: google/gemini-3.1-flash
-  providers:
-    anthropic:
-      api_key: ${ANTHROPIC_API_KEY}
-      prompt_caching: true
-    google:
-      api_key: ${GOOGLE_API_KEY}
-    openai:
-      api_key: ${OPENAI_API_KEY}
 
-gateways:
-  cli:
-    enabled: true
-  telegram:
-    enabled: true
-    bots:
-      # Primary / admin bot — this is YOU
-      admin:
-        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
-        trust_label: high
-        default_skill: default
-      # Public bot — strangers talk to this one (optional, comment out to skip)
-      # public:
-      #   token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
-      #   trust_label: untrusted
-      #   default_skill: telegram-triage
+prompt_caching:
+  cache_ttl: 5m
+
+auxiliary:
+  compression:
+    provider: gemini
+    model: google/gemini-3.1-flash
+    timeout: 120
+    extra_body: {}
+  approval:
+    provider: gemini
+    model: google/gemini-3.1-flash
+    timeout: 30
+    extra_body: {}
+
+telegram:
+  reactions: true
+  allowed_chats: "${TELEGRAM_ALLOWED_CHATS}"  # optional group/topic whitelist
+  channel_prompts: {}
+
+display:
+  platforms:
+    telegram:
+      streaming: true
+  runtime_footer:
+    enabled: false
+
+streaming:
+  enabled: false                    # turn on only if you want progressive Telegram drafts
+  transport: auto
 
 memory:
-  backend: lightrag
-  lightrag:
-    working_dir: ~/.hermes/lightrag
-    llm_model: google/gemini-3.1-flash
-    embedding_model: openai/text-embedding-3-small
+  memory_enabled: true
+  user_profile_enabled: true
+  provider: ""                      # built-in memory; use `hermes memory setup` for external providers
+
+approvals:
+  mode: manual
+  timeout: 60
+  cron_mode: deny
 
 security:
-  approval:
-    bypass_subagents: []               # Start empty; add after review
-    auto_approve_read: true
-    denylist:
-      - 'rm\s+-rf\s+/'
-      - 'curl\s+.+\|\s*(sh|bash)'
-      - '169\.254\.169\.254'           # AWS/GCP metadata IP
-      - 'cat\s+~?/?\.?ssh/'
-    require_approval:
-      - tool: github
-        actions: [create_pr, merge_pr, delete_branch]
-      - tool: terminal
-        actions: [exec]
-      - tool: any_mcp
-        sampling: true
-    approval_channel: telegram_dm       # Always DM, never group
-  secrets:
-    # Redaction is on by default in Hermes v0.13+; keep patterns explicit
-    # so hardened deployments know what is being scrubbed.
-    redaction_patterns:
-      - 'sk-[A-Za-z0-9]{40,}'           # OpenAI / Anthropic style
-      - 'xoxb-[A-Za-z0-9-]{40,}'        # Slack bot
-      - 'ghp_[A-Za-z0-9]{36}'           # GitHub PAT
-      - 'AKIA[0-9A-Z]{16}'              # AWS access key id
+  redact_secrets: true
+  tirith_enabled: true
+  allow_private_urls: false
 
-telemetry:
-  level: info
-  # Uncomment when you add Langfuse (see templates/compose/langfuse-stack.yml)
-  # exporters:
-  #   langfuse:
-  #     public_key: ${LANGFUSE_PUBLIC_KEY}
-  #     secret_key: ${LANGFUSE_SECRET_KEY}
-  #     host: http://localhost:3000
+gateway:
+  strict: true                      # safer for chat-facing deployments
+  trust_recent_files: true
+  trust_recent_files_seconds: 600
+
+# Credential hints for ~/.hermes/.env:
+#   ANTHROPIC_API_KEY=...
+#   GEMINI_API_KEY=...              # auxiliary compression/approval
+#   TELEGRAM_BOT_TOKEN=...
+#   TELEGRAM_ALLOWED_USERS=...

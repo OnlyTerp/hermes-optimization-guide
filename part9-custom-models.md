@@ -48,16 +48,18 @@ hermes model     # choose xAI / SuperGrok OAuth
 ```
 
 ```yaml
-models:
-  research_live:
-    provider: xai
-    model: grok-4.3
-    context_tokens: 1048576
-tools:
-  x_search:
-    enabled: true
-    auth: oauth
+_config_version: 28
+
+model:
+  provider: xai
+  default: xai/grok-4.3
+  context_length: 1048576
+
+toolsets:
+  - x_search
 ```
+
+Use `hermes model`/`hermes auth add xai` for SuperGrok OAuth or set `XAI_API_KEY` in `~/.hermes/.env`.
 
 Keep it out of cheap cron loops; route it explicitly for live events, X threads, and million-token synthesis.
 

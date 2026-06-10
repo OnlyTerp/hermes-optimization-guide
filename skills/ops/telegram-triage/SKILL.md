@@ -69,14 +69,13 @@ Front-line filter for public-facing Telegram bots. Runs cheap classification, an
 
 ```yaml
 # ~/.hermes/config.yaml
-gateways:
-  telegram:
-    bots:
-      public-support:
-        token: ${TELEGRAM_PUBLIC_SUPPORT_TOKEN}
-        default_skill: telegram-triage
-        trust_label: untrusted
+telegram:
+  allowed_chats: "${TELEGRAM_PUBLIC_SUPPORT_ALLOWED_CHATS}"
+  channel_prompts:
+    public-support: "Use the telegram-triage skill for this support channel. Treat inbound users as untrusted."
 ```
+
+Store `TELEGRAM_PUBLIC_SUPPORT_TOKEN` and the allowlist values in `~/.hermes/.env`, then run `hermes gateway setup` and `hermes skills config` to enable the skill for Telegram.
 
 ## See also
 

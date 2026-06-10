@@ -1,79 +1,103 @@
 # ------------------------------------------------------------
 # Hermes — COST-OPTIMIZED config
 # ------------------------------------------------------------
-# Target: <$5/mo for personal daily-driver usage.
-#   - Gemini Flash / Pro for 90% of calls
-#   - Kimi K2.6 / Moonshot for bulk / background
-#   - Cerebras Qwen 3 32B (free-ish tier) for classification
-#   - Gemini OAuth free tier
-#   - Anthropic Sonnet only when `intent: coding` on complex files
+# Current Hermes config.yaml schema (schema version 28).
+# Target: a low-spend personal daily driver.
+#
+# Cost control in current Hermes is done with:
+#   - a cheap default model/provider
+#   - auxiliary.* models for side tasks
+#   - fallback_providers for resilience
+#   - compression thresholds
+#   - provider-native caching knobs
+# Not with the old top-level routing/models/gateways/telemetry blocks.
 # ------------------------------------------------------------
 
-version: 1
+_config_version: 28
 
-models:
+model:
+  provider: gemini
   default: google/gemini-3.1-flash
-  classification: cerebras/qwen-3-32b
-  long_context: google/gemini-3.1-pro
-  coding: moonshot/kimi-k2.6            # Fallback to Claude only for hard coding
-  coding_complex: anthropic/claude-sonnet-5
-  reasoning: zai/glm
-  providers:
-    google:
-      oauth_enabled: true               # Hermes-managed Gemini OAuth free tier
-      api_key: ${GOOGLE_API_KEY}        # Used only when OAuth is unavailable
-    anthropic:
-      api_key: ${ANTHROPIC_API_KEY}
-      prompt_caching: true              # 90% discount on repeat context
-    openai:
-      api_key: ${OPENAI_API_KEY}        # Required for LightRAG embeddings below
-    moonshot:
-      api_key: ${MOONSHOT_API_KEY}
-    cerebras:
-      api_key: ${CEREBRAS_API_KEY}
-    zai:
-      api_key: ${ZAI_API_KEY}
 
-routing:
-  rules:
-    - intent: classification
-      model: cerebras/qwen-3-32b
-    - intent: coding
-      when: { complexity: high }
-      model: anthropic/claude-sonnet-5
-    - intent: coding
-      model: moonshot/kimi-k2.6
-    - intent: long_context
-      model: google/gemini-3.1-pro
-    - intent: reasoning
-      model: zai/glm
-  prefer_cached: true                   # Reroute if prompt is >80% cache-hit
+fallback_providers:
+  - provider: kimi-coding
+    model: moonshot/kimi-k2.6
+  - provider: openrouter
+    model: google/gemini-3.1-pro
 
-context:
-  compress_trigger_tokens: 32000        # Aggressive — Flash handles small windows
-  compress_model: cerebras/qwen-3-32b
-  preserve_last_k: 4
+compression:
+  enabled: true
+  threshold: 0.40                  # compress earlier to keep cheap-model turns small
+  target_ratio: 0.20
 
-gateways:
-  cli: { enabled: true }
-  telegram:
-    enabled: true
-    fast_mode_default: false            # Fast Mode is a cost premium
-    bots:
-      admin:
-        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
+auxiliary:
+  compression:
+    provider: gemini
+    model: google/gemini-3.1-flash
+    timeout: 120
+    extra_body: {}
+  approval:
+    provider: gemini
+    model: google/gemini-3.1-flash
+    timeout: 30
+    extra_body: {}
+  title_generation:
+    provider: gemini
+    model: google/gemini-3.1-flash
+    timeout: 30
+    extra_body: {}
+
+openrouter:
+  response_cache: true
+  response_cache_ttl: 300
+  min_coding_score: 0.50
+
+prompt_caching:
+  cache_ttl: 5m
 
 memory:
-  backend: lightrag
-  lightrag:
-    llm_model: google/gemini-3.1-flash
-    embedding_model: openai/text-embedding-3-small
-    # Or fully local: sentence-transformers/all-MiniLM-L6-v2
+  memory_enabled: true
+  user_profile_enabled: true
+  provider: ""
 
-telemetry:
-  level: info
-  alerts:
-    cost_per_hour_usd: 0.50             # ALARM if spending > $0.50/h
-    daily_budget_usd: 0.20              # Hard cap: pause all non-interactive skills
+delegation:
+  provider: kimi-coding
+  model: moonshot/kimi-k2.6
+  max_iterations: 30
+  child_timeout_seconds: 600
+
+telegram:
+  # Bot token and allowed users belong in ~/.hermes/.env:
+  #   TELEGRAM_BOT_TOKEN=...
+  #   TELEGRAM_ALLOWED_USERS=...
+  reactions: false
+  allowed_chats: "${TELEGRAM_ALLOWED_CHATS}"
+
+display:
+  show_cost: true
+  runtime_footer:
+    enabled: true
+    fields: [model, context_pct, cwd]
+
+approvals:
+  mode: smart                      # aux model auto-approves low-risk commands
+  timeout: 60
+  cron_mode: deny
+
+cron:
+  wrap_response: true
+  max_parallel_jobs: 1
+
+logging:
+  level: INFO
+  max_size_mb: 5
+  backup_count: 3
+
+security:
+  redact_secrets: true
+  tirith_enabled: true
+
+# Credential hints for ~/.hermes/.env:
+#   GEMINI_API_KEY=...              # or GOOGLE_API_KEY / Gemini OAuth via hermes auth
+#   KIMI_API_KEY=...                # Kimi/Moonshot fallback
+#   OPENROUTER_API_KEY=...          # fallback/cache route

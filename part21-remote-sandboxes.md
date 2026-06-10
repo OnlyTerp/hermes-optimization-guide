@@ -262,11 +262,17 @@ Route untrusted MCP servers (see [Part 19](./part19-security-playbook.md#layer-5
 ```yaml
 mcp_servers:
   random-scraper:
-    trust: untrusted
-    run_in_sandbox: e2b-scratch       # Isolate execution
+    # Expose the untrusted server from an isolated container/profile over HTTP/SSE,
+    # then connect Hermes to that isolated endpoint instead of spawning it on host.
+    url: "${RANDOM_SCRAPER_MCP_URL}"
+    sampling:
+      enabled: false
+    tools:
+      include:
+        - scrape_url
 ```
 
-Sandbox catches any malicious behavior — even if the scraper is compromised, it can't touch your host.
+The isolation boundary should be the container/profile that runs the MCP server. Hermes then talks to the scoped endpoint with sampling disabled and a narrow `tools.include` list.
 
 ---
 

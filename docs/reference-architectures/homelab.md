@@ -73,37 +73,33 @@ ollama pull qwen2.5-coder:32b
 Start from [`templates/config/production.yaml`](../../templates/config/production.yaml), then:
 
 ```yaml
-models:
-  default: ollama/llama3.1:70b-instruct-q4_K_M
-  providers:
-    ollama:
-      base_url: http://gpu-box.tailnet-xxx.ts.net:11434
-    anthropic:
-      api_key: "${ANTHROPIC_API_KEY}"        # fallback for hard queries
+_config_version: 28
 
-  routing:
-    - when: task == "reasoning"
-      use: anthropic/claude-sonnet-5
-    - when: task == "coding" && complexity == "high"
-      use: anthropic/claude-sonnet-5
+model:
+  provider: ollama
+  default: llama3.1:70b-instruct-q4_K_M
+  base_url: http://gpu-box.tailnet-xxx.ts.net:11434
 
-gateways:
-  cli:
-    enabled: true
-  telegram:
-    enabled: true
-    bots:
-      admin:
-        token: "${TELEGRAM_ADMIN_BOT_TOKEN}"
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
+fallback_providers:
+  - provider: anthropic
+    model: anthropic/claude-sonnet-5
+
+auxiliary:
+  compression:
+    provider: ollama
+    model: qwen2.5-coder:32b
+    base_url: http://gpu-box.tailnet-xxx.ts.net:11434
+
+telegram:
+  # Token/user allowlists live in ~/.hermes/.env or are written by:
+  #   hermes gateway setup
+  allowed_chats: "${TELEGRAM_ALLOWED_CHATS}"
+  reactions: true
 
 memory:
-  backend: lightrag
-  lightrag:
-    working_dir: /var/lib/hermes/lightrag
-    llm_model: ollama/qwen2.5-coder:32b         # local extraction
-    embedding_model: openai/text-embedding-3-small  # or local (bge-m3)
+  memory_enabled: true
+  user_profile_enabled: true
+  provider: ""  # built-in memory; keep LightRAG as an external MCP/skill integration
 ```
 
 ### 5. Langfuse self-host (observability inside the LAN)
@@ -115,7 +111,7 @@ cp templates/compose/.env.langfuse.example /opt/.env.langfuse
 docker compose -f /opt/langfuse-stack.yml --env-file /opt/.env.langfuse up -d
 ```
 
-Point Hermes `telemetry.langfuse.host` at `http://127.0.0.1:3000`.
+Point the observability plugin at Langfuse with `HERMES_LANGFUSE_BASE_URL=http://127.0.0.1:3000` plus the matching Langfuse public/secret keys in `~/.hermes/.env`.
 
 ### 6. Skills
 
@@ -123,7 +119,7 @@ Point Hermes `telemetry.langfuse.host` at `http://127.0.0.1:3000`.
 for skill in /opt/hermes-optimization-guide/skills/*/*/; do
   ln -sfn "$skill" "/home/hermes/.hermes/skills/$(basename $skill)"
 done
-hermes /reload
+# Restart Hermes, start a new session, or run /reload-skills inside an active chat.
 ```
 
 ## Honest tradeoffs

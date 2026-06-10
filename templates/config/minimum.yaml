@@ -1,31 +1,43 @@
 # ------------------------------------------------------------
 # Hermes — MINIMUM config
 # ------------------------------------------------------------
-# The smallest possible working setup:
-#   - 1 provider (Anthropic)
-#   - 1 gateway (CLI only; no Telegram/Discord)
-#   - No memory backend (vector only)
-#   - No MCP servers
-# For when you just want to see Hermes work before committing to more.
+# Current Hermes config.yaml schema (schema version 28).
+# Pair with ~/.hermes/.env for secrets, or run:
+#   hermes setup
+#   hermes model
+#
+# This is intentionally small: CLI chat, one built-in provider, built-in
+# memory, default compression, and manual approval for dangerous commands.
 # ------------------------------------------------------------
 
-version: 1
+_config_version: 28
 
-models:
+model:
+  provider: anthropic
   default: anthropic/claude-sonnet-5
-  providers:
-    anthropic:
-      api_key: ${ANTHROPIC_API_KEY}
 
-gateways:
-  cli:
-    enabled: true
+toolsets:
+  - hermes-cli
 
 memory:
-  backend: vector
-  vector:
-    driver: qdrant
-    path: ~/.hermes/vector
+  memory_enabled: true
+  user_profile_enabled: true
+  provider: ""                    # built-in memory only; no external provider
 
-# Everything else uses Hermes defaults. Run `hermes dashboard` later
-# to layer on skills, platforms, MCP servers, etc.
+compression:
+  enabled: true
+  threshold: 0.50
+  target_ratio: 0.20
+
+approvals:
+  mode: manual                     # manual | smart | off
+  timeout: 60
+  cron_mode: deny
+
+security:
+  redact_secrets: true
+  tirith_enabled: true
+
+# Provider credentials belong in ~/.hermes/.env, not config.yaml:
+#   ANTHROPIC_API_KEY=...
+# Or authenticate interactively with `hermes auth` / `hermes model`.

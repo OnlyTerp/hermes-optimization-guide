@@ -91,15 +91,15 @@ mcp_servers:
   postgres:
     command: npx
     args: ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
-    enabled_for:                     # Only load in these sessions
-      - profile: engineering
-      - channel: "#data-questions"
-    tools_allowlist:                 # Only expose these tools
-      - query
-      - describe_table
+    sampling:
+      enabled: false
+    tools:
+      include:                       # Only expose these tools
+        - query
+        - describe_table
 ```
 
-Without a `tools_allowlist`, every tool the server exposes is available.
+Without `tools.include` or `tools.exclude`, every tool the server exposes is available. For profile/channel scoping, keep separate Hermes profiles or separate gateway channel prompts/toolsets rather than using an MCP-local `enabled_for` block.
 
 ---
 
@@ -107,7 +107,7 @@ Without a `tools_allowlist`, every tool the server exposes is available.
 
 These are the ones that pay for themselves within a day:
 
-> **2026 reality check:** MCP is also a supply-chain boundary. Prefer official servers, pin package versions, restrict filesystem roots, and keep `allow_sampling: false` unless the server genuinely needs to call an LLM.
+> **2026 reality check:** MCP is also a supply-chain boundary. Prefer official servers, pin package versions, restrict filesystem roots, and explicitly set `sampling.enabled: false` unless the server genuinely needs to call an LLM.
 
 | Server | What it adds | Why you want it |
 |--------|--------------|-----------------|
@@ -194,11 +194,14 @@ mcp_servers:
   scraper:
     command: node
     args: ["./scraper-mcp.js"]
-    allow_sampling: true              # Off by default
-    sampling_model: gpt-5-mini        # Optional: pin a cheaper model for sampling
+    sampling:
+      enabled: true
+      model: openai/gpt-5.5-mini      # Optional: pin a cheaper model for sampling
+      max_rpm: 10
+      timeout: 30
 ```
 
-**Security note:** Sampling means an MCP server can burn your tokens. Only enable it for servers you trust. See [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust).
+**Security note:** Sampling means an MCP server can burn your tokens. Leave `sampling.enabled: false` for servers that read untrusted input or do not need LLM calls. See [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust).
 
 ---
 
@@ -240,7 +243,7 @@ Use MCP when you want:
 | Server shows connected but 0 tools | Permissions — server's env vars are missing its auth token | Check `env:` entries and that referenced `${VARS}` exist in `.env` |
 | Tools show up in CLI but not Telegram | Gateway process has its own env — restart it after config change | `hermes gateway restart` |
 | Constant reconnects on HTTP server | SSE timeout behind a reverse proxy | Set `proxy_read_timeout 300s` in nginx/Caddy |
-| `sampling not permitted` in server logs | `allow_sampling: false` (default) | Set `allow_sampling: true` in the server's block |
+| `sampling not permitted` in server logs | `sampling.enabled: false` | Set `sampling.enabled: true` in the server's block only when the server needs LLM calls |
 
 ---
 

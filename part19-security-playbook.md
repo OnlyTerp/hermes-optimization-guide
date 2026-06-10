@@ -214,7 +214,7 @@ For **true egress allowlisting** (block private ranges, block the metadata IP `1
 
 ## Layer 5: MCP and Plugin Trust
 
-MCP servers and plugins are third-party code you give tool access to. Hermes does **not** have per-server `trust:` levels, `allow_sampling`, or `max_concurrent_calls` config knobs. The real controls are credential filtering, tool filtering, and **operator review before install**.
+MCP servers and plugins are third-party code you give tool access to. Hermes does **not** have legacy per-server trust levels, legacy sampling flags, or `max_concurrent_calls` config knobs. The real controls are credential filtering, current `tools.include` / `tools.exclude` filtering, `sampling.enabled`, and **operator review before install**.
 
 Configure servers with the documented [MCP schema](https://hermes-agent.nousresearch.com/docs/reference/mcp-config-reference) and use `tools.include` / `tools.exclude` to expose only the tools you audited:
 

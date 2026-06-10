@@ -49,17 +49,19 @@ This part covers the v0.9 adapters, the newer v0.12–v0.14 surfaces, and **Andr
 
 Teams is no longer just a proof of the v0.12 plugin architecture. In v0.14 the Graph auth, webhook listener, pipeline runtime, and outbound delivery are wired together, so Teams can be a real enterprise chat surface.
 
-```yaml
-gateways:
-  teams:
-    enabled: true
-    tenant_id: ${MICROSOFT_TENANT_ID}
-    client_id: ${MICROSOFT_TEAMS_CLIENT_ID}
-    client_secret: ${MICROSOFT_TEAMS_CLIENT_SECRET}
-    allowed_teams:
-      - ${MICROSOFT_TEAMS_ADMIN_TEAM}
-    trust_label: medium
+```bash
+hermes gateway setup
 ```
+
+```dotenv
+# ~/.hermes/.env — current Hermes keeps Teams credentials outside config.yaml
+MICROSOFT_TENANT_ID=...
+MICROSOFT_TEAMS_CLIENT_ID=...
+MICROSOFT_TEAMS_CLIENT_SECRET=...
+MICROSOFT_TEAMS_ADMIN_TEAM=...
+```
+
+Keep Teams in a restricted/approved channel until identity mapping is proven.
 
 Keep approvals in a private admin channel, not in the same team/channel where untrusted requests arrive.
 
@@ -67,27 +69,29 @@ Keep approvals in a private admin channel, not in the same team/channel where un
 
 Use LINE when your users are in Japan, Korea, Taiwan, or a consumer/mobile-first workflow. Treat it like Telegram operationally: one admin bot/channel for approvals, strict allowed user IDs, and no write tools in public rooms.
 
-```yaml
-gateways:
-  line:
-    enabled: true
-    channel_access_token: ${LINE_CHANNEL_ACCESS_TOKEN}
-    channel_secret: ${LINE_CHANNEL_SECRET}
-    allowed_user_ids:
-      - ${LINE_ADMIN_USER_ID}
+```bash
+hermes gateway setup
+```
+
+```dotenv
+# ~/.hermes/.env
+LINE_CHANNEL_ACCESS_TOKEN=...
+LINE_CHANNEL_SECRET=...
+LINE_ADMIN_USER_ID=...
 ```
 
 ### SimpleX Chat
 
 SimpleX is the privacy-first choice: no global user IDs, no central identity graph. That is good for privacy and harder for ops. Require pairing, persist local contact labels, and do not use it as the only approval channel until restore/backup is tested.
 
-```yaml
-gateways:
-  simplex:
-    enabled: true
-    profile: simplex-admin
-    require_pairing: true
-    trust_label: medium
+```bash
+hermes gateway setup
+```
+
+```dotenv
+# ~/.hermes/.env
+SIMPLEX_PROFILE=simplex-admin
+SIMPLEX_REQUIRE_PAIRING=true
 ```
 
 ### Google Chat
@@ -96,15 +100,15 @@ Google Chat is the cleanest Workspace choice for Google Workspace teams that do 
 
 Typical posture:
 
-```yaml
-gateways:
-  google_chat:
-    enabled: true
-    project_id: ${GOOGLE_CLOUD_PROJECT}
-    credentials_json: ${GOOGLE_CHAT_CREDENTIALS_JSON}
-    allowed_spaces:
-      - ${GOOGLE_CHAT_ADMIN_SPACE}
-    trust_label: medium
+```bash
+hermes gateway setup
+```
+
+```dotenv
+# ~/.hermes/.env
+GOOGLE_CLOUD_PROJECT=...
+GOOGLE_CHAT_CREDENTIALS_JSON=...
+GOOGLE_CHAT_ADMIN_SPACE=...
 ```
 
 Keep public/customer-facing spaces in quarantine profile until identity mapping and approval routing are proven.

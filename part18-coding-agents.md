@@ -106,21 +106,16 @@ Each specialist has a sweet spot. Let Hermes route:
 A sensible `~/.hermes/config.yaml`:
 
 ```yaml
+_config_version: 28
+
 delegation:
-  default: claude-code
-  routing:
-    - match: { type: refactor, files_changed_gte: 5 }
-      agent: claude-code
-    - match: { type: bugfix, single_file: true }
-      agent: codex
-    - match: { type: explore, repo_tokens_gte: 200000 }
-      agent: gemini-cli
-    - match: { type: dependency_audit }
-      agent: gemini-cli
-    - match: { budget: low }
-      agent: opencode
-      model: moonshot/kimi-k2.6
+  provider: anthropic
+  model: anthropic/claude-sonnet-5
+  max_iterations: 50
+  child_timeout_seconds: 600
 ```
+
+Use Kanban worker lanes for specialist routing (`codex-worker`, `claude-code`, `gemini-cli`, `opencode`) instead of a `delegation.routing` block in `config.yaml`.
 
 ## Mode 1B: Kanban Worker Lanes (Preferred for Long Work)
 
