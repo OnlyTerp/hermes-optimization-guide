@@ -8,6 +8,11 @@ when_to_use:
 toolsets:
   - terminal
   - file
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [audit-approval-bypass]
 ---
 
 # audit-approval-bypass — Verify Approval Posture

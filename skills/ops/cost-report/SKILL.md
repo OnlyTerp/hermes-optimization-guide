@@ -16,6 +16,11 @@ parameters:
     type: string
     enum: [markdown, json, csv]
     default: markdown
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [cost-report]
 ---
 
 # cost-report — LLM Cost Breakdown

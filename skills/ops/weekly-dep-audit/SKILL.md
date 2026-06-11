@@ -17,6 +17,11 @@ parameters:
     type: string
     enum: [low, medium, high, critical]
     default: high
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [weekly-dep-audit]
 ---
 
 # weekly-dep-audit — Cross-Repo Dependency Audit

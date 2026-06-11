@@ -17,6 +17,11 @@ parameters:
     type: string
     enum: [quick, standard, deep]
     default: standard
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [pr-review]
 ---
 
 # pr-review — Delegated PR Review

@@ -8,6 +8,11 @@ toolsets:
   - classify
   - file
   - telegram
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [telegram-triage]
 ---
 
 # telegram-triage — Inbound Message Classifier

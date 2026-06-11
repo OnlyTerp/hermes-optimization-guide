@@ -15,6 +15,11 @@ parameters:
   repo:
     type: string
     description: "owner/repo (default is current dir's origin)"
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [release-notes]
 ---
 
 # release-notes — Generate Release Notes

@@ -14,6 +14,11 @@ parameters:
     type: string
     description: Glob pattern for which secrets to rotate (e.g. "webhook_hmac_*", "TWILIO_*", "all")
     default: "webhook_hmac_*"
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [rotate-secrets]
 ---
 
 # rotate-secrets — Atomic Secret Rotation

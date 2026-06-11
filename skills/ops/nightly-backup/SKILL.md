@@ -16,6 +16,11 @@ parameters:
   retain_days:
     type: integer
     default: 30
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [nightly-backup]
 ---
 
 # nightly-backup — Hermes Backup Automation

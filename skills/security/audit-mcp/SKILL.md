@@ -9,6 +9,11 @@ when_to_use:
 toolsets:
   - terminal
   - file
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [audit-mcp]
 ---
 
 # audit-mcp — MCP Server Security Audit

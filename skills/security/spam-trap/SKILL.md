@@ -22,6 +22,11 @@ security:
     it is classifying; it only labels. Every action downstream remains gated
     by approval.
 model_hint: cerebras/qwen-3-32b
+version: "1.0.0"
+license: MIT
+metadata:
+  hermes:
+    tags: [spam-trap]
 ---
 
 # spam-trap — First-line Filter
