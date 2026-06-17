@@ -2,6 +2,23 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-06-17 — Hermes v0.16.0 "Surface" Refresh
+
+### Added
+- **Part 24 — Hermes Desktop App**: the native macOS/Windows/Linux GUI introduced in v0.16. Covers `hermes desktop`, `--include-desktop`, the Cmd+K/Ctrl+K command palette, drag-and-drop + clipboard image paste, the composer model picker, per-session YOLO toggle, voice, management panes, background self-update, uninstall flags, and connecting to a remote Hermes gateway over secure WebSocket (OAuth or username/password, multi-profile, cross-profile `@session`).
+- **Part 25 — NVIDIA & Local Hardware**: the run-it-on-your-own-GPU story from the Nous × NVIDIA work. RTX PC / RTX PRO / DGX Spark tiers, a model-agnostic local stack (Ollama / LM Studio / llama.cpp), the DGX Spark playbook, OpenShell kernel-level isolation, NemoClaw + the "Build It Yourself" series, and the built-in NVIDIA Skills Hub tap (CUDA-X, AIQ, cuOpt).
+- New hero, desktop, and local-hardware banner graphics under `assets/`.
+- Part 22 section 8 "Newer Power Moves (v0.15 → v0.16)": `/undo [N]`, default-interface choice (`cli`/`tui`, `--cli`), the everywhere fuzzy model picker, leaner default skills, free instant `session_search`, `hermes kanban swarm`, and Brainworm/promptware defenses.
+
+### Changed
+- README badges, hero, intro, install section, architecture diagram, "Pick Your Path," "What's New," TOC, and repo map now target Hermes **v0.16.0 (v2026.6.5)** and surface the Desktop + local-hardware paths.
+- Collapsed the per-version model cheat-sheet tables in the README and `part1-setup.md` into a light, model-agnostic "bring any model" section — the harness is the durable part; the fuzzy picker + hourly catalog replace memorized leaderboards.
+- Canonical install commands updated to `https://hermes-agent.nousresearch.com/install.sh` and the native Windows `iex (irm https://hermes-agent.nousresearch.com/install.ps1)`, plus `hermes portal` Quick Setup and the web System page check-before-update / Debug Share flow.
+
+### Removed
+- v0.14-as-current framing from top-level guidance ("native Windows beta," PyPI-as-new, "Android new in v0.9," 24-part counts).
+- Stale per-version model recommendation tables that go out of date every release.
+
 ## 2026-06-03 — Part 19 security schema fixes
 
 ### Fixed

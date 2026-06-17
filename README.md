@@ -1,30 +1,50 @@
 # Hermes Optimization Guide
 
+<p align="center">
+  <img src="./assets/hero-banner.png" alt="Hermes Optimization Guide — the practical playbook for the Nous Research Hermes Agent across CLI, TUI, web, and the new native desktop app" width="880">
+</p>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Hermes](https://img.shields.io/badge/Hermes-v0.14.0%20%282026.5.16%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.5.16)
-[![Last updated](https://img.shields.io/badge/Last%20updated-2026--05--25-brightgreen)](./CHANGELOG.md)
-[![Parts](https://img.shields.io/badge/parts-24-blue)](#table-of-contents)
+[![Hermes](https://img.shields.io/badge/Hermes-v0.16.0%20%282026.6.5%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.6.5)
+[![Last updated](https://img.shields.io/badge/Last%20updated-2026--06--17-brightgreen)](./CHANGELOG.md)
+[![Parts](https://img.shields.io/badge/parts-26-blue)](#table-of-contents)
 [![Skills](https://img.shields.io/badge/installable%20skills-13-blue)](./skills/)
 [![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
 [![CI](https://github.com/OnlyTerp/hermes-optimization-guide/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Current through Hermes Agent v0.14.0 (v2026.5.16)** · **24 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Updated for the Foundation release: PyPI installs, Grok OAuth + 1M context, `hermes proxy`, `x_search`, Teams end-to-end, LINE/SimpleX, `/handoff`, faster browser/CDP paths, native Windows beta, durable Kanban, `/goal`, Checkpoints v2, no-agent cron, Curator, plugins, and current May 2026 model routing
+> **Current through Hermes Agent v0.16.0 (v2026.6.5) — "The Surface Release"** · **26 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Now covering the **native Hermes Desktop app** (macOS/Windows/Linux), the **NVIDIA RTX / DGX Spark** local-hardware story + OpenShell, multi-agent **swarms** (`hermes kanban swarm`), the browser **admin panel**, `/undo`, the fuzzy model picker, Quick Setup via Nous Portal, and a leaner default skill set. **Bring any model** — this guide is about the *harness*, not the weights.
 >
 > Other languages: [中文](./README-zh.md) · [日本語](./README-ja.md)
 
 ### The End-to-End Hermes Guide — docs + runnable artifacts
-Every part you need to go from fresh install to a production Hermes deployment that talks on 22+ built-in/plugin platforms, orchestrates Claude Code / Codex / Gemini CLI through durable Kanban lanes, plugs into any MCP server, traces every call in Langfuse, curates its own skills, and runs heavy work on disposable Modal/Daytona/Vercel sandboxes — without burning $100/day on frontier tokens.
+Every part you need to go from fresh install to a production Hermes deployment — driven from the **native desktop app**, the CLI/TUI, a browser admin panel, or 22+ chat platforms. Orchestrate Claude Code / Codex / Gemini CLI through durable Kanban lanes and **multi-agent swarms**, plug into any MCP server, trace every call in Langfuse, let it curate its own skills, push heavy work onto disposable Modal/Daytona/Vercel sandboxes — or run the whole thing **locally on your own GPU / NVIDIA DGX Spark**. It's all **model-agnostic**: bring whatever weights you want, the guide is about the *harness*.
 
 Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
 
-*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **May 25, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **June 17, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
 
 ---
 
-## Install Everything (one command)
+## Install
 
-On a fresh Debian 12 / Ubuntu 24.04 box (Hetzner CX22 works great for ~$5/mo):
+Pick the surface that fits you — they all drive the **same** agent, config, keys, sessions, and skills.
+
+**Easiest — the desktop app.** Grab the [Hermes Desktop](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) installer for macOS/Windows/Linux (or run `hermes desktop` if you already have the CLI). First launch offers **Quick Setup via Nous Portal** — sign in, pick a model, start chatting. Full tour: **[Part 24: Hermes Desktop App](./part24-desktop-app.md)**.
+
+**Terminal — one line.** macOS / Linux:
+
+```bash
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+```
+
+Windows (native, PowerShell):
+
+```powershell
+iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+```
+
+**Server — one command to production.** On a fresh Debian 12 / Ubuntu 24.04 box (Hetzner CX22 works great for ~$5/mo):
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/main/scripts/vps-bootstrap.sh | sudo bash
@@ -48,6 +68,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`templates/cron/`](./templates/cron) | Recommended production cron schedule. |
 | [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) | One-command fresh VPS → production Hermes. |
 | [`diagrams/`](./diagrams) | 6 Mermaid diagrams (architecture, MCP flow, delegation, sandbox sync, observability, security layers). |
+| [`assets/`](./assets) | Banner graphics used across the guide. |
 | [`benchmarks/`](./benchmarks) | Reproducible cost + latency table across 12 models × 5 tasks. |
 | [`docs/wizard/`](./docs/wizard) | **Interactive config wizard** — 8 questions → ready-to-drop `config.yaml`. Runs in your browser. |
 | [`docs/reference-architectures/`](./docs/reference-architectures) | **4 blueprints** — Homelab, Solo Dev, Small Agency, Road Warrior. Full parts list + cost + install. |
@@ -55,7 +76,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
 | [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
 | [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
-| README + `part1-*.md` … `part23-*.md` | The 24-part guide itself. |
+| README + `part1-*.md` … `part25-*.md` | The 26-part guide itself (now incl. Desktop App + NVIDIA / local hardware). |
 
 ---
 
@@ -63,13 +84,20 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 
 ```mermaid
 flowchart LR
-  Inputs[22+ platforms<br/>Telegram · Discord · Slack<br/>Google Chat · LINE · SimpleX<br/>Teams · QQBot · Yuanbao<br/>iMessage · WeChat · Email<br/>SMS · Webhooks · Cron · Voice · CLI] --> Gateway
+  subgraph Surfaces[Surfaces — one agent, many front ends]
+    direction TB
+    Desktop[Desktop app<br/>macOS · Windows · Linux]
+    Term[CLI · TUI]
+    Web[Web admin panel]
+    Chat[22+ chat platforms<br/>Telegram · Discord · Slack<br/>Teams · LINE · WeChat · …]
+  end
+  Surfaces --> Gateway
   Gateway --> Router[Model Router<br/>cost + context + capability]
-  Router --> Providers[Anthropic · OpenAI<br/>Google · Cerebras · Moonshot<br/>z.ai · xAI · Local]
+  Router --> Providers[Any provider / model<br/>Cloud APIs · OpenAI-compatible<br/>Local: llama.cpp · LM Studio · Ollama<br/>NVIDIA RTX · DGX Spark]
   Gateway --> Approval[Approval Layer<br/>denylist · allowlist · quarantine]
-  Approval --> Tools[Tools<br/>Native · Tool Gateway<br/>MCP · Subagents · Coding Agents]
+  Approval --> Tools[Tools<br/>Native · Tool Gateway · MCP<br/>Subagents · Coding Agents · Swarms]
   Tools --> Memory[Memory<br/>Vector · LightRAG · mem0]
-  Tools --> Logs[(Audit log<br/>+ Langfuse/Helicone traces)]
+  Tools --> Logs[(Audit log<br/>+ Langfuse / Helicone traces)]
 ```
 
 Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
@@ -78,10 +106,10 @@ Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 
 ## Pick Your Path
 
-This guide grew to 24 parts because *Hermes grew*. Six sections (Parts 1–5 plus SOUL.md) live in this README; Parts 6–23 live as separate files. You don't have to read them all — pick the shortest path to what you need:
+This guide grew to 26 parts because *Hermes grew*. Six sections (Parts 1–5 plus SOUL.md) live in this README; Parts 6–25 live as separate files. You don't have to read them all — pick the shortest path to what you need:
 
 ### 🎯 "I just want it working in 10 minutes"
-[Part 1: Setup](#part-1-setup-stop-fumbling-with-installation) → [Part 12: Web Dashboard](./part12-web-dashboard.md) → done. Use the dashboard to point-and-click the rest.
+Skip the terminal: install the [desktop app](./part24-desktop-app.md) and let first-run **Quick Setup via Nous Portal** pick a model for you. Prefer the CLI? [Part 1: Setup](#part-1-setup-stop-fumbling-with-installation) → [Part 12: Web Dashboard](./part12-web-dashboard.md) and point-and-click the rest.
 
 ### 📱 "I want a Telegram bot that's actually useful"
 [Part 1](#part-1-setup-stop-fumbling-with-installation) → [Part 4: Telegram](./part4-telegram-setup.md) → [Part 5: On-the-fly Skills](./part5-creating-skills.md) → [Part 7: Memory](./part7-memory-system.md).
@@ -101,58 +129,49 @@ This guide grew to 24 parts because *Hermes grew*. Six sections (Parts 1–5 plu
 ### 🛡️ "I'm worried about prompt injection (you should be)"
 [Part 19: Security Playbook](./part19-security-playbook.md) — read this first if your agent reads any untrusted input (email, webhooks, Discord, public Telegram groups).
 
+### 🖥️ "Just give me an app, not a terminal"
+[Part 24: Hermes Desktop App](./part24-desktop-app.md) — download, Quick Setup, and drive everything from a real GUI: streaming chat, a Cmd+K command palette, drag-and-drop files, a model picker, and an optional connection to a remote Hermes box.
+
+### 🔒 "Run it all locally on my own GPU"
+[Part 25: NVIDIA & Local Hardware](./part25-nvidia-local.md) — RTX / DGX Spark, OpenShell isolation, and a model-agnostic local stack (llama.cpp / LM Studio / Ollama) so your data never leaves the machine.
+
 ---
 
-## What's New (May 2026)
+## What's New (June 2026)
 
-Hermes moved again after the Tenacity refresh. The current stable target is **[v0.14.0 — 2026.5.16 — "The Foundation Release"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.5.16)**. This update folds the landed install, proxy, platform, live-search, and performance features into the guide and removes v0.13-as-current framing.
+Two big releases landed since the Foundation refresh — **v0.15.0 "Velocity"** and **[v0.16.0 "The Surface Release"](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.6.5)** — plus a deepening **NVIDIA** partnership. The headline themes: a native **desktop app**, run-it-**local** on NVIDIA hardware, multi-agent **swarms**, a browser **admin panel**, and a deliberately **leaner** default skill set. None of it is model-specific — bring whatever weights you want.
 
-### v0.14.0 — "Foundation"
+### v0.16.0 — "Surface" (latest)
 
-- **PyPI + lighter installs** — `pip install hermes-agent` now works, heavy extras lazy-install on first use, `[all]` is debloated, and launch is roughly 19 seconds faster. See [Part 1](#part-1-setup-stop-fumbling-with-installation).
-- **Grok/SuperGrok OAuth + 1M context** — Grok 4.3 is now a native OAuth-backed provider with live X search, Custom Voices, and million-token research lanes. See [Part 9](./part9-custom-models.md).
-- **`hermes proxy`** — one OpenAI-compatible localhost endpoint for OAuth-backed Claude Pro, ChatGPT Pro, and SuperGrok so Codex, Aider, Cline, Continue, and scripts can reuse subscriptions. See [Part 13](./part13-tool-gateway.md#openai-compatible-local-proxy).
-- **`x_search`** — first-class X/Twitter search with OAuth or API-key auth for live threads and post lookup. See [Part 13](./part13-tool-gateway.md#x_search-first-class-x-search).
-- **Teams end-to-end + LINE + SimpleX Chat** — Microsoft Graph auth/listener/runtime/delivery is wired through, and the gateway reaches 22 messaging platforms. See [Part 15](./part15-new-platforms.md).
-- **Live `/handoff`** — transfer an active session to another model/profile/persona without losing messages or tool context. See [Part 23](./part23-tenacity-stack.md#8-upgrade-checklist-from-v013-to-v014).
-- **Performance wave** — persistent CDP makes browser-console work dramatically faster; `computer_use` gains a provider-agnostic CUA backend; Claude prompt prefixes cache for 1 hour across sessions. See [Part 20](./part20-observability.md).
-- **Editor + OS reach** — Zed ACP Registry integration via `uvx`, clickable terminal URLs, and native Windows beta widen how Hermes is driven. See [Part 18](./part18-coding-agents.md#agent-tooling-updates-may-25-2026).
+- **Hermes Desktop** — a native macOS/Windows/Linux app: streaming chat with live tool activity, a session list with archive/search, drag-and-drop files, clipboard image paste, a **Cmd+K command palette**, a model picker in the composer, a per-session **YOLO toggle**, and in-app self-update. It's "another surface over one agent, not a fork." See [Part 24](./part24-desktop-app.md).
+- **Remote backend** — desktop and clients can connect to a remote Hermes gateway over a secure WebSocket (OAuth or username/password), with per-profile hosts, concurrent multi-profile sessions, and cross-profile `@session` links. Thin GUI local, heavy agent remote. See [Part 24](./part24-desktop-app.md#connect-to-a-remote-hermes).
+- **Browser admin panel** — the web dashboard grew into a full admin panel: a Channels page that sets up every messaging platform from the browser, MCP catalog enable/disable, credentials, webhooks, memory config, and a System page with **check-before-update** and one-click **Debug Share**. See [Part 12](./part12-web-dashboard.md).
+- **Quick Setup via Nous Portal** — `hermes portal` opens a guided first-run that signs you in and picks a model; Quick Setup vs Full Setup paths on first launch. See [Part 1](#part-1-setup-stop-fumbling-with-installation).
+- **`/undo [N]`** — take back the last N turns and prefill your last message to edit and resend, with CLI / TUI / messaging parity. See [Part 22](./part22-latest-power-moves.md).
+- **Fuzzy model picker + default interface choice** — type-to-filter model search across desktop/web/TUI/CLI, grouped multi-endpoint providers, an hourly-refreshed catalog, and a `cli`-or-`tui` default for `hermes chat` (with a `--cli` per-invocation override). See [Part 22](./part22-latest-power-moves.md).
+- **Leaner default skills** — rarely-used bundled skills moved to optional, a new `environments:` relevance gate, and the Curator can now prune built-in skills. See [Part 22](./part22-latest-power-moves.md).
+- **NVIDIA Skills Hub tap** — a built-in trusted Skills source alongside OpenAI/Anthropic/HuggingFace (CUDA-X, AIQ, cuOpt), part of the broader NVIDIA local-hardware story. See [Part 25](./part25-nvidia-local.md).
+- **Security** — CVE-2026-48710 Starlette pin, SSRF off-loop hardening, and subprocess credential stripping. See [Part 19](./part19-security-playbook.md).
 
-### v0.13.0 — "Tenacity"
+### v0.15.0 — "Velocity"
 
-- **Durable multi-agent Kanban** — boards, heartbeats, reclaim, retry budgets, zombie detection, and human unblock/review flow make long work auditable instead of fragile. See [Part 23](./part23-tenacity-stack.md#1-treat-kanban-as-the-durable-execution-layer).
-- **`/goal` persistent objectives** — keep a session locked on an observable target until done, paused, cleared, or out of budget. See [Part 23](./part23-tenacity-stack.md#3-use-goal-for-do-not-stop-until-it-is-done).
-- **Checkpoints v2 + no-agent cron** — real pruning, gateway auto-resume, script-only watchdogs, and provider/platform plugin surfaces. See [Part 23](./part23-tenacity-stack.md).
+- **Multi-agent swarms** — `hermes kanban swarm` turns the durable Kanban into a platform: a root planner, parallel workers, a gated verifier and synthesizer, a shared blackboard, per-task model overrides, and a worktree per task. See [Part 23](./part23-tenacity-stack.md).
+- **Huge perf wave** — `run_agent.py` was split into focused `agent/*` modules (−76% lines), cold start dropped sharply (`hermes --version` −63%), per-turn function calls fell ~47%, and `session_search` got **~4,500× faster — and free**. See [Part 20](./part20-observability.md).
+- **Brainworm / promptware defense** — a defense layer against instructions smuggled through tool output and untrusted content. See [Part 19](./part19-security-playbook.md).
+- **More surfaces & integrations** — Bitwarden Secrets Manager bootstrap, skill bundles (one slash command loads a whole workflow), an Ink TUI multi-session orchestrator, Krea 2 image generation, an interactive Nous-approved MCP catalog picker, ntfy as the 23rd messaging platform, and a deep xAI round (Web Search plugin, `hermes migrate xai`). See [Part 15](./part15-new-platforms.md) and [Part 17](./part17-mcp-servers.md).
 
-### v0.12.0 — "Curator"
+### NVIDIA partnership — run it local
 
-- **Autonomous Curator** — `hermes curator` grades, consolidates, pins, archives, and restores agent-created skills on a default 7-day cadence. See [Part 22](./part22-latest-power-moves.md#1-turn-on-curator-before-your-skill-library-becomes-noise).
-- **Self-improvement loop upgraded** — the review fork is rubric-based, active-skill-biased, restricted to memory + skills tools, and correctly inherits the parent provider/model/credentials. See [Part 5](./part5-creating-skills.md#curator-v012-keep-the-skill-library-from-rotting).
-- **Provider expansion** — LM Studio became a first-class provider; GMI Cloud, Azure AI Foundry, MiniMax OAuth, Tencent TokenHub, AWS Bedrock, NVIDIA NIM, Vercel AI Gateway, Step Plan, Gemini OAuth, and Codex OAuth are now part of the realistic routing menu. See [Part 9](./part9-custom-models.md).
-- **Plugin-first gateway** — gateway platforms can ship as plugins; Microsoft Teams is the first plugin-shipped platform, and Tencent Yuanbao is the 18th native platform. See [Part 15](./part15-new-platforms.md#2026-update-teams-line-simplex-google-chat-qqbot-and-yuanbao).
-- **Bundled plugins worth enabling** — Spotify tools, Google Meet transcription/duplex audio, Langfuse observability, achievements, extra image providers, and dashboard skins. See [Part 22](./part22-latest-power-moves.md#4-use-plugins-for-integrations-not-one-off-scripts).
-- **Dashboard caught up** — Models tab, auxiliary-model configuration, dashboard Chat backed by the real `hermes --tui`, plugin slots, themes, update/restart controls, and better session analytics. See [Part 12](./part12-web-dashboard.md).
-- **TUI is now the primary interface** — `hermes --tui` adds sticky composer, slash autocomplete, live tool cards, `/steer`, `/queue`, `/background`, `/busy`, `/indicator`, voice parity, LaTeX, and better resume/delete flows. See [Part 22](./part22-latest-power-moves.md#2-use-the-tui-as-your-daily-driver).
-- **Remote model catalog** — OpenRouter and Nous Portal picker lists update from a hosted manifest, so users see new models without waiting for a Hermes release. See [Part 9](./part9-custom-models.md#remote-model-catalog-stop-hardcoding-this-weeks-winner).
-- **Cron got serious** — per-job `workdir`, per-job toolsets, `context_from` chaining, and zero-LLM direct webhook delivery make scheduled automations cheaper and more predictable.
-- **Tool/runtime hardening** — hardline command blocklists, Docker host-user bind mounts, Vercel Sandbox backend, SSH permission fixes, local Chromium for localhost/LAN browser tasks, and richer approval hooks.
+Hermes is now optimized for always-on **local** use on **NVIDIA RTX PCs, RTX PRO workstations, and DGX Spark** (128GB unified memory, ~1 petaflop of AI performance, runs 120B-class MoE models all day). Tensor Cores accelerate inference, there's a dedicated **DGX Spark playbook**, and **OpenShell** adds kernel-level isolation between the agent and your OS. It stays model-agnostic — bring any weights. See [Part 25](./part25-nvidia-local.md).
 
-### v0.11.0 — "Interface"
+### Earlier milestones (still relevant)
 
-- **Ink TUI rewrite** — `hermes --tui` is a React/Ink interface over a Python JSON-RPC backend with streaming, status bars, pickers, and subagent observability.
-- **Transport layer rewrite** — Anthropic, Chat Completions, OpenAI Responses, and Bedrock transports are separate, making native providers more reliable than generic OpenAI-compatible shims.
-- **AWS Bedrock native provider** — IAM credentials, Converse API, cross-region inference profiles, and Bedrock Guardrails. See [Part 9](./part9-custom-models.md#aws-bedrock-and-azure-ai-foundry-enterprise-routing-without-proxy-glue).
-- **Auxiliary model UI** — choose separate models for compression, vision, session search, title generation, and curator instead of silently burning your main model on side tasks.
-- **Smarter delegation** — orchestrator-role subagents, configurable spawn depth, and file coordination between sibling workers reduce multi-agent clobbering. See [Part 18](./part18-coding-agents.md).
-- **Plugin and hook surface expanded** — plugins can register slash commands, dispatch tools, block tool execution, rewrite tool results, transform terminal output, add image backends, and add dashboard tabs.
-- **Webhook direct delivery** — push alerts to a platform chat without waking the LLM, ideal for uptime checks and event streams.
+- **v0.14 "Foundation"** — PyPI installs + lighter launch, Grok OAuth + 1M context, `hermes proxy` (OpenAI-compatible localhost), `x_search`, Teams/LINE/SimpleX, live `/handoff`, and the first native Windows support. See [Part 23](./part23-tenacity-stack.md) and [Part 13](./part13-tool-gateway.md).
+- **v0.13 "Tenacity"** — durable multi-agent Kanban, `/goal` persistent objectives, Checkpoints v2, and no-agent cron. See [Part 23](./part23-tenacity-stack.md).
+- **v0.12 "Curator"** — the autonomous Curator (`hermes curator`), a rubric-based self-improvement loop, a much wider provider menu, and a plugin-first gateway. See [Part 22](./part22-latest-power-moves.md) and [Part 9](./part9-custom-models.md).
+- **v0.11 "Interface"** — the Ink TUI rewrite, a per-transport provider layer, native AWS Bedrock, and auxiliary-model routing for side tasks. See [Part 22](./part22-latest-power-moves.md).
 
-### Still important from v0.9/v0.10
-
-- **Local web dashboard** (`hermes dashboard`) — config, API keys, sessions, logs, analytics, cron, skills, models, plugins, and optional browser Chat. See [Part 12](./part12-web-dashboard.md).
-- **Tool Gateway + local proxy** — Nous Portal subscribers can route web/image/TTS/browser calls through one subscription, and v0.14 `hermes proxy` exposes OAuth-backed Claude/OpenAI/xAI through a loopback OpenAI-compatible endpoint. See [Part 13](./part13-tool-gateway.md).
-- **Fast Mode** (`/fast`) and **guided compression** (`/compress <topic>`) still matter, but they are no longer the whole story; pair them with auxiliary model routing and `/steer`. See [Part 14](./part14-fast-mode-watchers.md).
-- **MCP + coding-agent delegation + remote sandboxes** remain the high-leverage developer stack. See [Part 17](./part17-mcp-servers.md), [Part 18](./part18-coding-agents.md), and [Part 21](./part21-remote-sandboxes.md).
+**Fundamentals that haven't changed:** the local web dashboard (`hermes dashboard`), the Tool Gateway + `hermes proxy`, Fast Mode (`/fast`) and guided compression (`/compress <topic>`), and the MCP + coding-agent + remote-sandbox developer stack. See [Part 12](./part12-web-dashboard.md), [Part 13](./part13-tool-gateway.md), [Part 14](./part14-fast-mode-watchers.md), [Part 17](./part17-mcp-servers.md), [Part 18](./part18-coding-agents.md), and [Part 21](./part21-remote-sandboxes.md).
 
 ---
 
@@ -181,7 +200,9 @@ Hermes moved again after the Tenacity refresh. The current stable target is **[v
 21. [Observability & Cost Control](./part20-observability.md) — Langfuse plugin, Helicone, OpenTelemetry → Phoenix, prompt-prefix caching, CDP spans, auxiliary routing, evals
 22. [Remote Sandboxes & Bulk File Sync](./part21-remote-sandboxes.md) — SSH, Modal, Daytona, Vercel Sandbox, Fly Machines, E2B. Diff-based sync-back on teardown
 23. [Latest Power Moves](./part22-latest-power-moves.md) — Curator, TUI habits, context-file hygiene, plugins, dashboard Chat, cron chaining, and the 2026 upgrade checklist
-24. [Foundation + Tenacity Stack](./part23-tenacity-stack.md) — PyPI/lazy deps, `hermes proxy`, `/handoff`, durable Kanban, `/goal`, Checkpoints v2, no-agent cron, worker lanes, and v0.14 upgrade checklist
+24. [Foundation + Tenacity Stack](./part23-tenacity-stack.md) — PyPI/lazy deps, `hermes proxy`, `/handoff`, durable Kanban, `/goal`, Checkpoints v2, no-agent cron, worker lanes, multi-agent swarms, and the upgrade checklist
+25. [Hermes Desktop App](./part24-desktop-app.md) — Native macOS/Windows/Linux GUI, Quick Setup, Cmd+K palette, drag-and-drop, model picker, remote gateway, multi-profile, voice, self-update
+26. [NVIDIA & Local Hardware](./part25-nvidia-local.md) — Run Hermes on your own GPU: RTX / DGX Spark, OpenShell isolation, NemoClaw, and a model-agnostic local stack
 
 ---
 
@@ -243,20 +264,23 @@ LLM Provider (Claude, GPT, local models)
 ## Quick Start
 
 ```bash
-# 1. Install Hermes (Linux/macOS/WSL2/Android)
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+# 1. Install Hermes (Linux/macOS/WSL2/Android) — or grab the desktop app
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 
-# 2. Configure providers and tools
+# 2. Configure providers and tools (or `hermes portal` for guided Quick Setup)
 hermes setup
 
-# 3a. Start chatting in the terminal
+# 3a. Start chatting in the terminal (CLI or TUI)
 hermes
 
-# 3b. Or launch the new browser dashboard (v0.9+)
+# 3b. Or open the browser dashboard / admin panel
 hermes dashboard
+
+# 3c. Or launch the native desktop app
+hermes desktop
 ```
 
-The dashboard is the fastest way to configure everything without touching YAML. See [Part 12](./part12-web-dashboard.md) for the full tour.
+The dashboard — and the new desktop app — are the fastest way to configure everything without touching YAML. See [Part 12](./part12-web-dashboard.md) and [Part 24](./part24-desktop-app.md) for the full tours.
 
 For the full walkthrough including optimization, read each part in order.
 
@@ -266,27 +290,27 @@ For the full walkthrough including optimization, read each part in order.
 
 ## The Install
 
-One command. That's it. v0.14 also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path.
+One command. That's it. Hermes also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path. Prefer a GUI? Install the [desktop app](./part24-desktop-app.md) instead — same agent, same config, same keys.
 
 ### Linux / macOS / WSL2
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 
-# Lean v0.14+ path when you already manage Python yourself:
+# Lean path when you already manage Python yourself:
 pip install hermes-agent
 ```
 
 > **Security tip:** Piping scripts directly from the internet to bash executes them sight-unseen. If you prefer to inspect first:
 > ```bash
-> curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh -o install.sh
+> curl -fsSL https://hermes-agent.nousresearch.com/install.sh -o install.sh
 > less install.sh   # Review the script
 > bash install.sh
 > ```
 
-> **Windows users:** Native Windows is in beta in v0.14. For the most reliable path, use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install); if you test native Windows, keep a backup and expect PTY/dashboard edge cases.
+> **Windows users:** Hermes now has a native Windows installer — in PowerShell run `iex (irm https://hermes-agent.nousresearch.com/install.ps1)`. [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) is still a great option if you prefer a Linux environment, and the [desktop app](./part24-desktop-app.md) installs like any other Windows program.
 
-> **Android users (new in v0.9):** the same installer detects Termux and installs the tested `[termux]` extra bundle automatically — CLI, cron, PTY/background terminal, Telegram gateway, MCP, Honcho, ACP. See [Part 15 — Android / Termux](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
+> **Android users:** the same installer detects Termux and installs the tested `[termux]` extra bundle automatically — CLI, cron, PTY/background terminal, Telegram gateway, MCP, Honcho, ACP. See [Part 15 — Android / Termux](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
 
 ### What the Installer Does
 
@@ -316,48 +340,20 @@ hermes             # Start chatting!
 
 The setup wizard (`hermes setup`) walks you through:
 
-### 1. Choose Your LLM Provider
+### 1. Choose Your Model (bring any)
 
 ```bash
 hermes model
 ```
 
-Supported providers and recommended models:
+**Hermes is model-agnostic — the harness is the point, not the weights.** Open the picker and fuzzy-search across every provider Hermes knows about; the catalog refreshes hourly, so new models show up without waiting for a release. You don't need to memorize this week's leaderboard — pick what's good *right now*:
 
-| Provider | Top Models | Best For | Env Variable |
-|----------|-----------|----------|-------------|
-| **Nous Portal** | Hermes 5, Hermes 4 405B | Built-in [Tool Gateway](./part13-tool-gateway.md) — web search/image/TTS/browser with no extra keys | Auth via `hermes model` |
-| **Anthropic** | Sonnet 5, Opus 4.7, Sonnet 4.6 | Best coding reliability, long unattended PR work, `/fast` priority tier | `ANTHROPIC_API_KEY` |
-| **OpenAI** | GPT-5.5, GPT-5 Codex, o-series | Strong tool use, sandboxed coding loops, deep reasoning, `/fast` priority tier | `OPENAI_API_KEY` |
-| **Xiaomi MiMo** | MiMo V2 Pro *(native adapter)* | Fast, cheap, native reasoning modes, great for orchestration | `XIAOMI_API_KEY` |
-| **xAI** | Grok 4.3, Grok Mini *(native adapter + SuperGrok OAuth)* | 1M context, native live-X search, Custom Voices | `XAI_API_KEY` or OAuth |
-| **Kimi / Moonshot** | Kimi K2.6, Kimi 2.5 | Big context, excellent $/pass for code and extraction | `MOONSHOT_API_KEY` |
-| **z.ai / GLM** | GLM-5, GLM-5 Air | Strong open-weight tool use, great for translation + cheap reasoning | `ZAI_API_KEY` |
-| **Google** | Gemini 3.1 Pro/Flash | Massive context, multimodal/video, cheap; OAuth supported via `hermes model` | `GEMINI_API_KEY` or OAuth |
-| **MiniMax** | M2.7+ | Good balance of speed, TTS, and quality | `MINIMAX_API_KEY` |
-| **Cerebras** | Llama 4 Scout, Qwen 3 32B | Blazing fast inference (2000+ tok/s), cheap | `CEREBRAS_API_KEY` |
-| **Groq** | Llama 4, Qwen 3 | Very fast inference, limited context | `GROQ_API_KEY` |
-| **Arcee** | AFM-4.5, Caller | Function-calling specialists, cheap | `ARCEE_API_KEY` |
-| **Hugging Face** | Any TGI/TEI endpoint | Self-hosted and Inference Endpoints | `HF_TOKEN` |
-| **OpenRouter** | All of the above + 200 more | Access every model from one key, auto-fallback | `OPENROUTER_API_KEY` |
-| **Ollama** (local) | DeepSeek V4-Pro/Flash, Qwen3-Coder-Next, Qwen3.6, Gemma 4, Nemotron | Free/private local inference — great for embeddings, drafts, and offline work | None needed |
+- **Cloud APIs** — Anthropic, OpenAI, Google, xAI / Grok (OAuth), Moonshot / Kimi, z.ai / GLM, MiniMax, Cerebras, Groq, and more. Set the matching `*_API_KEY` (or sign in by OAuth where supported) and you're done.
+- **One key for everything** — point Hermes at **OpenRouter** (`OPENROUTER_API_KEY`) to reach hundreds of models with automatic fallback.
+- **Local / private** — run on your own hardware with **Ollama**, **LM Studio**, or **llama.cpp** (no key needed). Ideal for embeddings, drafts, offline work, and privacy. For the full local-hardware story — NVIDIA RTX / DGX Spark and OpenShell isolation — see **[Part 25](./part25-nvidia-local.md)**.
+- **Nous Portal** — sign in once and get the built-in [Tool Gateway](./part13-tool-gateway.md) (web search / image / TTS / browser) with no extra keys.
 
-### Local Models (Ollama)
-
-Run models on your own hardware for free. Recommended local models:
-
-| Model | Size | Best For | Min VRAM |
-|-------|------|----------|----------|
-| Qwen3-Coder-Next | 30B+ | Best local coding lane | 24GB |
-| DeepSeek V4-Flash | MoE | Cheap local/open inference if you can host it | 24GB+ |
-| Qwen3.6-27B | 27B | Single-GPU reasoning/coding balance | 16GB |
-| Gemma 4 | 27B | Fast general assistant, long context | 16GB |
-| Nemotron 30B | 30B | Fine-tunable, good general purpose | 16GB |
-| nomic-embed-text | 274M | Free embeddings for memory search | 2GB |
-
-> **Recommendation:** Use a cloud frontier model (Anthropic/OpenAI/Gemini) as your primary and a local Ollama or LM Studio model for embeddings, fallback, and simple tasks. Best of both worlds.
-
-You can configure **multiple providers** with automatic fallback. If one goes down, Hermes switches to the next.
+Configure **multiple providers** with automatic fallback — if one goes down, Hermes switches to the next. A common, cheap setup: a frontier cloud model as your primary plus a small local model for embeddings and side tasks. Deep routing, aliases, and fallback chains live in **[Part 9: Custom Models](./part9-custom-models.md)**.
 
 ### 2. Set Your API Keys
 
@@ -1805,8 +1801,10 @@ You've now got the full picture:
 - **[Part 3: LightRAG](#part-3-lightrag--graph-rag-that-actually-works)** — Graph-based knowledge
 - **[Part 4: Telegram](#part-4-telegram-setup-chat-from-anywhere)** — Mobile access
 - **[Part 5: On-the-Fly Skills](#part-5-on-the-fly-skills-let-hermes-build-its-own-playbook)** — Self-improving workflows
-- **[Part 22: Latest Power Moves](./part22-latest-power-moves.md)** — Curator, TUI habits, plugins, and context hygiene
-- **[Part 23: Tenacity Stack](./part23-tenacity-stack.md)** — Kanban, `/goal`, Checkpoints v2, no-agent cron, and the current upgrade checklist
+- **[Part 22: Latest Power Moves](./part22-latest-power-moves.md)** — Curator, TUI habits, plugins, `/undo`, fuzzy model picker, and context hygiene
+- **[Part 23: Tenacity Stack](./part23-tenacity-stack.md)** — Kanban, `/goal`, Checkpoints v2, multi-agent swarms, and the current upgrade checklist
+- **[Part 24: Hermes Desktop App](./part24-desktop-app.md)** — The native GUI: Quick Setup, command palette, model picker, and remote backends
+- **[Part 25: NVIDIA & Local Hardware](./part25-nvidia-local.md)** — Run it on your own GPU: RTX / DGX Spark, OpenShell, and a model-agnostic local stack
 
 Start with setup, add what you need, and let Hermes build the rest.
 

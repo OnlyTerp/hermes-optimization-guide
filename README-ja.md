@@ -2,7 +2,7 @@
 
 > [英語版はこちら](./README.md) · このページは入口の要約。本文の章は英語のまま。
 
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（v0.14.0 まで反映）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。
+[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（v0.16.0 “Surface” まで反映。ネイティブデスクトップアプリと NVIDIA ローカルハードウェアを含む）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。
 
 ## ワンコマンドで起動
 
@@ -15,7 +15,7 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 ## 主なコンテンツ
 
-- **24 章の本文**（README 内の章 + `part6`〜`part23`） — v0.14 Foundation、Grok OAuth、`hermes proxy`、LINE/SimpleX、Kanban、`/goal`、Checkpoints v2、Curator、TUI、プラグイン、LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
+- **26 章の本文**（README 内の章 + `part6`〜`part25`） — v0.16 デスクトップアプリ、NVIDIA / DGX Spark ローカル実行、v0.15 Velocity マルチエージェント Swarm、`/undo`、あいまい検索モデルピッカー、Grok OAuth、`hermes proxy`、Kanban、`/goal`、Checkpoints v2、Curator、TUI、プラグイン、LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
 - **13 個のインストール可能 Skill**（`skills/`） — 監査、バックアップ、依存スキャン、コストレポート、Telegram トリアージ、PR レビュー、受信トレイ整理、Hermes 週報、スパムフィルタ、会議準備 など
 - **5 つのプロダクション設定テンプレ**（`templates/config/`） — minimum / telegram-bot / production / cost-optimized / security-hardened
 - **インフラ一式**（`templates/compose/`, `templates/caddy/`, `templates/systemd/`, `scripts/`） — Langfuse セルフホスト、Caddy リバースプロキシ、systemd 強化、VPS ブートストラップ
@@ -31,6 +31,8 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 3. コストを下げたい → [part20-observability.md](./part20-observability.md) の "Cost-routing playbook"
 4. 本番運用したい → [docs/reference-architectures/](./docs/reference-architectures/) から近いものを選ぶ
 5. 公開エンドポイント → [part19-security-playbook.md](./part19-security-playbook.md) を必ず読む
+6. ターミナルではなく GUI が欲しい → [part24-desktop-app.md](./part24-desktop-app.md)（Hermes デスクトップアプリ）
+7. 自分の GPU でローカル実行したい → [part25-nvidia-local.md](./part25-nvidia-local.md)（RTX / DGX Spark）
 
 ## ライセンス・貢献
 

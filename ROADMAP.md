@@ -24,6 +24,7 @@ What's landing next. PRs welcome.
 
 ## Done (recent)
 
+- ✅ 2026-06-17 — v0.16 "Surface" refresh: Part 24 Hermes Desktop App, Part 25 NVIDIA & local hardware (DGX Spark / OpenShell / NemoClaw), new banner graphics, `/undo` + default-interface + fuzzy-picker power moves, native Windows installer, `hermes portal` Quick Setup, and a trim of stale per-version model tables to a model-agnostic section
 - ✅ 2026-05-25 — v0.14 refresh: PyPI install, Grok OAuth, `hermes proxy`, `x_search`, Teams end-to-end, LINE/SimpleX, `/handoff`, Windows beta, and May 25 model SOTA
 - ✅ 2026-05-14 — v0.13 refresh: Kanban, `/goal`, Checkpoints v2, Google Chat, no-agent cron, provider plugins, and May 2026 model SOTA
 - ✅ 2026-04-30 — v0.11/v0.12 refresh: Curator, TUI, plugins, Bedrock/Azure/LM Studio, Teams/Yuanbao/QQBot, Vercel Sandbox, Part 22
