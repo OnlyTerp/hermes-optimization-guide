@@ -85,7 +85,7 @@ You can re-open onboarding any time from Settings.
 
 ---
 
-## Connect to a Remote Hermes
+## 7. Connect to a Remote Hermes
 
 The desktop app doesn't have to run the agent locally. It can connect to a **remote Hermes gateway** over a secure WebSocket (`/api/ws`):
 
@@ -97,7 +97,7 @@ The model is "**thin GUI local, heavy agent remote**" — keep a lightweight app
 
 ---
 
-## 7. Sessions, Files, and Voice
+## 8. Sessions, Files, and Voice
 
 - **Sessions:** archive, search, and **search-by-id**; run concurrent multi-profile sessions with cross-profile `@session` links.
 - **File browser:** set the initial working directory with `hermes desktop --cwd PATH` or the `HERMES_DESKTOP_CWD` environment variable.
@@ -109,13 +109,13 @@ Beyond chat, the app has dedicated panes for **Skills**, **Cron**, **Profiles**,
 
 ---
 
-## 8. Updating
+## 9. Updating
 
 The app checks for updates in the background and offers **one-click update**; manual updates work too. This mirrors the gateway's **check-before-update** flow (verify before pulling) introduced alongside the System page in the web admin panel — see [Part 12](./part12-web-dashboard.md).
 
 ---
 
-## 9. Uninstalling
+## 10. Uninstalling
 
 Remove the app from **Settings → About → Danger zone**, or from the CLI:
 
@@ -127,7 +127,7 @@ hermes uninstall --full   # remove everything, including data
 
 ---
 
-## 10. `hermes desktop` Flags
+## 11. `hermes desktop` Flags
 
 For development and troubleshooting, `hermes desktop` accepts:
 

@@ -59,7 +59,7 @@ A strong setup:
 
 1. Run the **gateway** on the DGX Spark so watchers, cron, and messaging stay always-on.
 2. Keep a **big local model resident** for the bulk of the work, with a cloud model in the fallback chain for the hardest tasks.
-3. Drive it from your laptop with the **[desktop app's remote backend](./part24-desktop-app.md#connect-to-a-remote-hermes)** — thin GUI local, heavy agent on the Spark.
+3. Drive it from your laptop with the **[desktop app's remote backend](./part24-desktop-app.md#7-connect-to-a-remote-hermes)** — thin GUI local, heavy agent on the Spark.
 4. Put durable work on **[Kanban](./part23-tenacity-stack.md)** so long-running jobs survive restarts.
 
 ---
