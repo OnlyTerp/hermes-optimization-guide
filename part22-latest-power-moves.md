@@ -1,6 +1,6 @@
 # Part 22: Latest Power Moves — Curator, TUI, Plugins, Context Files
 
-*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13/v0.14 durability + foundation layer — Kanban, `/goal`, `/handoff`, Checkpoints v2, no-agent cron, PyPI installs, proxy, and new platforms — go next to [Part 23](./part23-tenacity-stack.md).*
+*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13/v0.14 durability + foundation layer — Kanban, `/goal`, `/handoff`, Checkpoints v2, no-agent cron, PyPI installs, proxy, and new platforms — go next to [Part 23](./part23-tenacity-stack.md). The newest everyday moves from v0.15 "Velocity" and v0.16 "Surface" — `/undo`, a default-interface choice, the fuzzy model picker, and leaner default skills — are in [section 8](#8-newer-power-moves-v015--v016). For the native GUI and the run-it-local story, see [Part 24](./part24-desktop-app.md) and [Part 25](./part25-nvidia-local.md).*
 
 ---
 
@@ -162,6 +162,52 @@ Then:
 5. Test one gateway message, one tool call, one skill, and one cron job.
 6. Review [Part 19](./part19-security-playbook.md) before enabling broad platform access.
 7. Then run the [v0.14 Foundation checklist](./part23-tenacity-stack.md#8-upgrade-checklist-from-v013-to-v014).
+
+---
+
+## 8. Newer Power Moves (v0.15 → v0.16)
+
+The Velocity and Surface releases added a handful of small things you'll reach for daily:
+
+### `/undo [N]` — take back turns
+
+Made a mess, or sent the wrong prompt? `/undo` rewinds the last turn; `/undo N` rewinds the last `N`. It also **prefills your last message** so you can edit and resend instead of retyping. Works the same in the CLI, TUI, and messaging surfaces.
+
+```text
+/undo        # undo the last turn
+/undo 3      # undo the last three turns
+```
+
+### Pick your default interface
+
+`hermes chat` can default to either the **CLI** or the **TUI** — set it once and override per-invocation with `--cli`:
+
+```bash
+hermes config set interface tui   # or: cli
+hermes chat --cli                 # one-off override
+```
+
+The TUI also unified its model switcher under `/model` and added a Sessions overlay.
+
+### The fuzzy model picker is everywhere
+
+Desktop, web, TUI, and CLI all share the same **fuzzy model picker**. Multi-endpoint providers are grouped, and the catalog **refreshes hourly**, so new models appear without waiting for a Hermes release. Just type part of a name in `hermes model` and pick.
+
+### Leaner default skills
+
+v0.16 trimmed the built-in skill set so the agent isn't carrying dead weight. Several skills became **native plugins** or moved to **MCP** (for example, Spotify is now a native plugin; Linear is `hermes mcp install linear`), others moved to **optional**, and a new `environments:` relevance gate keeps irrelevant skills from loading. Curator can now prune **built-in** skills too, not just agent-created ones.
+
+If you relied on a skill that disappeared, check whether it's now a plugin (`hermes plugins list`) or an MCP server (`hermes mcp ...`) before recreating it.
+
+### Free, instant session search
+
+`session_search` is now ~4,500× faster and runs locally for free — searching your own history no longer burns tokens. Combine it with desktop's search-by-id (see [Part 24](./part24-desktop-app.md)) to jump back into past work fast.
+
+### Scale durable work into a swarm
+
+When one board outgrows a single worker, `hermes kanban swarm` turns Kanban into a multi-agent platform (root, parallel workers, gated verifier/synthesizer, shared blackboard, per-task model overrides). Full details in [Part 23](./part23-tenacity-stack.md).
+
+> **Security note:** v0.15 added **Brainworm/promptware defenses** against malicious instructions hidden in tool output. Keep them on, and read [Part 19](./part19-security-playbook.md) before wiring up untrusted inputs.
 
 ---
 

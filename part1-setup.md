@@ -6,25 +6,37 @@
 
 ## The Install
 
-One command. That's it. v0.14 also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path.
+One command. That's it. Hermes also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path. Prefer a GUI? Install the [desktop app](./part24-desktop-app.md) — same agent, same config, same keys.
 
 ### Linux / macOS / WSL2
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 
-# Lean v0.14+ path when you already manage Python yourself:
+# Lean path when you already manage Python yourself:
 pip install hermes-agent
 ```
 
 > **Security tip:** Piping scripts directly from the internet to bash executes them sight-unseen. If you prefer to inspect first:
 > ```bash
-> curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh -o install.sh
+> curl -fsSL https://hermes-agent.nousresearch.com/install.sh -o install.sh
 > less install.sh   # Review the script
 > bash install.sh
 > ```
 
-> **Windows users:** Native Windows is in beta in v0.14. Use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) for production/stable gateway work; try native Windows only after backing up config and expecting PTY/dashboard quirks.
+### Windows (native)
+
+Hermes now has a first-class native Windows installer. In PowerShell:
+
+```powershell
+iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+```
+
+[WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) is still a solid choice if you prefer a Linux environment for gateway work.
+
+### Desktop app
+
+Want a GUI instead of a terminal? Install the [Hermes Desktop app](./part24-desktop-app.md) (macOS/Windows/Linux) — or add it to a CLI install with `--include-desktop`. It runs the same agent, config, and keys. Full tour in [Part 24](./part24-desktop-app.md).
 
 ### What the Installer Does
 
@@ -54,25 +66,20 @@ hermes             # Start chatting!
 
 The setup wizard (`hermes setup`) walks you through:
 
-### 1. Choose Your LLM Provider
+### 1. Choose Your Model (bring any)
 
 ```bash
-hermes model
+hermes model        # fuzzy-search every provider Hermes knows about
 ```
 
-Supported providers:
+**Hermes is model-agnostic** — the picker fuzzy-searches a catalog that refreshes hourly, so you're never stuck on last release's list. You don't have to commit to a single provider:
 
-| Provider | Best For | Env Variable |
-|----------|----------|-------------|
-| Anthropic (Claude) | Highest quality, best at complex tasks | `ANTHROPIC_API_KEY` |
-| OpenAI (GPT-5.5/Codex) | Strong tool use, sandboxed coding, deep reasoning | `OPENAI_API_KEY` |
-| OpenRouter | Access 100+ models from one key | `OPENROUTER_API_KEY` |
-| Cerebras | Fast inference, good for simple tasks | `CEREBRAS_API_KEY` |
-| Groq | Very fast, limited context | `GROQ_API_KEY` |
-| xAI (Grok / SuperGrok OAuth) | Live X search, Grok 4.3 1M context, Custom Voices | `XAI_API_KEY` or OAuth |
-| Google (Gemini) | Huge context, cheap | `GEMINI_API_KEY` |
+- **Cloud APIs** — Anthropic, OpenAI, Google, xAI / Grok (OAuth), Moonshot / Kimi, z.ai / GLM, MiniMax, Cerebras, Groq, and more. Set the matching `*_API_KEY` or sign in by OAuth.
+- **One key for everything** — OpenRouter (`OPENROUTER_API_KEY`) reaches hundreds of models with automatic fallback.
+- **Local / private** — Ollama, LM Studio, or llama.cpp with no key needed. See [Part 25: NVIDIA & Local Hardware](./part25-nvidia-local.md).
+- **Nous Portal** — `hermes portal` runs a guided **Quick Setup** that signs you in and picks a model for you.
 
-You can configure **multiple providers** with automatic fallback. If one goes down, Hermes switches to the next.
+Configure **multiple providers** with automatic fallback — if one goes down, Hermes switches to the next. Routing, aliases, and fallback chains are covered in [Part 9](./part9-custom-models.md).
 
 ### 2. Set Your API Keys
 
@@ -195,7 +202,7 @@ Expected output: Hermes responds with a greeting, confirming the model connectio
 hermes update
 ```
 
-This pulls the latest code, updates dependencies, migrates config, and restarts the gateway. Run it regularly — Hermes ships frequent improvements.
+This pulls the latest code, updates dependencies, migrates config, and restarts the gateway. Run it regularly — Hermes ships frequent improvements. The web admin panel's **System page** adds a **check-before-update** step and a one-click **Debug Share** for support, and the [desktop app](./part24-desktop-app.md) checks in the background and updates in one click.
 
 ---
 
@@ -205,3 +212,5 @@ This pulls the latest code, updates dependencies, migrates config, and restarts 
 - **Want smarter memory?** → [Part 3: LightRAG Setup](./part3-lightrag-setup.md)
 - **Need mobile access?** → [Part 4: Telegram Setup](./part4-telegram-setup.md)
 - **Want the agent to self-improve?** → [Part 5: On-the-Fly Skills](./part5-creating-skills.md)
+- **Prefer a GUI?** → [Part 24: Hermes Desktop App](./part24-desktop-app.md)
+- **Run it on your own GPU?** → [Part 25: NVIDIA & Local Hardware](./part25-nvidia-local.md)
