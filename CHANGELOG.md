@@ -2,6 +2,11 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-06-29 — Part 19 security playbook refresh
+
+### Changed
+- **Part 19 — Security Playbook**: refreshed against current Hermes security docs and source. Corrected `command_allowlist` wording, updated tirith defaults/behavior, expanded env and credential passthrough guidance, replaced stale SSH/Docker examples, added `security.website_blocklist`, `security.allow_private_urls`, `HERMES_WRITE_SAFE_ROOT`, supply-chain advisory acknowledgements, and `security.allow_lazy_installs` hardening notes.
+
 ## 2026-06-17 — Hermes v0.16.0 "Surface" Refresh
 
 ### Added
