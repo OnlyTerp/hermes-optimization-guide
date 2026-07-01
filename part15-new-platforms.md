@@ -1,12 +1,12 @@
-# Part 15: Messaging Platforms (Teams, LINE, SimpleX, Google Chat, iMessage, WeChat, Android)
+# Part 15: Messaging Platforms (iMessage via Photon, WhatsApp Cloud, Teams, LINE, SimpleX, Google Chat, WeChat, Android)
 
-*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wires Teams end-to-end and adds LINE + SimpleX Chat.*
+*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wired Teams end-to-end and added LINE + SimpleX Chat; v0.15 added ntfy; and v0.17 "Reach" added the three biggest asks at once — **iMessage with no Mac required (Photon)**, an **official WhatsApp Business Cloud API** adapter, and the **Raft** agent-to-agent network.*
 
 ---
 
-## The 22+ Platform Lineup
+## The 25+ Platform Lineup
 
-As of v0.14, the gateway ships built-in adapters plus plugin-shipped platforms:
+As of v0.17, the gateway ships built-in adapters plus plugin-shipped platforms:
 
 | Platform | Mode | Notes |
 |----------|------|-------|
@@ -16,8 +16,11 @@ As of v0.14, the gateway ships built-in adapters plus plugin-shipped platforms:
 | **Google Chat** | App / webhook | **New in v0.13**, Workspace-native chat surface |
 | **LINE** | Messaging API | **New in v0.14**, Japan/Korea/Taiwan mobile-first surface |
 | **SimpleX Chat** | Decentralized chat | **New in v0.14**, privacy-first chat with no user IDs |
-| WhatsApp | Web API | QR-code login, requires always-on node |
-| **iMessage (BlueBubbles)** | Webhook | **New in v0.9** |
+| WhatsApp (personal) | Web API | QR-code login, requires always-on node |
+| **iMessage (Photon)** | Photon Spectrum relay | **New in v0.17** — no Mac required |
+| **iMessage (BlueBubbles)** | Webhook | Self-hosted alternative (needs an always-on Mac) |
+| **WhatsApp Business Cloud API** | Official Meta webhook | **New in v0.17** — no QR node needed |
+| **Raft** | Agent network | **New in v0.17** — talk to other agents, not humans |
 | **Weixin (WeChat personal)** | Long-poll | **New in v0.9** |
 | **WeCom (Enterprise WeChat)** | Webhook | **New in v0.9** |
 | **QQBot** | WebSocket/Webhook | Added after the original v0.9 platform sweep |
@@ -41,7 +44,34 @@ All of them respect:
 - The shared session database (Part 7)
 - Pre-dispatch plugin hooks
 
-This part covers the v0.9 adapters, the newer v0.12–v0.14 surfaces, and **Android / Termux** — running the agent itself on a phone.
+This part covers the v0.9 adapters, the newer v0.12–v0.17 surfaces, and **Android / Termux** — running the agent itself on a phone.
+
+> **Telegram got richer in v0.17:** the Telegram adapter upgraded to Bot API 10.1 rich messages — formatted output with media, on by default. If your bot's replies suddenly look nicer, that's why; if a client chokes on them, they can be disabled per-gateway.
+
+## 2026 Update (v0.17): iMessage Without a Mac, Official WhatsApp, and Raft
+
+### iMessage via Photon Spectrum — the new default
+
+The #1 ask since v0.9 — iMessage without dedicating a Mac — shipped in v0.17 as a platform plugin built on **Photon Spectrum's** managed line pool:
+
+```bash
+hermes photon login    # device-code OAuth — authenticate and you're live
+```
+
+Sign in, and Hermes lives in the blue bubbles: DMs, markdown rendering, emoji reactions, outbound media — over a gRPC-native channel (no webhook), with no macOS server, no Full Disk Access, and no always-on hardware. Free to start, nothing to self-host. Access controls (pairing, allowlists, `/fast`, cron delivery) work like every other gateway.
+
+Operationally:
+
+- **Use Photon** if you just want Hermes on iMessage. It's the supported, zero-hardware path and is positioned as the successor to the BlueBubbles bridge.
+- **Keep BlueBubbles** (below) if you require fully self-hosted message flow — Photon is a relay service, so your iMessage traffic transits their infrastructure. For the privacy-maximalist posture, the Mac-based bridge is still the answer.
+
+### WhatsApp Business Cloud API — the official path
+
+The old WhatsApp adapter drives WhatsApp Web with a QR login and an always-on node — fine for personal use, fragile for production. v0.17 adds an adapter for **Meta's official Business Cloud API**: webhook-based, no browser session to babysit, and legitimate for business use. If you're building anything customer-facing on WhatsApp, use this one; keep the Web adapter for personal accounts.
+
+### Raft — your agent gets peers
+
+Raft is a channel where the counterparty is **another agent**, not a human. A bundled adapter connects Hermes to [Raft](https://raft.build) as an external agent through a wake-channel bridge: set `RAFT_PROFILE`, run the bridge, and Raft can wake Hermes to handle messages. The design is privacy-by-contract — wake payloads carry only metadata (event IDs, timestamps), never message bodies. Still: treat every inbound Raft message as **untrusted input** — same posture as a public group chat: quarantine profile, no write tools, approvals for anything that touches your machine. [Part 19](./part19-security-playbook.md) applies double here.
 
 ## 2026 Update: Teams, LINE, SimpleX, Google Chat, QQBot, and Yuanbao
 
@@ -118,13 +148,13 @@ Use QQBot when your community already lives in QQ and you want the same approval
 Yuanbao is now a native gateway adapter with text and media delivery. It belongs in the same bucket as Weixin/WeCom: powerful in China/APAC workflows, but operationally different from Western SaaS bots. Verify media size limits and identity mapping before using it for production approvals.
 
 
-## iMessage via BlueBubbles
+## iMessage via BlueBubbles (Self-Hosted Alternative)
 
-### Why This Matters
+### Why You'd Still Do This
 
-Apple doesn't have a public iMessage API. The only supported path is [BlueBubbles](https://bluebubbles.app/), a free open-source macOS server that exposes a REST API + webhook feed on top of the native Messages.app database.
+> **Most people should use Photon now** (`hermes photon login`, above) — it needs no Mac at all. BlueBubbles remains the right choice when you want message flow that never leaves hardware you own.
 
-If you have a Mac that stays on, you now have an iMessage bot with full media, reactions, typing indicators, and read receipts.
+[BlueBubbles](https://bluebubbles.app/) is a free open-source macOS server that exposes a REST API + webhook feed on top of the native Messages.app database. If you have a Mac that stays on, you get a fully self-hosted iMessage bot with full media, reactions, typing indicators, and read receipts.
 
 ### Prerequisites
 

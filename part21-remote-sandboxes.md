@@ -165,7 +165,7 @@ sandboxes:
       pull_on_command: "/sync-home"  # Manual sync when you want it
 ```
 
-Pair with the [Gemini OAuth provider](./part9-custom-models.md#gemini-oauth--free-tier-friendly) for free-tier-friendly long-context reads inside the sandbox.
+Pair with a [Gemini API key or Vertex AI](./part9-custom-models.md#google-api-key-or-vertex-ai-gemini-oauth-is-gone) for cheap long-context reads inside the sandbox.
 
 ---
 

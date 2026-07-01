@@ -1,8 +1,8 @@
 # Part 9: Custom Model Providers (Use Any Model You Want)
 
-*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Gemini OAuth, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, Vercel AI Gateway, Ollama, and provider plugins. This is the May 25, 2026 cheat sheet.*
+*Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Google Vertex AI, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, Vercel AI Gateway, Ollama, MoA virtual models, and provider plugins. This is the July 1, 2026 cheat sheet.*
 
-> **What's new since the v0.13 guide refresh** — v0.14 adds SuperGrok OAuth with Grok 4.3 at 1M context, `hermes proxy` for OpenAI-compatible access to OAuth-backed Claude/ChatGPT/SuperGrok subscriptions, first-class `x_search`, cross-session 1-hour Claude prompt caching, OpenRouter Pareto Code routing, and provider-agnostic `computer_use` support.
+> **What's new since the v0.14 guide refresh** — v0.17 puts Cursor's **Composer** (`grok-composer-2.5-fast`, 200K context) in the xAI OAuth picker; v0.18 adds a first-class **Google Vertex AI** provider (auto-minted, auto-refreshed OAuth2 tokens from a service account — no static key, no mid-session expiry) and makes every **Mixture-of-Agents preset a selectable model** under a `moa` provider ([Part 26](./part26-moa-verification.md)). **Breaking:** the Gemini-CLI OAuth providers (`google-gemini-cli`, `google-antigravity`) were **removed in v0.18** — migrate to a `GEMINI_API_KEY` or Vertex AI.
 
 ---
 
@@ -24,7 +24,8 @@ As of v0.14.0 (May 2026), Hermes ships **native adapters** for a large provider 
 | **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](./README.md#part-3-lightrag--graph-rag-that-actually-works)) |
 | **z.ai / GLM** | Yes | Strong open-weight tool-use models; good cheap fallback for planning/exploration |
 | **Google Gemini (direct)** | Yes | 1M context; native prompt caching on Pro; image/video-capable model routing |
-| **Google Gemini (OAuth)** | Yes | Browser PKCE login via `hermes model`; free tier supported; no external `gemini` install |
+| **Google Vertex AI** | Yes | Gemini via your GCP service account / ADC; short-lived OAuth2 tokens auto-minted and refreshed |
+| **MoA (virtual)** | Yes | Every Mixture-of-Agents preset is a pickable model — see [Part 26](./part26-moa-verification.md) |
 | **MiniMax** | Yes | API key or OAuth; native streaming and TTS |
 | **GMI Cloud** | Yes | Hosted open models behind a native provider |
 | **Tencent TokenHub** | Yes | Tencent model routing through TokenHub aliases |
@@ -72,7 +73,8 @@ The exact "best model" moves weekly, so treat this as a routing posture rather t
 | Default coding / refactors | Anthropic Sonnet 5, Claude Code, or Codex OAuth | Best reliability for patch-heavy work; Codex OAuth avoids API-key churn |
 | Deep reasoning / high stakes | GPT-5.5 reasoning or Anthropic Opus 4.7 | Use explicitly; do not make it the default for cron/bulk tasks |
 | Long-context repo or document reads | Gemini 3.1 Pro/Flash, Grok 4.3, or OpenRouter equivalent | Huge window, cheap enough for map/reduce, video, and summarization |
-| Cheap daily driver | Gemini OAuth + Kimi K2.6 + z.ai/GLM | Good quality/cost mix, especially with auxiliary routing |
+| Cheap daily driver | Gemini Flash (API key) + Kimi K2.6 + z.ai/GLM | Good quality/cost mix, especially with auxiliary routing |
+| Committee for hard calls | A `moa` preset of 2–3 frontier models | Visible multi-model deliberation; ~N× cost, use sparingly ([Part 26](./part26-moa-verification.md)) |
 | Enterprise / VPC / compliance | AWS Bedrock or Azure AI Foundry | IAM/Azure auth, guardrails, private deployments, audit controls |
 | Local/privacy/offline | LM Studio or Ollama | No cloud egress; great for extraction, embeddings, and drafts |
 | Ultra-fast interactive turns | Cerebras or Groq | Very high tokens/sec; useful for classification and short-form chat |
@@ -93,16 +95,27 @@ hermes model
 
 If you're on a paid subscription, the setup also offers to enable the [Tool Gateway](./part13-tool-gateway.md) — web search, image gen, TTS, and browser automation through your subscription, no extra keys needed.
 
-### Gemini OAuth — Free-Tier Friendly
+### Google: API Key or Vertex AI (Gemini OAuth Is Gone)
 
-If you have a Google account, skip the API key entirely and sign in from Hermes:
+> **Migration note (v0.18):** the Gemini-CLI OAuth providers (`google-gemini-cli`, `google-antigravity`) were **removed**. If your config still points at them, model selection will fail after upgrading. Pick one of the two supported paths below.
 
-```bash
-hermes model
-# Pick "Google Gemini (OAuth)" → complete the browser PKCE flow
+**Path 1 — API key (simplest).** Set `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) and use the native Google Gemini provider. Free-tier keys work.
+
+**Path 2 — Vertex AI (GCP shops).** New in v0.18: a first-class Vertex provider over Vertex's OpenAI-compatible endpoint. Vertex has no static API key — every request needs a short-lived (~1h) OAuth2 token minted from a service-account JSON or Application Default Credentials. Hermes mints and auto-refreshes these for you, so sessions no longer die mid-run on token expiry:
+
+```yaml
+providers:
+  vertex:
+    project_id: ${GOOGLE_CLOUD_PROJECT}
+    location: us-central1
+    credentials_json: ${GOOGLE_APPLICATION_CREDENTIALS}   # or rely on ADC
 ```
 
-Tokens are stored under `~/.hermes/auth/google_oauth.json` with 0600 permissions and automatic refresh. On headless SSH boxes, Hermes falls back to paste-mode auth.
+Use Vertex when your org already routes Gemini through Google Cloud (IAM, quotas, audit); use the plain API key everywhere else.
+
+### Cursor's Composer via xAI OAuth
+
+v0.17 put `grok-composer-2.5-fast` — the fast coding model behind Cursor — in the xAI OAuth model picker with its full 200K context. If you have an xAI Grok subscription, you can point Hermes at Composer directly over OAuth, no separate API key: your Grok plan, Hermes' agent loop, Composer's coding speed. It's a strong pick for the fast-coding lane in your routing table.
 
 ### AWS Bedrock and Azure AI Foundry — Enterprise Routing Without Proxy Glue
 
@@ -296,8 +309,9 @@ Use these as opinionated defaults, then tune with [Part 20's cost-routing playbo
 
 | Task | First choice | Fallback (cheaper) | Fallback (fastest) |
 |------|--------------|--------------------|--------------------|
-| Daily conversation | Anthropic Sonnet 5 | Gemini OAuth or z.ai/GLM | Cerebras Qwen 3 |
-| Coding delegation | Claude Code / Codex OAuth | OpenCode + Kimi K2.6 | OpenCode + Cerebras |
+| Daily conversation | Anthropic Sonnet 5 | Gemini Flash or z.ai/GLM | Cerebras Qwen 3 |
+| Coding delegation | Claude Code / Codex OAuth | OpenCode + Kimi K2.6 | xAI Composer 2.5 (OAuth) |
+| High-stakes judgment calls | `moa` council preset ([Part 26](./part26-moa-verification.md)) | GPT-5.5 reasoning | — |
 | Long-context reads (>200K) | Gemini 3.1 Pro | Gemini Flash | — |
 | Classification / triage | Gemini Flash | Cerebras Qwen3 32B | Arcee AFM-4.5 |
 | Reasoning (math, planning) | GPT-5.5 reasoning | Anthropic Opus 4.7 | z.ai/GLM |

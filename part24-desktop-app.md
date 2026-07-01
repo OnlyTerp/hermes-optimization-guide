@@ -4,7 +4,7 @@
   <img src="./assets/desktop-app.png" alt="Hermes Desktop — the native macOS, Windows, and Linux app for the Hermes Agent" width="880">
 </p>
 
-*The v0.16.0 "Surface Release" shipped **Hermes Desktop**: a native macOS/Windows/Linux app that runs the exact same agent as the CLI, TUI, and gateway. Same config, same keys, same sessions, same skills, same memory — it's "another surface over one agent, not a fork." If you've avoided Hermes because you didn't want to live in a terminal, this is your on-ramp.*
+*The v0.16.0 "Surface Release" shipped **Hermes Desktop**: a native macOS/Windows/Linux app that runs the exact same agent as the CLI, TUI, and gateway. Same config, same keys, same sessions, same skills, same memory — it's "another surface over one agent, not a fork." Two releases later it has grown into a genuine daily driver: v0.17 "Reach" added subagent watch-windows, native notifications, marketplace themes, and a real terminal pane; v0.18 "Judgment" turned it into a coding cockpit with first-class **Projects**, a **multi-terminal panel**, and the **memory graph**. If you've avoided Hermes because you didn't want to live in a terminal, this is your on-ramp.*
 
 ---
 
@@ -44,13 +44,19 @@ The main window is a streaming chat with **live tool activity** — you watch to
 - **Clipboard image paste** — paste a screenshot straight in.
 - **Right-hand preview rail** — rendered output (files, images, results) opens beside the chat instead of scrolling away.
 - **Composer history and queue editing** — press up/down in the composer to recall previous messages and edit a queued message before it sends.
+- **Per-thread drafts** (v0.17) — half-written messages persist per conversation; switch threads without losing what you were typing.
+- **PR-style diffs in chat** (v0.18) — code changes render as reviewable diffs inline.
+- **Conversation timeline rail** (v0.18) — jump around long sessions from a scannable timeline instead of scrolling.
+- **Subagent watch-windows** (v0.17) — pop open a live window on any running subagent and watch it work instead of waiting on a summary.
+- **Native OS notifications** (v0.17) — get pinged when a long run finishes or the agent needs an approval, even when the app is backgrounded.
 
 ---
 
 ## 3. Command Palette and Keyboard
 
 - **Command palette:** `Cmd+K` (macOS) / `Ctrl+K` (Windows/Linux) opens a fuzzy command palette for nearly everything — switch sessions, change model, open settings, run commands.
-- **Rebindable shortcuts:** remap keys to taste.
+- **Rebindable shortcuts** (v0.17): remap keys to taste.
+- **Themes from the VS Code Marketplace** (v0.17): install any VS Code theme and the whole app adopts it. Your terminal aesthetic can follow you.
 - **Custom zoom:** scale the whole UI up or down.
 - **Language switcher:** the desktop UI is fully internationalized. v0.16 added **Simplified Chinese (简体中文)**; English is the default. Switch via the UI language picker (`display.language`).
 
@@ -97,11 +103,32 @@ The model is "**thin GUI local, heavy agent remote**" — keep a lightweight app
 
 ---
 
-## 8. Sessions, Files, and Voice
+## 8. Projects — the v0.18 Coding Cockpit
+
+v0.18 made **Projects** first-class. A project is a per-profile workspace with:
+
+- A **project sidebar** and dedicated project pages.
+- A **coding rail** — the agent's plan, running checks, and file activity beside the chat.
+- A **review pane** — read the diff like a PR before you accept it.
+- **Worktree management** — each project's changes live in an isolated git worktree, so parallel projects don't stomp each other.
+- **Session–project association** — sessions attach to a project, so the history of a codebase stays in one place.
+
+Combined with the **multi-terminal panel** (multiple named terminals per project) this is the closest thing to an IDE the Hermes desktop has — except the agent drives. Pair it with verification and completion contracts from [Part 26](./part26-moa-verification.md#2-verification--done-means-proven-not-claimed) so "accept" means "checks passed," not "looks plausible."
+
+---
+
+## 9. The Memory Graph
+
+Settings → Memory opens the v0.18 **memory graph**: a radial, playable timeline of every memory and skill the agent has accumulated — scrub through time and watch the graph grow. It's the GUI counterpart of `/journey` ([Part 26](./part26-moa-verification.md#3-learn-and-journey--self-improvement-you-can-see)): click any node to edit or delete it. Do a pruning pass monthly; wrong memories compound.
+
+---
+
+## 10. Sessions, Files, and Voice
 
 - **Sessions:** archive, search, and **search-by-id**; run concurrent multi-profile sessions with cross-profile `@session` links.
 - **File browser:** set the initial working directory with `hermes desktop --cwd PATH` or the `HERMES_DESKTOP_CWD` environment variable.
 - **Voice:** click the mic to talk; macOS prompts for microphone permission once.
+- **Remote media relay** (v0.17): when connected to a remote gateway, images and files generated on the remote box stream back to the app instead of being stranded on the server.
 
 ### Management Panes
 
@@ -109,13 +136,13 @@ Beyond chat, the app has dedicated panes for **Skills**, **Cron**, **Profiles**,
 
 ---
 
-## 9. Updating
+## 11. Updating
 
 The app checks for updates in the background and offers **one-click update**; manual updates work too. This mirrors the gateway's **check-before-update** flow (verify before pulling) introduced alongside the System page in the web admin panel — see [Part 12](./part12-web-dashboard.md).
 
 ---
 
-## 10. Uninstalling
+## 12. Uninstalling
 
 Remove the app from **Settings → About → Danger zone**, or from the CLI:
 
@@ -127,7 +154,7 @@ hermes uninstall --full   # remove everything, including data
 
 ---
 
-## 11. `hermes desktop` Flags
+## 13. `hermes desktop` Flags
 
 For development and troubleshooting, `hermes desktop` accepts:
 
@@ -146,7 +173,7 @@ For development and troubleshooting, `hermes desktop` accepts:
 
 ## When to Use Desktop vs CLI/TUI
 
-- **Desktop** — you want a real GUI: drag-and-drop, image paste, a preview rail, point-and-click model switching, and one-click updates. Great for non-terminal users and for connecting to a remote agent.
+- **Desktop** — you want a real GUI: drag-and-drop, image paste, a preview rail, Projects with reviewable diffs, the memory graph, point-and-click model switching, and one-click updates. Great for non-terminal users and for connecting to a remote agent.
 - **TUI** (`hermes --tui`) — you live in the terminal but want live tool cards, `/steer`, queueing, and a sticky composer. See [Part 22](./part22-latest-power-moves.md).
 - **CLI** (`hermes`) — scripting, cron, CI, and quick one-shots.
 
