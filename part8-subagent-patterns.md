@@ -28,7 +28,7 @@ delegate_task(
     toolsets=["terminal", "file"]
 )
 
-# Parallel batch (up to 3)
+# Parallel batch
 delegate_task(
     tasks=[
         {
@@ -37,7 +37,7 @@ delegate_task(
         },
         {
             "goal": "Benchmark current LightRAG search latency",
-            "context="Path: ~/.hermes/skills/research/lightrag/",
+            "context": "Path: ~/.hermes/skills/research/lightrag/",
             "toolsets": ["terminal"]
         },
         {
@@ -53,6 +53,33 @@ delegate_task(
 - Results come back as a summary. Intermediate tool calls never enter your context.
 - Each subagent gets its own terminal session.
 - Default max iterations: 50. Lower it for simple tasks (`max_iterations=10`).
+
+## Background Delegation (v0.17) and Fan-Out (v0.18)
+
+By default `delegate_task` blocks your session until the subagent returns. Add `background=True` and it returns a **handle immediately** — you keep chatting, and the result re-enters the conversation as a new turn when it's done:
+
+```python
+delegate_task(goal="Deep-dive the competitor's pricing page", background=True)
+```
+
+v0.18 extends this to batches — **background fan-out**. Dispatch parallel subagents and get **one consolidated turn when all of them finish**:
+
+```python
+delegate_task(
+    tasks=[
+        {"goal": "Audit src/auth for the token-refresh bug"},
+        {"goal": "Audit src/billing for the same pattern"},
+        {"goal": "Check upstream issues for known reports"},
+    ],
+    background=True,
+)
+```
+
+The CLI/TUI status bar tracks running background subagents, and the desktop app can open a live **watch-window** on any of them ([Part 24](./part24-desktop-app.md)). Rules of thumb:
+
+- **Foreground** when the next step depends on the result.
+- **Background** for research, audits, and monitoring legs you'd otherwise wait on.
+- **Kanban** ([Part 23](./part23-tenacity-stack.md)) when the work must survive restarts or involve humans — background subagents die with the process.
 
 ## The CEO/COO/Worker Pattern
 
@@ -118,7 +145,7 @@ subprocess.run([
 
 | Scenario | Approach |
 |----------|----------|
-| 3 independent research tasks | Batch `delegate_task` with `tasks` array |
+| 3 independent research tasks | Batch `delegate_task` with `tasks` array (`background=True` if you want to keep working) |
 | 1 complex coding task | ACP subagent (Claude Code or Codex) |
 | Multiple code changes in different files | SWE-1.6 via Cascade |
 | Single API call | Just call the tool, don't delegate |
@@ -136,7 +163,7 @@ subprocess.run([
 
 ---
 
-## What's Next (April 2026 Additions)
+## What's Next
 
 The subagent system has grown rapidly. Continue with:
 

@@ -84,6 +84,8 @@ Use it for:
 
 Do not use `/goal` for vague aspirations like "improve the project." Give it an observable exit condition: checks pass, PR opened, benchmark table updated, board card complete, etc.
 
+> **v0.18 upgrade — completion contracts.** `/goal` now compiles your objective into an explicit **completion contract**, and the goal only closes when the contract's conditions are *demonstrated* — not when the model claims they are. Background goals run under the same contracts, and `/goal wait <pid>` blocks until a specific background goal completes (useful for chaining). Combined with coding verification, "done" now means proven. Details in [Part 26](./part26-moa-verification.md#2-verification--done-means-proven-not-claimed).
+
 ---
 
 ## 4. Checkpoints v2 Changes Your Risk Model

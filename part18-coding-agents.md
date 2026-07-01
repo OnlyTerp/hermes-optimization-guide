@@ -12,7 +12,7 @@ Hermes is excellent at reasoning, memory, conversation, and workflow. It is *not
 |-------|-----------|------------|
 | **Claude Code** | Best unattended PR work, large refactors, tests, reviews; Week 20+ agent view, `/goal`, and fast Opus 4.7 mode make it the premium lane | Pro/Max OAuth or `ANTHROPIC_API_KEY` |
 | **Codex** (OpenAI) | Fast sandboxed feedback loop, bug hunts, small/medium edits; v0.133+ goals default well and runs cleanly behind `hermes proxy` | OAuth via `openai` CLI, `OPENAI_API_KEY`, or `hermes proxy` |
-| **Gemini CLI** | 1M context and multimodal repo/document sweeps; v0.43 improves surgical edits, session import/export, and OAuth behavior on headless Linux | OAuth via `gemini auth`; Hermes' own Gemini OAuth covers normal model-provider use |
+| **Gemini CLI** | 1M context and multimodal repo/document sweeps; v0.43 improves surgical edits, session import/export, and OAuth behavior on headless Linux | OAuth via `gemini auth`; for normal model-provider use, Hermes uses a `GEMINI_API_KEY` or Vertex AI ([Part 9](./part9-custom-models.md)) |
 | **OpenCode** (anomalyco) | Open-source, routes to Kimi K2.6 / GLM / MiMo cheaply | Bring any provider key |
 | **Aider** | Surgical git-based edits, smallest token footprint; works well through `hermes proxy` | Bring any provider key or local proxy |
 

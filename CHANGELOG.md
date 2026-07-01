@@ -2,6 +2,26 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-07-01 — Hermes v0.17.0 "Reach" + v0.18.0 "Judgment" Refresh
+
+### Added
+- **Part 26 — MoA, Verification & Self-Improvement**: the v0.18 "Judgment" stack. Mixture-of-Agents presets as first-class selectable models (`moa` provider, visible per-reference reasoning, streaming aggregator, `/moa` one-shots, trace persistence), evidence-based coding verification (`agent.coding_context`, `pre_verify`, verify-on-stop), **completion contracts** for `/goal` + `/goal wait <pid>`, `/learn` + `/journey` self-improvement, background subagent fan-out, everyday commands (`/prompt`, `/reasoning full`, `/timestamps`, in-place compaction, Blank Slate setup), and the team/fleet layer (scale-to-zero + drain coordination, managed scope from `/etc/hermes`, multiplexed gateway, Automation Blueprints, cron continuations). New `assets/moa-judgment.png` banner.
+- Part 15: **iMessage via Photon Spectrum** (`hermes photon login`, no Mac required) as the recommended iMessage path, plus the official **WhatsApp Business Cloud API** adapter, the **Raft** agent-network channel, and Telegram rich messages (Bot API 10.1).
+- Part 24: v0.17/v0.18 desktop coverage — first-class **Projects** (coding rail, review pane, worktrees), multi-terminal panel, memory graph, subagent watch-windows, VS Code Marketplace themes, native notifications, remote media relay.
+- Part 9: **Google Vertex AI** provider, MoA-as-provider note, and Cursor **Composer** via xAI Grok OAuth.
+- Part 8: `delegate_task(background=true)` and background fan-out patterns.
+- Part 7: `memory` atomic batch operations, `/journey`, and the desktop memory graph.
+- Part 22 section 9 "Newer Power Moves (v0.17 → v0.18)".
+
+### Changed
+- README badges, intro, "Pick Your Path," "What's New," TOC, and repo map now target Hermes **v0.18.0 (v2026.7.1)**; platform count updated to 25+; guide is now 27 parts.
+- Part 23: `/goal` guidance updated for completion contracts; Curator notes updated for the opt-in LLM consolidation pass (Part 22).
+
+### Removed
+- **Gemini OAuth as a recommended provider** — the Gemini-CLI OAuth providers were removed in Hermes v0.18. Routing tables and Part 9/21/22 references now point to Gemini API keys or the new Vertex AI provider.
+- BlueBubbles-as-the-only-iMessage-path framing (kept as the self-hosted/legacy alternative).
+- v0.16-as-current framing and the expanded v0.15 "What's New" section (condensed into Earlier Milestones).
+
 ## 2026-06-17 — Hermes v0.16.0 "Surface" Refresh
 
 ### Added

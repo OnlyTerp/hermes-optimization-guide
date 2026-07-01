@@ -31,6 +31,8 @@ The `memory` tool saves durable facts that get injected into every future sessio
 
 **Format:** Keep entries under 2000 chars total. Be compact. These get injected into every message.
 
+**Batch operations (v0.17):** the `memory` tool applies multiple add/update/delete operations **atomically in one call**. Bulk cleanups are one round-trip instead of ten — and a failed batch doesn't leave memory half-edited.
+
 ```python
 # Good
 memory(action="add", target="memory", content="OpenClaw migrated. LightRAG: 4528 entities, float16 vectors (4096d). Telegram bot 8624585264, group -5216536760.")
@@ -49,7 +51,7 @@ memory(action="add", target="memory", content="Today I worked on the lead gen pi
 # Browse recent sessions (no cost, instant)
 session_search()
 
-# Search for specific topics (uses LLM to summarize)
+# Search for specific topics (local full-text search — free and instant since v0.15)
 session_search(query="hermes optimization guide github")
 session_search(query="LightRAG setup OR embedding model")
 ```
@@ -110,6 +112,15 @@ Agent has full context → better answer
 ```
 
 **The hierarchy:** memory is always on. session_search is on-demand. skill_manage is triggered by task matching.
+
+## Auditing What the Agent Learned (v0.18)
+
+The memory system is no longer write-only. Two v0.18 additions close the loop:
+
+- **`/journey`** — a timeline of every memory and skill Hermes has accumulated; edit or delete any entry in place. The desktop app renders it as a playable **memory graph**.
+- **`/learn <anything>`** — deliberately distill a skill from a directory, URL, or a workflow you just demonstrated, instead of waiting for the background self-improvement loop.
+
+Do a `/journey` pruning pass monthly — a wrong memory gets injected into every future session and compounds. Full guidance: [Part 26](./part26-moa-verification.md#3-learn-and-journey--self-improvement-you-can-see).
 
 ## Anti-Patterns
 

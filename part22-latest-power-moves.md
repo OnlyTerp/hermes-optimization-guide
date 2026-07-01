@@ -1,6 +1,6 @@
 # Part 22: Latest Power Moves — Curator, TUI, Plugins, Context Files
 
-*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13/v0.14 durability + foundation layer — Kanban, `/goal`, `/handoff`, Checkpoints v2, no-agent cron, PyPI installs, proxy, and new platforms — go next to [Part 23](./part23-tenacity-stack.md). The newest everyday moves from v0.15 "Velocity" and v0.16 "Surface" — `/undo`, a default-interface choice, the fuzzy model picker, and leaner default skills — are in [section 8](#8-newer-power-moves-v015--v016). For the native GUI and the run-it-local story, see [Part 24](./part24-desktop-app.md) and [Part 25](./part25-nvidia-local.md).*
+*If you already know Hermes but missed the v0.11/v0.12 wave, read this part first for Curator, TUI, plugins, and context hygiene. For the v0.13/v0.14 durability + foundation layer — Kanban, `/goal`, `/handoff`, Checkpoints v2, no-agent cron, PyPI installs, proxy, and new platforms — go next to [Part 23](./part23-tenacity-stack.md). The everyday moves from v0.15 "Velocity" and v0.16 "Surface" — `/undo`, a default-interface choice, the fuzzy model picker, and leaner default skills — are in [section 8](#8-newer-power-moves-v015--v016), and the newest v0.17 "Reach" / v0.18 "Judgment" quick hits are in [section 9](#9-newer-power-moves-v017--v018). For the native GUI and the run-it-local story, see [Part 24](./part24-desktop-app.md) and [Part 25](./part25-nvidia-local.md). For the big v0.18 ideas — Mixture-of-Agents, verification, `/learn`, `/journey` — see [Part 26](./part26-moa-verification.md).*
 
 ---
 
@@ -22,6 +22,8 @@ Use it like this:
 - Restore archived skills instead of recreating them from memory.
 
 Curator should prune skills, not decide project policy. Put durable project rules in context files.
+
+> **v0.17 change:** the Curator's LLM-driven consolidation pass is now **opt-in** — routine curation (archiving duplicates, pruning stale skills) costs zero tokens by default. Enable consolidation explicitly when you want it to actually merge and rewrite skills. Pair Curator with `/journey` ([Part 26](./part26-moa-verification.md#3-learn-and-journey--self-improvement-you-can-see)) to audit the memory side too.
 
 ---
 
@@ -211,11 +213,49 @@ When one board outgrows a single worker, `hermes kanban swarm` turns Kanban into
 
 ---
 
+## 9. Newer Power Moves (v0.17 → v0.18)
+
+The Reach and Judgment releases added another round of daily drivers. The headline features (MoA, verification, `/learn`, `/journey`, background fan-out) get their own part — [Part 26](./part26-moa-verification.md) — but these small ones deserve muscle memory:
+
+### `/prompt` — compose long prompts in a real editor
+
+Opens `$EDITOR` so you can write a multi-line, markdown-formatted prompt and have it queued as your next message. The single best QoL command of v0.18 for anyone writing detailed task briefs.
+
+### `/reasoning full` — uncap thinking for a session
+
+When a session hits something genuinely hard, `/reasoning full` removes the thinking budget cap for that session. Cheaper than switching to a bigger model for one gnarly step.
+
+### `/timestamps` and a timestamped `/history`
+
+Toggle inline timestamps on turns and see when things actually happened in `/history` — essential when auditing long autonomous runs.
+
+### In-place compaction (no more broken `@session` links)
+
+Context compression now rewrites the session **under the same session id** by default, instead of rotating to a new one. Long-running sessions keep their identity, so `@session` references, integrations, and desktop links stop silently breaking.
+
+### `image_generate` learned image-to-image
+
+Pass an input image and a transform prompt — restyle screenshots, apply logos, iterate on drafts — across every image provider, from any surface.
+
+### `memory` batch operations
+
+The `memory` tool applies multiple add/update/delete operations atomically in one call. Bulk cleanups (or a `/journey` pruning session) are one round-trip instead of ten.
+
+### Automation Blueprints instead of raw cron
+
+Parameterized automation templates that render as a dashboard form, a slash command, or a plain conversation ("set up my daily briefing for 8am"). Use them for anything you'd previously hand-rolled cron YAML for; keep raw cron for the deterministic no-agent watchdogs in [Part 23](./part23-tenacity-stack.md#5-use-no_agent-cron-for-watchdogs).
+
+### Blank Slate setup
+
+A minimal-agent onboarding mode: start from nothing and opt in tools one at a time. The right default for compliance-sensitive or locked-down machines.
+
+---
+
 ## What to Ignore
 
 Some old advice is no longer worth optimizing around:
 
-- Do not install external Gemini CLI just for Gemini auth; Hermes can do OAuth itself.
+- Do not build your Gemini setup on the old Gemini-CLI OAuth providers — they were **removed in v0.18**. Use a Gemini API key, or the Vertex AI provider for GCP shops ([Part 9](./part9-custom-models.md)).
 - Do not fork the dashboard for a custom tab; write a dashboard plugin.
 - Do not keep a giant SOUL.md full of procedures; use skills and Curator.
 - Do not use one expensive default model for every auxiliary task.
