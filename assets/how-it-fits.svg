@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7c3aed" flood-opacity="0.18"/>
+    </filter>
+    <marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a78bfa"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="620" fill="url(#bg)"/>
+  <g stroke="#3b2a63" stroke-width="1.2" opacity="0.28" fill="none">
+    <path d="M40 80 H160 L210 130"/><circle cx="210" cy="130" r="4"/>
+    <path d="M1560 540 H1440 L1390 490"/><circle cx="1390" cy="490" r="4"/>
+  </g>
+
+  <text x="800" y="62" text-anchor="middle" fill="#f5f3ff" font-size="32" font-weight="700" letter-spacing="6" filter="url(#glow)">HOW THE PIECES FIT TOGETHER</text>
+  <text x="800" y="94" text-anchor="middle" fill="#a78bfa" font-size="15" letter-spacing="3">EVERYTHING IS MODULAR — INSTALL WHAT YOU NEED, SKIP WHAT YOU DON'T</text>
+
+  <!-- You -->
+  <g filter="url(#soft)"><rect x="120" y="250" width="240" height="120" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.5" stroke-width="1.5"/></g>
+  <rect x="120" y="250" width="240" height="5" rx="2.5" fill="url(#accent)"/>
+  <text x="240" y="300" text-anchor="middle" font-size="26">🧑‍💻</text>
+  <text x="240" y="334" text-anchor="middle" fill="#f5f3ff" font-size="18" font-weight="700">You — any device</text>
+  <text x="240" y="356" text-anchor="middle" fill="#a78bfa" font-size="12.5">desktop · terminal · browser · phone</text>
+
+  <!-- Agent -->
+  <g filter="url(#soft)"><rect x="440" y="250" width="280" height="120" rx="16" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="2"/></g>
+  <rect x="440" y="250" width="280" height="5" rx="2.5" fill="url(#accent)"/>
+  <text x="580" y="300" text-anchor="middle" font-size="26">⚡</text>
+  <text x="580" y="334" text-anchor="middle" fill="#f5f3ff" font-size="18" font-weight="700">Hermes Agent</text>
+  <text x="580" y="356" text-anchor="middle" fill="#a78bfa" font-size="12.5">lean context — ~5KB injected per message</text>
+
+  <!-- Modular stack -->
+  <g filter="url(#soft)"><rect x="800" y="150" width="440" height="320" rx="18" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.5" stroke-width="1.5"/></g>
+  <rect x="800" y="150" width="440" height="6" rx="3" fill="url(#accent)"/>
+  <text x="1020" y="192" text-anchor="middle" fill="#e9d5ff" font-size="17" font-weight="700" letter-spacing="3">MODULAR LAYERS</text>
+  <g font-size="15" fill="#f5f3ff">
+    <rect x="826" y="210" width="388" height="52" rx="10" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="848" y="238" font-weight="600">🧩  Skills</text>
+    <text x="848" y="256" font-size="12.5" fill="#a78bfa">loaded on demand — zero token cost when idle</text>
+    <rect x="826" y="272" width="388" height="52" rx="10" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="848" y="300" font-weight="600">🧠  Memory</text>
+    <text x="848" y="318" font-size="12.5" fill="#a78bfa">compact, vector-searched, three tiers</text>
+    <rect x="826" y="334" width="388" height="52" rx="10" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="848" y="362" font-weight="600">🕸️  LightRAG</text>
+    <text x="848" y="380" font-size="12.5" fill="#a78bfa">entity graph — deep relationship recall</text>
+    <rect x="826" y="396" width="388" height="52" rx="10" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="848" y="424" font-weight="600">📱  Chat platforms</text>
+    <text x="848" y="442" font-size="12.5" fill="#a78bfa">Telegram &amp; 25+ more — mobile + group access</text>
+  </g>
+
+  <!-- Provider -->
+  <g filter="url(#soft)"><rect x="1320" y="250" width="220" height="120" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.5" stroke-width="1.5"/></g>
+  <rect x="1320" y="250" width="220" height="5" rx="2.5" fill="url(#accent)"/>
+  <text x="1430" y="300" text-anchor="middle" font-size="26">🌌</text>
+  <text x="1430" y="334" text-anchor="middle" fill="#f5f3ff" font-size="17" font-weight="700">Any LLM provider</text>
+  <text x="1430" y="356" text-anchor="middle" fill="#a78bfa" font-size="12.5">cloud · MoA · local weights</text>
+
+  <!-- connectors -->
+  <g stroke="#a78bfa" stroke-width="2" fill="none" opacity="0.85">
+    <path d="M360 310 H440" marker-end="url(#arr2)"/>
+    <path d="M720 310 H800" marker-end="url(#arr2)"/>
+    <path d="M1240 310 H1320" marker-end="url(#arr2)"/>
+  </g>
+  <g fill="#c084fc" filter="url(#glow)">
+    <circle cx="360" cy="310" r="5"/>
+    <circle cx="720" cy="310" r="5"/>
+    <circle cx="1240" cy="310" r="5"/>
+  </g>
+
+  <text x="800" y="548" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="2">THE KEY INSIGHT: EVERYTHING IS MODULAR — THE AGENT ADAPTS</text>
+</svg>

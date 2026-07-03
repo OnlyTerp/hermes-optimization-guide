@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7c3aed" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="360" fill="url(#bg)"/>
+  <g stroke="#3b2a63" stroke-width="1.2" opacity="0.28" fill="none">
+    <path d="M40 60 H140 L190 110"/><circle cx="190" cy="110" r="4"/>
+    <path d="M1560 300 H1460 L1410 250"/><circle cx="1410" cy="250" r="4"/>
+  </g>
+
+  <text x="800" y="58" text-anchor="middle" fill="#f5f3ff" font-size="28" font-weight="700" letter-spacing="5" filter="url(#glow)">DOCS + RUNNABLE ARTIFACTS</text>
+  <text x="800" y="88" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="3">NOT JUST PROSE — WORKING FILES YOU CAN DROP IN TODAY</text>
+
+  <g text-anchor="middle">
+    <g filter="url(#soft)"><rect x="60" y="120" width="235" height="180" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/></g>
+    <rect x="60" y="120" width="235" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="177" y="185" fill="#c084fc" font-size="46" font-weight="800" filter="url(#glow)">27</text>
+    <text x="177" y="222" fill="#f5f3ff" font-size="17" font-weight="700">guide parts</text>
+    <text x="177" y="248" fill="#a78bfa" font-size="12.5">setup → production,</text>
+    <text x="177" y="266" fill="#a78bfa" font-size="12.5">one file each</text>
+
+    <g filter="url(#soft)"><rect x="311" y="120" width="235" height="180" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/></g>
+    <rect x="311" y="120" width="235" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="428" y="185" fill="#c084fc" font-size="46" font-weight="800" filter="url(#glow)">13</text>
+    <text x="428" y="222" fill="#f5f3ff" font-size="17" font-weight="700">installable skills</text>
+    <text x="428" y="248" fill="#a78bfa" font-size="12.5">ln -s into ~/.hermes/skills/</text>
+    <text x="428" y="266" fill="#a78bfa" font-size="12.5">and they're live</text>
+
+    <g filter="url(#soft)"><rect x="562" y="120" width="235" height="180" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/></g>
+    <rect x="562" y="120" width="235" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="679" y="185" fill="#c084fc" font-size="46" font-weight="800" filter="url(#glow)">5</text>
+    <text x="679" y="222" fill="#f5f3ff" font-size="17" font-weight="700">config templates</text>
+    <text x="679" y="248" fill="#a78bfa" font-size="12.5">minimum → production</text>
+    <text x="679" y="266" fill="#a78bfa" font-size="12.5">→ security-hardened</text>
+
+    <g filter="url(#soft)"><rect x="813" y="120" width="235" height="180" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/></g>
+    <rect x="813" y="120" width="235" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="930" y="185" fill="#c084fc" font-size="46" font-weight="800" filter="url(#glow)">4</text>
+    <text x="930" y="222" fill="#f5f3ff" font-size="17" font-weight="700">reference architectures</text>
+    <text x="930" y="248" fill="#a78bfa" font-size="12.5">Homelab · Solo Dev</text>
+    <text x="930" y="266" fill="#a78bfa" font-size="12.5">Small Agency · Road Warrior</text>
+
+    <g filter="url(#soft)"><rect x="1064" y="120" width="235" height="180" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/></g>
+    <rect x="1064" y="120" width="235" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="1181" y="185" fill="#c084fc" font-size="46" font-weight="800" filter="url(#glow)">1</text>
+    <text x="1181" y="222" fill="#f5f3ff" font-size="17" font-weight="700">command to a VPS</text>
+    <text x="1181" y="248" fill="#a78bfa" font-size="12.5">vps-bootstrap.sh: fresh box</text>
+    <text x="1181" y="266" fill="#a78bfa" font-size="12.5">→ hardened production</text>
+
+    <g filter="url(#soft)"><rect x="1315" y="120" width="225" height="180" rx="16" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/></g>
+    <rect x="1315" y="120" width="225" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="1427" y="185" fill="#c084fc" font-size="46" font-weight="800" filter="url(#glow)">8</text>
+    <text x="1427" y="222" fill="#f5f3ff" font-size="17" font-weight="700">wizard questions</text>
+    <text x="1427" y="248" fill="#a78bfa" font-size="12.5">interactive browser wizard</text>
+    <text x="1427" y="266" fill="#a78bfa" font-size="12.5">→ ready config.yaml</text>
+  </g>
+
+  <text x="800" y="338" text-anchor="middle" fill="#8b5cf6" font-size="12.5" letter-spacing="2">SKILLS · CONFIGS · COMPOSE STACKS · CADDY · SYSTEMD · CRON · BENCHMARKS — ALL IN THIS REPO</text>
+</svg>

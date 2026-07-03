@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="860" viewBox="0 0 1600 860" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="14" flood-color="#7c3aed" flood-opacity="0.18"/>
+    </filter>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a78bfa"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="860" fill="url(#bg)"/>
+
+  <!-- faint circuit background -->
+  <g stroke="#3b2a63" stroke-width="1.2" opacity="0.28" fill="none">
+    <path d="M40 120 H180 L230 170 V300"/><circle cx="230" cy="300" r="4"/>
+    <path d="M1560 740 H1420 L1370 690 V560"/><circle cx="1370" cy="560" r="4"/>
+    <path d="M80 800 H240 L300 740"/><circle cx="300" cy="740" r="4"/>
+    <path d="M1520 90 H1380 L1330 140"/><circle cx="1330" cy="140" r="4"/>
+  </g>
+  <g fill="#8b5cf6" opacity="0.16">
+    <circle cx="120" cy="520" r="3"/><circle cx="1490" cy="300" r="3"/>
+    <circle cx="760" cy="820" r="2.5"/><circle cx="980" cy="60" r="2.5"/>
+  </g>
+
+  <!-- title -->
+  <text x="800" y="64" text-anchor="middle" fill="#f5f3ff" font-size="34" font-weight="700" letter-spacing="6" filter="url(#glow)">HERMES ARCHITECTURE</text>
+  <text x="800" y="96" text-anchor="middle" fill="#a78bfa" font-size="16" letter-spacing="3">ONE AGENT · MANY SURFACES · ANY MODEL</text>
+
+  <!-- SURFACES column -->
+  <g filter="url(#soft)">
+    <rect x="60" y="150" width="330" height="560" rx="18" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/>
+  </g>
+  <rect x="60" y="150" width="330" height="6" rx="3" fill="url(#accent)"/>
+  <text x="225" y="196" text-anchor="middle" fill="#e9d5ff" font-size="20" font-weight="700" letter-spacing="4">SURFACES</text>
+  <g font-size="16" fill="#ddd6fe">
+    <g>
+      <rect x="88" y="222" width="274" height="64" rx="12" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+      <text x="110" y="250" font-weight="600" fill="#f5f3ff">🖥️  Desktop App</text>
+      <text x="110" y="272" font-size="13" fill="#a78bfa">macOS · Windows · Linux</text>
+    </g>
+    <g>
+      <rect x="88" y="300" width="274" height="64" rx="12" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+      <text x="110" y="328" font-weight="600" fill="#f5f3ff">⌨️  CLI · TUI</text>
+      <text x="110" y="350" font-size="13" fill="#a78bfa">hermes chat · Ink TUI</text>
+    </g>
+    <g>
+      <rect x="88" y="378" width="274" height="64" rx="12" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+      <text x="110" y="406" font-weight="600" fill="#f5f3ff">🌐  Web Admin Panel</text>
+      <text x="110" y="428" font-size="13" fill="#a78bfa">hermes dashboard</text>
+    </g>
+    <g>
+      <rect x="88" y="456" width="274" height="86" rx="12" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+      <text x="110" y="484" font-weight="600" fill="#f5f3ff">💬  25+ Chat Platforms</text>
+      <text x="110" y="506" font-size="13" fill="#a78bfa">Telegram · Discord · Slack · Teams</text>
+      <text x="110" y="526" font-size="13" fill="#a78bfa">iMessage (Photon) · WhatsApp · LINE</text>
+    </g>
+    <g>
+      <rect x="88" y="556" width="274" height="64" rx="12" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+      <text x="110" y="584" font-weight="600" fill="#f5f3ff">⏰  Cron · Webhooks</text>
+      <text x="110" y="606" font-size="13" fill="#a78bfa">automation blueprints · continuations</text>
+    </g>
+  </g>
+
+  <!-- GATEWAY core -->
+  <g filter="url(#soft)">
+    <rect x="490" y="240" width="300" height="380" rx="18" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="2"/>
+  </g>
+  <rect x="490" y="240" width="300" height="6" rx="3" fill="url(#accent)"/>
+  <text x="640" y="286" text-anchor="middle" fill="#e9d5ff" font-size="20" font-weight="700" letter-spacing="4">GATEWAY</text>
+  <g font-size="15" fill="#f5f3ff">
+    <rect x="514" y="310" width="252" height="56" rx="10" fill="#0f0a20" stroke="#7c3aed" stroke-opacity="0.6"/>
+    <text x="640" y="336" text-anchor="middle" font-weight="600">Model Router</text>
+    <text x="640" y="356" text-anchor="middle" font-size="12.5" fill="#a78bfa">cost · context · capability</text>
+    <rect x="514" y="380" width="252" height="56" rx="10" fill="#0f0a20" stroke="#7c3aed" stroke-opacity="0.6"/>
+    <text x="640" y="406" text-anchor="middle" font-weight="600">Approval Layer</text>
+    <text x="640" y="426" text-anchor="middle" font-size="12.5" fill="#a78bfa">denylist · allowlist · quarantine</text>
+    <rect x="514" y="450" width="252" height="56" rx="10" fill="#0f0a20" stroke="#7c3aed" stroke-opacity="0.6"/>
+    <text x="640" y="476" text-anchor="middle" font-weight="600">Context Engine</text>
+    <text x="640" y="496" text-anchor="middle" font-size="12.5" fill="#a78bfa">compression · prompt caching</text>
+    <rect x="514" y="520" width="252" height="56" rx="10" fill="#0f0a20" stroke="#7c3aed" stroke-opacity="0.6"/>
+    <text x="640" y="546" text-anchor="middle" font-weight="600">Scale-to-Zero</text>
+    <text x="640" y="566" text-anchor="middle" font-size="12.5" fill="#a78bfa">drain coordination · managed scope</text>
+  </g>
+
+  <!-- MODELS -->
+  <g filter="url(#soft)">
+    <rect x="890" y="150" width="320" height="250" rx="18" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/>
+  </g>
+  <rect x="890" y="150" width="320" height="6" rx="3" fill="url(#accent)"/>
+  <text x="1050" y="192" text-anchor="middle" fill="#e9d5ff" font-size="19" font-weight="700" letter-spacing="3">ANY MODEL</text>
+  <g font-size="14" fill="#ddd6fe">
+    <rect x="912" y="212" width="276 " height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="238" text-anchor="middle">Cloud APIs · OpenAI-compatible</text>
+    <rect x="912" y="262" width="276" height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="288" text-anchor="middle">MoA virtual models (council + judge)</text>
+    <rect x="912" y="312" width="276" height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="338" text-anchor="middle">Local: llama.cpp · LM Studio · Ollama</text>
+    <text x="1050" y="382" text-anchor="middle" font-size="12.5" fill="#a78bfa">NVIDIA RTX · DGX Spark · bring any weights</text>
+  </g>
+
+  <!-- TOOLS -->
+  <g filter="url(#soft)">
+    <rect x="890" y="430" width="320" height="280" rx="18" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/>
+  </g>
+  <rect x="890" y="430" width="320" height="6" rx="3" fill="url(#accent)"/>
+  <text x="1050" y="472" text-anchor="middle" fill="#e9d5ff" font-size="19" font-weight="700" letter-spacing="3">TOOLS</text>
+  <g font-size="14" fill="#ddd6fe">
+    <rect x="912" y="492" width="276" height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="518" text-anchor="middle">Native tools · Nous Tool Gateway</text>
+    <rect x="912" y="542" width="276" height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="568" text-anchor="middle">MCP servers (stdio · HTTP)</text>
+    <rect x="912" y="592" width="276" height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="618" text-anchor="middle">Subagents · background fan-out</text>
+    <rect x="912" y="642" width="276" height="40" rx="9" fill="#0f0a20" stroke="#6d28d9" stroke-opacity="0.55"/>
+    <text x="1050" y="668" text-anchor="middle">Coding agents · swarms · sandboxes</text>
+  </g>
+
+  <!-- MEMORY + OBSERVABILITY -->
+  <g filter="url(#soft)">
+    <rect x="1310" y="240" width="230" height="180" rx="18" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/>
+  </g>
+  <rect x="1310" y="240" width="230" height="6" rx="3" fill="url(#accent)"/>
+  <text x="1425" y="280" text-anchor="middle" fill="#e9d5ff" font-size="18" font-weight="700" letter-spacing="3">MEMORY</text>
+  <g font-size="13.5" fill="#ddd6fe" text-anchor="middle">
+    <text x="1425" y="312">Vector · three-tier</text>
+    <text x="1425" y="338">LightRAG graph RAG</text>
+    <text x="1425" y="364">/learn · /journey</text>
+    <text x="1425" y="390">Curator pruning</text>
+  </g>
+
+  <g filter="url(#soft)">
+    <rect x="1310" y="450" width="230" height="180" rx="18" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5"/>
+  </g>
+  <rect x="1310" y="450" width="230" height="6" rx="3" fill="url(#accent)"/>
+  <text x="1425" y="490" text-anchor="middle" fill="#e9d5ff" font-size="18" font-weight="700" letter-spacing="3">OBSERVE</text>
+  <g font-size="13.5" fill="#ddd6fe" text-anchor="middle">
+    <text x="1425" y="522">Audit log</text>
+    <text x="1425" y="548">Langfuse · Helicone</text>
+    <text x="1425" y="574">OpenTelemetry</text>
+    <text x="1425" y="600">Cost routing · evals</text>
+  </g>
+
+  <!-- connectors -->
+  <g stroke="#a78bfa" stroke-width="2" fill="none" opacity="0.85">
+    <path d="M390 430 H490" marker-end="url(#arr)"/>
+    <path d="M790 338 C 840 338 840 275 890 275" marker-end="url(#arr)"/>
+    <path d="M790 478 C 840 478 840 545 890 545" marker-end="url(#arr)"/>
+    <path d="M1210 330 C 1260 330 1260 330 1310 330" marker-end="url(#arr)"/>
+    <path d="M1210 540 C 1260 540 1260 540 1310 540" marker-end="url(#arr)"/>
+  </g>
+  <g fill="#c084fc" filter="url(#glow)">
+    <circle cx="390" cy="430" r="5"/>
+    <circle cx="790" cy="338" r="5"/>
+    <circle cx="790" cy="478" r="5"/>
+    <circle cx="1210" cy="330" r="5"/>
+    <circle cx="1210" cy="540" r="5"/>
+  </g>
+
+  <!-- footer -->
+  <text x="800" y="790" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="2">MODEL-AGNOSTIC BY DESIGN — THE GUIDE IS ABOUT THE HARNESS, NOT THE WEIGHTS</text>
+  <line x1="560" y1="812" x2="770" y2="812" stroke="#6d28d9" stroke-width="1" opacity="0.6"/>
+  <line x1="830" y1="812" x2="1040" y2="812" stroke="#6d28d9" stroke-width="1" opacity="0.6"/>
+  <text x="800" y="818" text-anchor="middle" fill="#8b5cf6" font-size="14">⚡</text>
+</svg>
