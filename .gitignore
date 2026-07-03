@@ -1,0 +1,10 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Benchmark run output (results are summarized in benchmarks/README.md)
+benchmarks/results/
+
+# Editor/OS noise
+.DS_Store
+*.log
