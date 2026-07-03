@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4c1d95"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7c3aed" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="420" fill="url(#bg)"/>
+  <g stroke="#3b2a63" stroke-width="1.2" opacity="0.28" fill="none">
+    <path d="M40 60 H140 L190 110"/><circle cx="190" cy="110" r="4"/>
+    <path d="M1560 370 H1460 L1410 320"/><circle cx="1410" cy="320" r="4"/>
+  </g>
+
+  <text x="800" y="58" text-anchor="middle" fill="#f5f3ff" font-size="28" font-weight="700" letter-spacing="5" filter="url(#glow)">TRACKED RELEASE BY RELEASE</text>
+  <text x="800" y="88" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="3">THE GUIDE IS REFRESHED FOR EVERY MAJOR HERMES RELEASE</text>
+
+  <!-- rail -->
+  <rect x="90" y="196" width="1420" height="4" rx="2" fill="url(#rail)" opacity="0.9"/>
+
+  <!-- nodes -->
+  <g text-anchor="middle">
+    <!-- v0.13 -->
+    <circle cx="180" cy="198" r="9" fill="#0f0a20" stroke="#8b5cf6" stroke-width="2.5"/>
+    <text x="180" y="160" fill="#e9d5ff" font-size="17" font-weight="700">v0.13</text>
+    <text x="180" y="236" fill="#c4b5fd" font-size="14" font-weight="600">Tenacity</text>
+    <text x="180" y="258" fill="#a78bfa" font-size="12">durable Kanban · /goal</text>
+    <text x="180" y="276" fill="#a78bfa" font-size="12">Checkpoints v2</text>
+
+    <!-- v0.14 -->
+    <circle cx="420" cy="198" r="9" fill="#0f0a20" stroke="#8b5cf6" stroke-width="2.5"/>
+    <text x="420" y="160" fill="#e9d5ff" font-size="17" font-weight="700">v0.14</text>
+    <text x="420" y="236" fill="#c4b5fd" font-size="14" font-weight="600">Foundation</text>
+    <text x="420" y="258" fill="#a78bfa" font-size="12">PyPI install · hermes proxy</text>
+    <text x="420" y="276" fill="#a78bfa" font-size="12">native Windows</text>
+
+    <!-- v0.15 -->
+    <circle cx="660" cy="198" r="9" fill="#0f0a20" stroke="#8b5cf6" stroke-width="2.5"/>
+    <text x="660" y="160" fill="#e9d5ff" font-size="17" font-weight="700">v0.15</text>
+    <text x="660" y="236" fill="#c4b5fd" font-size="14" font-weight="600">Velocity</text>
+    <text x="660" y="258" fill="#a78bfa" font-size="12">multi-agent swarms</text>
+    <text x="660" y="276" fill="#a78bfa" font-size="12">promptware defense</text>
+
+    <!-- v0.16 -->
+    <circle cx="900" cy="198" r="9" fill="#0f0a20" stroke="#a855f7" stroke-width="2.5"/>
+    <text x="900" y="160" fill="#e9d5ff" font-size="17" font-weight="700">v0.16</text>
+    <text x="900" y="236" fill="#c4b5fd" font-size="14" font-weight="600">Surface</text>
+    <text x="900" y="258" fill="#a78bfa" font-size="12">Desktop app · admin panel</text>
+    <text x="900" y="276" fill="#a78bfa" font-size="12">remote backend</text>
+
+    <!-- v0.17 -->
+    <circle cx="1140" cy="198" r="9" fill="#0f0a20" stroke="#c084fc" stroke-width="2.5"/>
+    <text x="1140" y="160" fill="#e9d5ff" font-size="17" font-weight="700">v0.17</text>
+    <text x="1140" y="236" fill="#c4b5fd" font-size="14" font-weight="600">Reach</text>
+    <text x="1140" y="258" fill="#a78bfa" font-size="12">iMessage via Photon</text>
+    <text x="1140" y="276" fill="#a78bfa" font-size="12">background subagents</text>
+
+    <!-- v0.18 -->
+    <circle cx="1400" cy="198" r="12" fill="#c084fc" filter="url(#glow)"/>
+    <circle cx="1400" cy="198" r="18" fill="none" stroke="#c084fc" stroke-opacity="0.4" stroke-width="2"/>
+    <text x="1400" y="156" fill="#f5f3ff" font-size="19" font-weight="800" filter="url(#glow)">v0.18</text>
+    <text x="1400" y="240" fill="#e9d5ff" font-size="14" font-weight="700">Judgment — latest</text>
+    <text x="1400" y="262" fill="#a78bfa" font-size="12">MoA as a model · verification</text>
+    <text x="1400" y="280" fill="#a78bfa" font-size="12">/learn · scale-to-zero</text>
+  </g>
+
+  <!-- current badge -->
+  <g filter="url(#soft)">
+    <rect x="440" y="322" width="720" height="52" rx="26" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="1.5"/>
+  </g>
+  <text x="800" y="355" text-anchor="middle" fill="#e9d5ff" font-size="16" font-weight="700" letter-spacing="1">CURRENT THROUGH v0.18.0 (v2026.7.1) — "THE JUDGMENT RELEASE"</text>
+</svg>
