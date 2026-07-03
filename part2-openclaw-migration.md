@@ -18,7 +18,7 @@ Hermes is the successor to OpenClaw. If you've spent weeks or months building up
 | User profile | `workspace/USER.md` | `~/.hermes/memories/USER.md` |
 | Skills | `workspace/skills/`, `~/.openclaw/skills/` | `~/.hermes/skills/openclaw-imports/` |
 | Model config | `agents.defaults.model` | `config.yaml` |
-| Provider keys | `models.providers.*.apiKey` | `~/.hermes/.env` (with `--migrate-secrets`) |
+| Provider keys | `models.providers.*.apiKey` | `~/.hermes/.env` (migrated by default; excluded with `--preset user-data`) |
 | Custom providers | `models.providers.*` | `config.yaml → custom_providers` |
 | Max turns | `agents.defaults.timeoutSeconds` | `agent.max_turns` (timeoutSeconds / 10) |
 
@@ -32,7 +32,7 @@ Hermes is the successor to OpenClaw. If you've spent weeks or months building up
 # Preview what would happen (no files changed)
 hermes claw migrate --dry-run
 
-# Run the full migration (includes API keys)
+# Run the full migration (API keys migrate by default)
 hermes claw migrate
 
 # Exclude API keys (safer for shared machines)
@@ -48,10 +48,9 @@ The migration reads from `~/.openclaw/` by default. If you have legacy `~/.clawd
 | Option | What It Does | Default |
 |--------|-------------|---------|
 | `--dry-run` | Preview without writing anything | off |
-| `--preset full` | Include API keys and secrets | yes |
-| `--preset user-data` | Exclude API keys | no |
+| `--preset full` | Everything, including API keys and secrets | yes (default preset) |
+| `--preset user-data` | Everything except API keys | off |
 | `--overwrite` | Overwrite existing Hermes files on conflicts | skip |
-| `--migrate-secrets` | Include API keys explicitly | on with `--preset full` |
 | `--source <path>` | Custom OpenClaw directory | `~/.openclaw/` |
 | `--workspace-target <path>` | Where to place `AGENTS.md` | current directory |
 | `--skill-conflict <mode>` | `skip`, `overwrite`, or `rename` | `skip` |
@@ -82,7 +81,7 @@ The tool will:
 2. Map config keys to Hermes equivalents
 3. Merge memory files (deduplicating entries)
 4. Copy skills to `~/.hermes/skills/openclaw-imports/`
-5. Migrate API keys (if `--preset full`)
+5. Migrate API keys (default; skipped with `--preset user-data`)
 6. Report what was done
 
 ### 3. Handle Conflicts
@@ -91,7 +90,7 @@ If a skill already exists in Hermes with the same name:
 
 - **`--skill-conflict skip`** (default): Leaves the Hermes version, skips the import
 - **`--skill-conflict overwrite`**: Replaces the Hermes version with the OpenClaw version
-- **--skill-conflict rename`**: Creates a `-imported` copy alongside the Hermes version
+- **`--skill-conflict rename`**: Creates a `-imported` copy alongside the Hermes version
 
 ```bash
 # Example: rename on conflict so you can compare

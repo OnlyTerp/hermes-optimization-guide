@@ -32,6 +32,8 @@ Produces `~/.hermes/backups/hermes-YYYY-MM-DD-HHMMSS.tar.zst` containing:
 | `memories/` | yes | All memory files |
 | `skills/` | yes | All skills including executable scripts and references |
 | `sessions.db` | yes | SQLite DB is dumped via `VACUUM INTO` so it's consistent even with a running gateway |
+| `projects.db` | yes | Project registry — included since v0.18 |
+| `kanban.db` | yes | Kanban boards ([Part 23](./part23-tenacity-stack.md)) — included since v0.18 |
 | `plugins/` | yes | Both CLI and dashboard plugins |
 | `logs/` | no by default | Use `--include-logs` if you need them for debugging |
 | `auth.json` | no | Never backed up — re-authenticate on the new machine |
@@ -62,7 +64,7 @@ Treat that archive like a password manager vault — it contains every key.
 hermes backup --no-sessions --output ~/hermes-share.tar.zst
 ```
 
-Safe to email. Contains your prompting knowledge and procedural skills, nothing private.
+Contains your prompting knowledge and procedural skills — but **also your `memories/` directory**, which is often private (names, addresses, health notes, whatever you've told the agent). Skim `memories/` or add `--exclude memories/` before emailing it to anyone.
 
 **Scheduled backups to a mounted drive:**
 
@@ -143,7 +145,7 @@ When something goes weird, the old flow was: grep through `~/.hermes/logs/`, pas
 ```text
 You → /debug
   Collecting diagnostics…
-  ✓ Agent version: v0.14.0 (v2026.5.16)
+  ✓ Agent version: v0.18.0 (v2026.7.1)
   ✓ Platform: Linux 6.8.0 / Python 3.12.3
   ✓ Gateway: running (3 adapters connected)
   ✓ Last 200 lines of agent.log
@@ -213,15 +215,7 @@ Use it to filter memory by project, pre-summarize tool output, pull from LightRA
 
 ### `/compress <topic>`
 
-The context compressor (Part 6) now takes an optional focus topic:
-
-```text
-You → /compress migration to Fly.io
-  Compressing 47 messages with focus: "migration to Fly.io".
-  Kept 6 messages verbatim, summarized 41 into 2 bullet blocks.
-```
-
-Preserves detail relevant to the topic and aggressively compresses everything else. Perfect for salvaging a long debugging session after you've solved the problem and want to keep the decision trail but ditch 200 exploratory tool calls.
+The context compressor (Part 6) accepts an optional focus topic — preserve detail relevant to the topic, aggressively compress everything else. Full walkthrough in [Part 14](./part14-fast-mode-watchers.md#compress-topic--guided-compression).
 
 ---
 
@@ -231,21 +225,17 @@ A handful of hardening changes landed in the "everywhere" + "gateway" releases w
 
 ### v0.13+ redaction + hardline blocklist
 
-Hermes v0.13+ turns secret redaction on by default and keeps the hardline blocklist for commands that should not be recoverable through casual approval prompts. Keep your own denylist too, but do not rely on "the model will know this is dangerous" for commands that delete homes, scrape credentials, or hit metadata services.
-
-Useful custom denylist additions:
+Hermes v0.13+ turns secret redaction on by default and keeps the hardline blocklist for commands that should not be recoverable through casual approval prompts. The dangerous-command patterns are **built into the source** (`tools/approval.py`) — there is no `security.approval.denylist` config key where you add your own regex. What you control is the top-level `approvals:` policy:
 
 ```yaml
-security:
-  approval:
-    denylist:
-      - 'rm\s+-rf\s+(/|~|\$HOME)'
-      - 'curl\s+.+\|\s*(sh|bash)'
-      - '169\.254\.169\.254'
-      - 'cat\s+~?/?\.?ssh/'
-      - 'aws\s+s3\s+sync\s+.+\s+s3://'
-      - 'ssh-keyscan'
+# ~/.hermes/config.yaml — schema verified against Part 19 (v0.18)
+approvals:
+  mode: manual        # manual | smart | off
+  timeout: 60         # fail-closed deny after this many seconds
+  cron_mode: deny     # headless cron jobs never auto-approve dangerous commands
 ```
+
+Do not rely on "the model will know this is dangerous" for commands that delete homes, scrape credentials, or hit metadata services — the real boundary is OS-level isolation. See [Part 19](./part19-security-playbook.md) for the full approval-layer reference.
 
 ### `hermes update --check` before upgrades
 
@@ -260,7 +250,7 @@ The preflight catches obvious incompatibilities and the backup gives you a rollb
 
 ### Webhook secrets validated on startup
 
-Every webhook-based adapter (Telegram, BlueBubbles, WeCom, Feishu, WeChat, generic Webhook) now validates its signing secret at gateway startup. A missing/empty/weak secret produces a startup error instead of silently accepting forged requests.
+Every webhook-based adapter (Telegram, BlueBubbles, WeCom, Feishu, generic Webhook) now validates its signing secret at gateway startup. (Weixin/personal WeChat isn't in this list — it's long-poll, no webhook to validate.) A missing/empty/weak secret produces a startup error instead of silently accepting forged requests.
 
 Generate strong ones:
 
@@ -276,7 +266,7 @@ WeChat, Telegram, and BlueBubbles download inbound media through a validator tha
 - Metadata endpoints (`169.254.169.254` — AWS/GCP IMDS)
 - `file://`, `data://`, and other non-HTTP schemes
 
-Set `HERMES_ALLOW_PRIVATE_MEDIA_URLS=true` only on trusted networks where your agent legitimately needs to fetch from an internal host.
+Set `WEIXIN_ALLOW_PRIVATE_MEDIA_URLS=true` (for the Weixin adapter — see [Part 15](./part15-new-platforms.md)) only on trusted networks where your agent legitimately needs to fetch from an internal host.
 
 ### Env values redacted in all logs
 
@@ -310,4 +300,4 @@ You've now seen the backup/debug slice of the current feature surface:
 - [Part 15 — New Platforms (Teams, LINE, SimpleX, iMessage, WeChat, Android)](./part15-new-platforms.md)
 - [Part 23 — Tenacity Stack](./part23-tenacity-stack.md)
 
-If you installed fresh on v0.14.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.
+If you installed fresh on v0.18.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.

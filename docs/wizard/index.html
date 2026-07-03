@@ -57,23 +57,23 @@
   <p class="lede">
     Answer 8 questions → get a production-ready <code>config.yaml</code> you can drop at <code>~/.hermes/config.yaml</code>.
     Runs entirely in your browser; nothing is uploaded.
-    Based on the <a href="../../README.md">Hermes Optimization Guide</a>.
+    Based on the <a href="../../README.md">Hermes Optimization Guide</a>; schema verified against Part 19 (v0.18).
   </p>
 
   <form id="wizard" class="card" onsubmit="return false;">
     <fieldset>
       <legend>1. Who's this deployment for?</legend>
-      <p class="hint">Picks the starting template.</p>
+      <p class="hint">Picks the starting template — mirrors <code>templates/config/&lt;persona&gt;.yaml</code>.</p>
       <label><input type="radio" name="persona" value="minimum" onchange="applyPersona(this.value)" checked> Just me, CLI only (simplest)</label>
       <label><input type="radio" name="persona" value="telegram-bot" onchange="applyPersona(this.value)"> Me + a Telegram bot</label>
-      <label><input type="radio" name="persona" value="production" onchange="applyPersona(this.value)"> Production deployment (multi-gateway, multi-provider, memory, MCP, alerts)</label>
+      <label><input type="radio" name="persona" value="production" onchange="applyPersona(this.value)"> Production deployment (multi-platform, multi-provider, MCP)</label>
       <label><input type="radio" name="persona" value="cost-optimized" onchange="applyPersona(this.value)"> Cost-optimized (&lt;$5/mo personal daily-driver)</label>
       <label><input type="radio" name="persona" value="security-hardened" onchange="applyPersona(this.value)"> Security-hardened (public-facing, untrusted input)</label>
     </fieldset>
 
     <fieldset>
-      <legend>2. Default model</legend>
-      <p class="hint">Can be overridden per-skill.</p>
+      <legend>2. Primary model</legend>
+      <p class="hint">Drives the tool-calling loop. Switch at runtime with <code>/model</code>.</p>
       <select name="default_model">
         <option value="anthropic/claude-sonnet-5">Anthropic Claude Sonnet 5 (balanced default)</option>
         <option value="anthropic/claude-opus-4.7">Anthropic Claude Opus 4.7 (max capability)</option>
@@ -82,26 +82,25 @@
         <option value="openai/gpt-5.5">OpenAI GPT-5.5 (deep reasoning)</option>
         <option value="xai/grok-4.3">xAI Grok 4.3 (1M context + live X search)</option>
         <option value="moonshot/kimi-k2.6">Moonshot Kimi K2.6 (cheap + strong coding)</option>
-        <option value="zai/glm">z.ai GLM (very cheap)</option>
+        <option value="zai/glm-5">z.ai GLM-5 (very cheap)</option>
       </select>
     </fieldset>
 
     <fieldset class="grid2">
       <div>
-        <legend>3. Memory backend</legend>
-        <label><input type="radio" name="memory" value="vector" checked> Vector DB (qdrant, fast, simple)</label>
-        <label><input type="radio" name="memory" value="lightrag"> LightRAG (knowledge graph + vector; Part 3)</label>
-        <label><input type="radio" name="memory" value="mem0"> mem0 cloud (cross-device)</label>
-        <label><input type="radio" name="memory" value="none"> None</label>
+        <legend>3. Memory</legend>
+        <label><input type="radio" name="memory" value="native" checked> Native (SQLite, local-first, zero config — Part 7)</label>
+        <label><input type="radio" name="memory" value="lightrag"> + LightRAG knowledge graph (separate server — Part 3)</label>
+        <label><input type="radio" name="memory" value="mem0"> + mem0 cloud via MCP (cross-device)</label>
       </div>
       <div>
-        <legend>4. Gateways</legend>
+        <legend>4. Platforms</legend>
+        <p class="hint">Tokens + user allowlists go in <code>~/.hermes/.env</code>.</p>
         <label><input type="checkbox" name="gw_cli" checked> CLI</label>
         <label><input type="checkbox" name="gw_telegram"> Telegram</label>
         <label><input type="checkbox" name="gw_discord"> Discord</label>
         <label><input type="checkbox" name="gw_slack"> Slack</label>
         <label><input type="checkbox" name="gw_email"> Email (IMAP/SMTP)</label>
-        <label><input type="checkbox" name="gw_webhook"> Webhook receiver</label>
       </div>
     </fieldset>
 
@@ -118,21 +117,23 @@
     </fieldset>
 
     <fieldset>
-      <legend>6. Approval layer</legend>
-      <label><input type="radio" name="approval" value="strict" checked> Strict — require approval on every write/exec/send</label>
-      <label><input type="radio" name="approval" value="moderate"> Moderate — auto-approve read; approval on writes</label>
-      <label><input type="radio" name="approval" value="relaxed"> Relaxed — admin-only, trust the CLI</label>
+      <legend>6. Dangerous-command approval</legend>
+      <p class="hint">The dangerous patterns are built into Hermes — this sets the policy (Part 19, Layer 2).</p>
+      <label><input type="radio" name="approval" value="manual" checked> Manual — always prompt on a dangerous command (default)</label>
+      <label><input type="radio" name="approval" value="smart"> Smart — auxiliary LLM auto-approves clearly low-risk, escalates the rest</label>
+      <label><input type="radio" name="approval" value="off"> Off — no prompts (only for disposable, container-isolated boxes)</label>
     </fieldset>
 
     <fieldset class="grid2">
       <div>
         <legend>7. Observability</legend>
-        <label><input type="radio" name="obs" value="none" checked> None (journald only)</label>
-        <label><input type="radio" name="obs" value="langfuse"> Langfuse (self-hosted or cloud)</label>
-        <label><input type="radio" name="obs" value="helicone"> Helicone (cloud proxy)</label>
+        <p class="hint">Wired via env vars / a plugin, not config.yaml (Part 20).</p>
+        <label><input type="radio" name="obs" value="none" checked> None (logs + /usage only)</label>
+        <label><input type="radio" name="obs" value="langfuse"> Langfuse plugin (self-hosted or cloud)</label>
+        <label><input type="radio" name="obs" value="helicone"> Helicone (proxy base_url)</label>
       </div>
       <div>
-        <legend>8. Cron</legend>
+        <legend>8. Cron (written as a cron.yaml stub)</legend>
         <label><input type="checkbox" name="cron_backup" checked> Nightly backup</label>
         <label><input type="checkbox" name="cron_deps" checked> Weekly dep audit</label>
         <label><input type="checkbox" name="cron_cost" checked> Weekly cost report</label>
@@ -168,7 +169,8 @@
 <script>
 /* Simple config generator — emits valid YAML from the form state.
    No frameworks, no build step. Designed to be serve-able from GitHub Pages
-   (or directly from `file://`). */
+   (or directly from `file://`). Output shape matches templates/config/*.yaml,
+   which are verified against the real Hermes schema (Part 19, v0.18). */
 
 function val(name) {
   const el = document.querySelector(`[name="${name}"]:checked`);
@@ -189,46 +191,46 @@ function select(name) {
 const PERSONA_PRESETS = {
   'minimum': {
     default_model: 'anthropic/claude-sonnet-5',
-    memory: 'vector',
-    gateways: { cli: true, telegram: false, discord: false, slack: false, email: false, webhook: false },
+    memory: 'native',
+    gateways: { cli: true, telegram: false, discord: false, slack: false, email: false },
     mcps:     { github: false, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
-    approval: 'moderate',
+    approval: 'manual',
     obs: 'none',
     crons:    { backup: false, deps: false, cost: false, mcp: false },
   },
   'telegram-bot': {
     default_model: 'anthropic/claude-sonnet-5',
-    memory: 'lightrag',
-    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
+    memory: 'native',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
-    approval: 'moderate',
+    approval: 'manual',
     obs: 'none',
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'production': {
     default_model: 'anthropic/claude-sonnet-5',
     memory: 'lightrag',
-    gateways: { cli: true, telegram: true, discord: true, slack: true, email: true, webhook: true },
+    gateways: { cli: true, telegram: true, discord: true, slack: true, email: true },
     mcps:     { github: true, postgres: true, cloudflare: true, linear: true, filesystem: true, mem0: false },
-    approval: 'strict',
+    approval: 'manual',
     obs: 'langfuse',
     crons:    { backup: true, deps: true, cost: true, mcp: true },
   },
   'cost-optimized': {
     default_model: 'google/gemini-3.1-flash',
-    memory: 'lightrag',
-    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: false },
+    memory: 'native',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: true, mem0: false },
-    approval: 'moderate',
+    approval: 'manual',
     obs: 'none',
     crons:    { backup: true, deps: false, cost: true, mcp: false },
   },
   'security-hardened': {
     default_model: 'anthropic/claude-sonnet-5',
-    memory: 'vector',
-    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false, webhook: true },
+    memory: 'native',
+    gateways: { cli: true, telegram: true, discord: false, slack: false, email: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: false, mem0: false },
-    approval: 'strict',
+    approval: 'manual',
     obs: 'langfuse',
     crons:    { backup: true, deps: true, cost: true, mcp: true },
   },
@@ -261,9 +263,21 @@ function applyPersona(persona) {
   setStatus(`Loaded "${persona}" preset — tweak any field, then Generate.`);
 }
 
+const PROVIDER_KEYS = {
+  anthropic: 'ANTHROPIC_API_KEY',
+  google:    'GOOGLE_API_KEY',
+  openai:    'OPENAI_API_KEY',
+  moonshot:  'MOONSHOT_API_KEY',
+  zai:       'ZAI_API_KEY',
+  cerebras:  'CEREBRAS_API_KEY',
+  xai:       'XAI_API_KEY',
+};
+
 function generate() {
   const persona = val('persona');
-  const model = select('default_model');
+  const modelFull = select('default_model');
+  const [provider, ...modelParts] = modelFull.split('/');
+  const model = modelParts.join('/');
   const memory = val('memory');
   const approval = val('approval');
   const obs = val('obs');
@@ -274,7 +288,6 @@ function generate() {
     discord: on('gw_discord'),
     slack: on('gw_slack'),
     email: on('gw_email'),
-    webhook: on('gw_webhook'),
   };
   const mcps = {
     github: on('mcp_github'),
@@ -291,131 +304,188 @@ function generate() {
     mcp: on('cron_mcp'),
   };
 
+  const hardened = persona === 'security-hardened';
   const lines = [];
   lines.push(`# Generated ${new Date().toISOString()} by the Hermes Config Wizard`);
-  lines.push(`# https://onlyterp.github.io/hermes-optimization-guide/wizard/`);
-  lines.push(`# Persona: ${persona}`);
+  lines.push(`# https://onlyterp.github.io/hermes-optimization-guide/docs/wizard/`);
+  lines.push(`# Persona: ${persona} — schema verified against Part 19 (v0.18)`);
   lines.push(`# Pair with ~/.hermes/.env — env vars referenced as $\{VAR\}.`);
   lines.push(``);
-  lines.push(`version: 1`);
-  lines.push(``);
-  lines.push(`models:`);
-  lines.push(`  default: ${model}`);
-  lines.push(`  providers:`);
-  const providerKeys = {
-    anthropic: 'ANTHROPIC_API_KEY',
-    google:    'GOOGLE_API_KEY',
-    openai:    'OPENAI_API_KEY',
-    moonshot:  'MOONSHOT_API_KEY',
-    zai:       'ZAI_API_KEY',
-    cerebras:  'CEREBRAS_API_KEY',
-    xai:       'XAI_API_KEY',
-  };
-  // Providers required by each persona's routing rules (must be superset of
-  // models referenced in routing blocks later in this function).
-  const EXTRA_PROVIDERS = {
-    'cost-optimized': ['anthropic', 'google', 'moonshot', 'cerebras'],
-    'production':     ['anthropic', 'google', 'xai'],
-    'security-hardened': ['anthropic'],
-  };
-  const providersToEmit = new Set([model.split('/')[0]]);
-  (EXTRA_PROVIDERS[persona] || []).forEach(p => providersToEmit.add(p));
-  // LightRAG uses google/gemini-3.1-flash (LLM) + openai/text-embedding-3-small
-  // (embedding) — make sure both providers are configured.
-  if (memory === 'lightrag') { providersToEmit.add('google'); providersToEmit.add('openai'); }
-  // mem0 is a cloud service with its own key; no extra LLM provider needed here.
-  [...providersToEmit].forEach(p => {
-    const envVar = providerKeys[p] || 'API_KEY';
-    lines.push(`    ${p}:`);
-    lines.push(`      api_key: "$\{${envVar}\}"`);
-  });
-  lines.push(``);
 
-  // Gateways
-  lines.push(`gateways:`);
-  if (gateways.cli) lines.push(`  cli:\n    enabled: true`);
-  if (gateways.telegram) {
-    lines.push(`  telegram:`);
-    lines.push(`    enabled: true`);
-    lines.push(`    bots:`);
-    lines.push(`      admin:`);
-    lines.push(`        token: "$\{TELEGRAM_ADMIN_BOT_TOKEN\}"`);
-    lines.push(`        allowed_user_ids:`);
-    lines.push(`          - $\{TELEGRAM_OWNER_ID\}`);
-    lines.push(`        trust_label: high`);
-  }
-  if (gateways.discord) {
-    lines.push(`  discord:`);
-    lines.push(`    enabled: true`);
-    lines.push(`    bot_token: "$\{DISCORD_BOT_TOKEN\}"`);
-    lines.push(`    trust_label: medium`);
-  }
-  if (gateways.slack) {
-    lines.push(`  slack:`);
-    lines.push(`    enabled: true`);
-    lines.push(`    signing_secret: "$\{SLACK_SIGNING_SECRET\}"`);
-    lines.push(`    bot_token: "$\{SLACK_BOT_TOKEN\}"`);
-  }
-  if (gateways.email) {
-    lines.push(`  email:`);
-    lines.push(`    enabled: true`);
-    lines.push(`    imap:`);
-    lines.push(`      host: imap.gmail.com`);
-    lines.push(`      user: "$\{EMAIL_USER\}"`);
-    lines.push(`      password: "$\{EMAIL_APP_PASSWORD\}"`);
-    lines.push(`    smtp:`);
-    lines.push(`      host: smtp.gmail.com`);
-    lines.push(`      user: "$\{EMAIL_USER\}"`);
-    lines.push(`      password: "$\{EMAIL_APP_PASSWORD\}"`);
-    lines.push(`    trust_label: untrusted`);
-  }
-  if (gateways.webhook) {
-    lines.push(`  webhook:`);
-    lines.push(`    enabled: true`);
-    lines.push(`    require_signature: true`);
-    lines.push(`    max_body_bytes: 1048576`);
-  }
-  lines.push(``);
-
-  // Memory
-  if (memory && memory !== 'none') {
-    lines.push(`memory:`);
-    lines.push(`  backend: ${memory}`);
-    if (memory === 'vector') {
-      lines.push(`  vector:`);
-      lines.push(`    driver: qdrant`);
-      lines.push(`    path: ~/.hermes/vector`);
-    } else if (memory === 'lightrag') {
-      lines.push(`  lightrag:`);
-      lines.push(`    working_dir: ~/.hermes/lightrag`);
-      lines.push(`    llm_model: google/gemini-3.1-flash`);
-      lines.push(`    embedding_model: openai/text-embedding-3-small`);
-    } else if (memory === 'mem0') {
-      lines.push(`  mem0:`);
-      lines.push(`    api_key: "$\{MEM0_API_KEY\}"`);
-    }
+  // ----- profiles (security-hardened) — mirrors templates/config/security-hardened.yaml
+  if (hardened) {
+    lines.push(`# Default profile: quarantine. Untrusted-facing surfaces get the`);
+    lines.push(`# locked-down posture; the trusted profile is opt-in (admin bot / CLI).`);
+    lines.push(`profile: quarantine`);
+    lines.push(``);
+    lines.push(`profiles:`);
+    lines.push(`  quarantine:`);
+    lines.push(`    # Untrusted-input-facing: cheap model, no MCP servers, approval on everything.`);
+    lines.push(`    model: gemini-3.1-flash`);
+    lines.push(`    provider: google`);
+    lines.push(`    mcp_servers: []`);
+    lines.push(`    approvals:`);
+    lines.push(`      mode: manual`);
+    lines.push(`      timeout: 60`);
+    lines.push(`      cron_mode: deny`);
+    lines.push(`  trusted:`);
+    lines.push(`    model: ${model}`);
+    lines.push(`    provider: ${provider}`);
     lines.push(``);
   }
 
-  // MCP servers
-  const anyMcp = Object.values(mcps).some(Boolean);
+  // ----- primary model
+  lines.push(`# Primary model — drives the tool-calling loop.`);
+  lines.push(`model: ${model}`);
+  lines.push(`provider: ${provider}`);
+  lines.push(``);
+
+  // ----- providers
+  const providersToEmit = new Set([provider]);
+  if (hardened) providersToEmit.add('google');           // quarantine profile model
+  if (persona === 'cost-optimized') { providersToEmit.add('cerebras'); providersToEmit.add('google'); }
+  lines.push(`providers:`);
+  [...providersToEmit].forEach(p => {
+    const envVar = PROVIDER_KEYS[p] || 'API_KEY';
+    lines.push(`  ${p}:`);
+    lines.push(`    api_key: "$\{${envVar}\}"`);
+    if (p === 'cerebras') lines.push(`    base_url: https://api.cerebras.ai/v1`);
+    if (obs === 'helicone' && p === 'anthropic') {
+      lines.push(`    base_url: https://anthropic.helicone.ai`);
+      lines.push(`    headers:`);
+      lines.push(`      Helicone-Auth: Bearer $\{HELICONE_API_KEY\}`);
+    }
+    if (obs === 'helicone' && p === 'openai') {
+      lines.push(`    base_url: https://oai.helicone.ai/v1`);
+      lines.push(`    headers:`);
+      lines.push(`      Helicone-Auth: Bearer $\{HELICONE_API_KEY\}`);
+    }
+  });
+  lines.push(``);
+
+  if (providersToEmit.has('anthropic')) {
+    lines.push(`# Anthropic prompt caching — stable prefixes are auto-marked cacheable.`);
+    lines.push(`prompt_caching:`);
+    lines.push(`  cache_ttl: "5m"          # "5m" or "1h" — the only two Anthropic tiers`);
+    lines.push(``);
+  }
+
+  if (persona === 'cost-optimized') {
+    lines.push(`# Side-tasks off the primary — where silent cost bloat lives (Part 20, Rule 1).`);
+    lines.push(`auxiliary_models:`);
+    lines.push(`  compression:`);
+    lines.push(`    provider: cerebras`);
+    lines.push(`    model: qwen-3-32b`);
+    lines.push(`  web_extract:`);
+    lines.push(`    provider: cerebras`);
+    lines.push(`    model: qwen-3-32b`);
+    lines.push(`  vision:`);
+    lines.push(`    provider: google`);
+    lines.push(`    model: gemini-3.1-flash`);
+    lines.push(``);
+    lines.push(`compression:`);
+    lines.push(`  enabled: true`);
+    lines.push(`  threshold: 0.35          # compress earlier than the 0.50 default`);
+    lines.push(`  target_ratio: 0.20`);
+    lines.push(`  protect_last_n: 12`);
+    lines.push(``);
+  }
+
+  // ----- platforms — env-based wiring per Part 4 / Part 19 Layer 1
+  const envLines = [];
+  if (gateways.telegram) {
+    envLines.push(`#   TELEGRAM_BOT_TOKEN=<from @BotFather>`);
+    envLines.push(`#   TELEGRAM_ALLOWED_USERS=<your-numeric-user-id>`);
+  }
+  if (gateways.discord) {
+    envLines.push(`#   DISCORD_BOT_TOKEN=...`);
+    envLines.push(`#   DISCORD_ALLOWED_USERS=...`);
+  }
+  if (gateways.slack) {
+    envLines.push(`#   SLACK_BOT_TOKEN=...  SLACK_SIGNING_SECRET=...`);
+    envLines.push(`#   SLACK_ALLOWED_USERS=U01ABC123`);
+  }
+  if (gateways.email) {
+    envLines.push(`#   EMAIL_ALLOWED_USERS=you@example.com   (+ IMAP/SMTP creds)`);
+  }
+  if (envLines.length) {
+    lines.push(`# ------------------------------------------------------------`);
+    lines.push(`# Platform tokens + user allowlists live in ~/.hermes/.env:`);
+    envLines.forEach(l => lines.push(l));
+    lines.push(`# Hermes is default-deny — no allowlist means nobody gets in.`);
+    lines.push(`# Never set GATEWAY_ALLOW_ALL_USERS on anything public.`);
+    lines.push(`# ------------------------------------------------------------`);
+    lines.push(``);
+  }
+
+  if (hardened && gateways.telegram) {
+    lines.push(`# Per-bot profile routing — the public bot lands in quarantine;`);
+    lines.push(`# only the owner-allowlisted admin bot reaches trusted.`);
+    lines.push(`telegram:`);
+    lines.push(`  bots:`);
+    lines.push(`    admin:`);
+    lines.push(`      token: $\{TELEGRAM_ADMIN_BOT_TOKEN\}`);
+    lines.push(`      profile: trusted`);
+    lines.push(`    public:`);
+    lines.push(`      token: $\{TELEGRAM_PUBLIC_BOT_TOKEN\}`);
+    lines.push(`      profile: quarantine`);
+    lines.push(`      default_skill: telegram-triage`);
+    lines.push(``);
+  }
+  if (gateways.discord) {
+    lines.push(`discord:`);
+    lines.push(`  require_mention: true    # only respond when @mentioned in channels`);
+    lines.push(``);
+  }
+  if (gateways.telegram || gateways.discord || gateways.slack) {
+    lines.push(`group_sessions_per_user: true`);
+    lines.push(``);
+  }
+
+  // ----- memory
+  if (memory === 'lightrag') {
+    lines.push(`# Native memory (SQLite) is on by default — nothing to configure.`);
+    lines.push(`# LightRAG is a SEPARATE server + skill, not a config.yaml key:`);
+    lines.push(`#   lightrag-server --host 127.0.0.1 --port 9623`);
+    lines.push(`# then install the lightrag query skill. Full setup: Part 3.`);
+    lines.push(``);
+  } else if (memory === 'native') {
+    lines.push(`# Memory: native (SQLite, local-first) — zero config needed (Part 7).`);
+    lines.push(``);
+  }
+
+  // ----- MCP servers — real schema: command/args/env/enabled/timeout + tools.include/exclude
+  const wantMem0 = mcps.mem0 || memory === 'mem0';
+  const anyMcp = Object.values(mcps).some(Boolean) || wantMem0;
   if (anyMcp) {
+    lines.push(`# MCP servers — no trust:/allow_sampling: knobs exist; the controls are`);
+    lines.push(`# tool filtering (tools.include), credential scoping (env:), and review`);
+    lines.push(`# before install (Part 19, Layer 5).`);
     lines.push(`mcp_servers:`);
     if (mcps.github) {
       lines.push(`  github:`);
       lines.push(`    command: npx`);
       lines.push(`    args: [-y, "@modelcontextprotocol/server-github"]`);
       lines.push(`    env:`);
-      lines.push(`      GITHUB_PERSONAL_ACCESS_TOKEN: "$\{GITHUB_PAT\}"`);
-      lines.push(`    trust: trusted`);
-      lines.push(`    allow_sampling: false`);
+      lines.push(`      GITHUB_PERSONAL_ACCESS_TOKEN: "$\{GITHUB_PAT\}"   # scoped, read-mostly PAT`);
+      lines.push(`    enabled: true`);
+      lines.push(`    timeout: 120`);
+      lines.push(`    tools:`);
+      if (hardened) {
+        lines.push(`      include: [get_pull_request, list_pull_requests, get_issue]`);
+      } else {
+        lines.push(`      include: []        # empty = all; list exactly the tools you audited`);
+      }
+      lines.push(`      exclude: []`);
     }
     if (mcps.postgres) {
       lines.push(`  postgres:`);
       lines.push(`    command: npx`);
       lines.push(`    args: [-y, "@modelcontextprotocol/server-postgres", "$\{DATABASE_URL\}"]`);
-      lines.push(`    trust: trusted`);
-      lines.push(`    allow_sampling: false`);
+      lines.push(`    enabled: true`);
+      lines.push(`    tools:`);
+      lines.push(`      include: [query]   # read-only surface`);
+      lines.push(`      exclude: []`);
     }
     if (mcps.cloudflare) {
       lines.push(`  cloudflare:`);
@@ -423,126 +493,90 @@ function generate() {
       lines.push(`    args: [-y, "@cloudflare/mcp-server-cloudflare"]`);
       lines.push(`    env:`);
       lines.push(`      CLOUDFLARE_API_TOKEN: "$\{CLOUDFLARE_API_TOKEN\}"`);
-      lines.push(`    trust: trusted`);
+      lines.push(`    enabled: true`);
     }
     if (mcps.linear) {
       lines.push(`  linear:`);
       lines.push(`    url: https://mcp.linear.app/mcp`);
       lines.push(`    # OAuth is completed by the MCP client on first connection.`);
-      lines.push(`    trust: trusted`);
-      lines.push(`    allow_sampling: false`);
+      lines.push(`    enabled: true`);
     }
     if (mcps.filesystem) {
       lines.push(`  filesystem:`);
       lines.push(`    command: npx`);
       lines.push(`    args: [-y, "@modelcontextprotocol/server-filesystem", "/home/hermes/scratch"]`);
-      lines.push(`    trust: trusted`);
+      lines.push(`    enabled: true`);
     }
-    if (mcps.mem0) {
+    if (wantMem0) {
       lines.push(`  mem0:`);
       lines.push(`    command: npx`);
       lines.push(`    args: [-y, "@mem0ai/mcp-server-mem0"]`);
       lines.push(`    env:`);
       lines.push(`      MEM0_API_KEY: "$\{MEM0_API_KEY\}"`);
+      lines.push(`    enabled: true`);
     }
     lines.push(``);
   }
 
-  // Approval
-  lines.push(`security:`);
-  lines.push(`  approval:`);
-  if (approval === 'strict') {
-    lines.push(`    auto_approve_read: false`);
-    lines.push(`    require_approval:`);
-    lines.push(`      - { tool: "*", actions: [exec, write, send, create, update, delete, post] }`);
-    lines.push(`    approval_timeout: 300`);
-  } else if (approval === 'moderate') {
-    lines.push(`    auto_approve_read: true`);
-    lines.push(`    require_approval:`);
-    lines.push(`      - { tool: github, actions: [create_pr, merge_pr, delete_branch] }`);
-    lines.push(`      - { tool: terminal, actions: [exec] }`);
-    lines.push(`      - { tool: email, actions: [send] }`);
-    lines.push(`      - { tool: any_mcp, sampling: true }`);
+  // ----- approvals — real top-level block (Part 19, Layer 2)
+  lines.push(`# Dangerous-command approval. The patterns are built into Hermes`);
+  lines.push(`# (tools/approval.py) — you don't write regex here.`);
+  lines.push(`approvals:`);
+  if (approval === 'off') {
+    lines.push(`  mode: off              # ⚠ equivalent to --yolo; disposable/container boxes only`);
   } else {
-    lines.push(`    auto_approve_read: true`);
-    lines.push(`    require_approval: []`);
+    lines.push(`  mode: ${approval}${approval === 'manual' ? '            # always prompt on a dangerous command' : '             # auxiliary LLM triages; uncertain middle still prompts'}`);
   }
-  lines.push(`    denylist:`);
-  lines.push(`      - 'rm\\s+-rf\\s+/'`);
-  lines.push(`      - 'curl\\s+.+\\|\\s*(sh|bash)'`);
-  lines.push(`      - '169\\.254\\.169\\.254'`);
-  lines.push(`      - 'cat\\s+~?/?\\.?ssh/'`);
-
-  // Persona-specific security blocks
-  if (persona === 'security-hardened') {
-    lines.push(`  mcp:`);
-    lines.push(`    default_trust: untrusted`);
-    lines.push(`    require_allowlist: true`);
-    lines.push(`    allow_sampling: false`);
-  } else if (anyMcp) {
-    lines.push(`  mcp:`);
-    lines.push(`    default_trust: trusted`);
-    lines.push(`    allow_sampling: false`);
-  }
-
-  if (persona === 'security-hardened' || persona === 'production') {
-    lines.push(`  webhook:`);
-    lines.push(`    max_body_bytes: 1048576`);
-    lines.push(`    require_signature: true`);
-    lines.push(`  redaction:`);
-    lines.push(`    memory_write: true`);
-    lines.push(`    log: true`);
-    lines.push(``);
-    lines.push(`profiles:`);
-    lines.push(`  quarantine:`);
-    lines.push(`    # Low-trust gateways route here: no memory writes, no MCP, read-only tools`);
-    lines.push(`    allow_memory_write: false`);
-    lines.push(`    allow_send: false`);
-    lines.push(`    mcp_servers: []`);
-    lines.push(`    toolsets: [classify]`);
-  }
+  lines.push(`  timeout: 60            # fail-closed deny on timeout`);
+  lines.push(`  cron_mode: deny        # cron jobs never auto-approve dangerous commands`);
+  lines.push(``);
+  lines.push(`# "Always approve" descriptions accumulate here when you answer "always".`);
+  lines.push(`command_allowlist: []`);
+  lines.push(``);
+  lines.push(`security:`);
+  lines.push(`  redact_secrets: true   # default on — keep it on`);
   lines.push(``);
 
-  // Cost-routing rules for cost-optimized persona
-  if (persona === 'cost-optimized') {
-    lines.push(`routing:`);
-    lines.push(`  rules:`);
-    lines.push(`    - { when: "task.type == 'classify'",       use: "cerebras/qwen-3-32b" }`);
-    lines.push(`    - { when: "context.tokens > 200000",        use: "google/gemini-3.1-pro" }`);
-    lines.push(`    - { when: "task.type == 'code'",            use: "moonshot/kimi-k2.6" }`);
-    lines.push(`    - { when: "task.explicit_opt_in == 'sonnet'", use: "anthropic/claude-sonnet-5" }`);
-    lines.push(`    - { else: true,                              use: "google/gemini-3.1-flash" }`);
+  if (hardened) {
+    lines.push(`# OS-level isolation — the only real boundary (Part 19). LLM-emitted`);
+    lines.push(`# shell + file ops run inside a container; the agent can't read .env.`);
+    lines.push(`# Note: container backends intentionally SKIP dangerous-command approval.`);
+    lines.push(`terminal:`);
+    lines.push(`  backend: docker`);
+    lines.push(`  docker_image: nikolaik/python-nodejs:python3.11-nodejs20`);
+    lines.push(`  cwd: /workspace`);
+    lines.push(`  docker_mount_cwd_to_workspace: false`);
+    lines.push(`  container_persistent: false`);
     lines.push(``);
   }
 
-  // Telemetry
+  // ----- observability — env/plugin wiring, not a config.yaml block (Part 20)
   if (obs === 'langfuse') {
-    lines.push(`telemetry:`);
-    lines.push(`  level: info`);
-    lines.push(`  exporters:`);
-    lines.push(`    langfuse:`);
-    lines.push(`      public_key: "$\{LANGFUSE_PUBLIC_KEY\}"`);
-    lines.push(`      secret_key: "$\{LANGFUSE_SECRET_KEY\}"`);
-    lines.push(`      host: "$\{LANGFUSE_HOST\}"`);
+    lines.push(`# Observability: Langfuse is a bundled plugin, configured via env —`);
+    lines.push(`# there is no telemetry: block in config.yaml (Part 20).`);
+    lines.push(`#   hermes plugins enable observability/langfuse`);
+    lines.push(`# then in ~/.hermes/.env:`);
+    lines.push(`#   HERMES_LANGFUSE_PUBLIC_KEY=pk-lf-...`);
+    lines.push(`#   HERMES_LANGFUSE_SECRET_KEY=sk-lf-...`);
+    lines.push(`#   HERMES_LANGFUSE_BASE_URL=https://cloud.langfuse.com`);
     lines.push(``);
   } else if (obs === 'helicone') {
-    lines.push(`telemetry:`);
-    lines.push(`  level: info`);
-    lines.push(`  exporters:`);
-    lines.push(`    helicone:`);
-    lines.push(`      api_key: "$\{HELICONE_API_KEY\}"`);
+    lines.push(`# Observability: Helicone rides on the provider base_url + headers`);
+    lines.push(`# emitted above. Set HELICONE_API_KEY in ~/.hermes/.env.`);
     lines.push(``);
   }
 
-  // Cron
+  // ----- cron — separate file
   const cronList = [];
-  if (crons.backup) cronList.push(`  - { name: nightly-backup,     schedule: "0 3 * * *", task: "/nightly-backup s3://backups/hermes/ 30" }`);
-  if (crons.deps)   cronList.push(`  - { name: weekly-dep-audit,   schedule: "0 9 * * 1", task: "/weekly-dep-audit severity_floor=high" }`);
-  if (crons.cost)   cronList.push(`  - { name: weekly-cost-report, schedule: "0 9 * * 1", task: "/cost-report window=7d format=markdown" }`);
-  if (crons.mcp)    cronList.push(`  - { name: weekly-mcp-audit,   schedule: "0 10 * * 1", task: "/audit-mcp" }`);
+  if (crons.backup) cronList.push(`#   - name: nightly-backup\n#     schedule: "0 3 * * *"\n#     task: /nightly-backup local 30`);
+  if (crons.deps)   cronList.push(`#   - name: weekly-dep-audit\n#     schedule: "0 9 * * 1"\n#     task: /weekly-dep-audit severity_floor=high`);
+  if (crons.cost)   cronList.push(`#   - name: weekly-cost-report\n#     schedule: "0 9 * * 1"\n#     task: /cost-report window=7d format=markdown`);
+  if (crons.mcp)    cronList.push(`#   - name: weekly-mcp-audit\n#     schedule: "0 10 * * 1"\n#     task: /audit-mcp`);
   if (cronList.length) {
-    lines.push(`cron:`);
-    cronList.forEach(l => lines.push(l));
+    lines.push(`# Scheduled skills go in ~/.hermes/cron.yaml (separate file):`);
+    cronList.forEach(l => l.split('\n').forEach(x => lines.push(x)));
+    lines.push(`# approvals.cron_mode: deny blocks any cron task that trips a dangerous`);
+    lines.push(`# command — keep cron skills read-only (Part 19).`);
     lines.push(``);
   }
 

@@ -2,6 +2,22 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-07-03 — Accuracy & consistency maintenance pass
+
+### Fixed
+- **Real-schema alignment sweep**: config examples across the guide now match the actual Hermes v0.18 schema documented in [Part 19](./part19-security-playbook.md) (`tools.include/exclude`, `approvals:`, `command_allowlist:`, real `compression:` keys) — the remaining fictional keys (`security.approval.*`, per-MCP `trust:`, `routing:` blocks, `telemetry.alerts`) were replaced or rewritten as prose pointing at Part 19.
+- Benchmark claims corrected to the actual **13-model** × 5-task matrix, and the benchmarks docs now ship a real reproduction path instead of the nonexistent `hermes evals` subcommand.
+- Canonical install URL (`https://hermes-agent.nousresearch.com/install.sh`) everywhere; stray `install.hermes.nous.ai` references removed.
+- Platform count standardized on **25+** (README architecture diagram said 22+).
+- Infra template fixes (systemd / compose / Caddy / bootstrap script consistency pass).
+- Dead anchor in `ECOSYSTEM.md` → Part 12 dashboard-plugins section; archived reference MCP servers flagged as legacy and `server-github` swapped for GitHub's official `github/github-mcp-server`.
+- `CODE_OF_CONDUCT.md` enforcement contact moved from a personal email to GitHub's private-report mechanism.
+
+### Changed
+- **README slimmed**: Parts 1–5 no longer live inline — each is a short summary linking to its `partN-*.md` file (the SOUL.md personality section stays in the README). The two divergences were reconciled into the part files (fallback model `openrouter/anthropic/claude-sonnet-5`, config key `compression.enabled`).
+- **Translations synced**: `README-zh.md` and `README-ja.md` brought current to v0.18.0 / 27 parts with condensed v0.17 + v0.18 highlights and a "last synced" date.
+- CI cross-link checking now also validates heading anchors (see [ROADMAP](./ROADMAP.md)).
+
 ## 2026-07-01 — Hermes v0.17.0 "Reach" + v0.18.0 "Judgment" Refresh
 
 ### Added
@@ -182,7 +198,7 @@ Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepa
 - **`templates/cron/production-crons.yaml`** — all recommended scheduled tasks
 - **`scripts/vps-bootstrap.sh`** — fresh Hetzner CX22 → production Hermes in ~10 minutes
 - **`diagrams/architecture.md`** — 6 Mermaid diagrams (top-level, MCP, delegation, sandbox sync, observability, security)
-- **`benchmarks/README.md` + `matrix.yaml`** — reproducible cost/latency table across 12 models × 5 tasks
+- **`benchmarks/README.md` + `matrix.yaml`** — reproducible cost/latency table across the model × task matrix (13 models × 5 tasks as of 2026-07)
 - **`ECOSYSTEM.md`** — canonical directory of MCP servers, coding agents, dashboard plugins, observability tools
 - **`ROADMAP.md`** — what's coming next; invites contribution
 - **`CONTRIBUTING.md`**, **`CHANGELOG.md`**, **`CODE_OF_CONDUCT.md`** — standard repo hygiene

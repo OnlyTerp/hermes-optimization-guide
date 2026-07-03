@@ -110,7 +110,7 @@ curl -fsSL https://langfuse.com/docker-compose.yml -o langfuse.yml
 docker compose -f langfuse.yml up -d
 ```
 
-Point `host:` at your domain. Hermes sends OTLP over HTTPS, so Caddy with Let's Encrypt just works.
+Point `HERMES_LANGFUSE_BASE_URL` at your domain. Hermes sends OTLP over HTTPS, so Caddy with Let's Encrypt just works.
 
 ### What You See
 

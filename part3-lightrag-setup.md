@@ -79,10 +79,13 @@ LLM_MODEL=kimi-k2.6
 LLM_BINDING_HOST=https://api.moonshot.ai/v1
 LLM_BINDING_API_KEY=<your-moonshot-api-key>
 
-# Embedding model (for vector storage)
-EMBEDDING_BINDING=fireworks
+# Embedding model (for vector storage) — Fireworks is OpenAI-compatible,
+# so use the openai binding with the Fireworks base URL
+EMBEDDING_BINDING=openai
+EMBEDDING_BINDING_HOST=https://api.fireworks.ai/inference/v1
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
-EMBEDDING_API_KEY=<your-fireworks-api-key>
+EMBEDDING_DIM=4096
+EMBEDDING_BINDING_API_KEY=<your-fireworks-api-key>
 ```
 
 **Option B — Cerebras GPT OSS 120B + Fireworks (speed default):**
@@ -94,10 +97,12 @@ LLM_MODEL=gpt-oss-120b
 LLM_BINDING_HOST=https://api.cerebras.ai/v1
 LLM_BINDING_API_KEY=<your-cerebras-api-key>
 
-# Embedding model (for vector storage)
-EMBEDDING_BINDING=fireworks
+# Embedding model (for vector storage) — same openai binding trick as Option A
+EMBEDDING_BINDING=openai
+EMBEDDING_BINDING_HOST=https://api.fireworks.ai/inference/v1
 EMBEDDING_MODEL=accounts/fireworks/models/qwen3-embedding-8b
-EMBEDDING_API_KEY=<your-fireworks-api-key>
+EMBEDDING_DIM=4096
+EMBEDDING_BINDING_API_KEY=<your-fireworks-api-key>
 ```
 
 **Option C — local Ollama (free, quality varies):**
@@ -116,7 +121,7 @@ EMBEDDING_MODEL=nomic-embed-text
 
 > **Security tip:** Set restrictive permissions on this file: `chmod 600 ~/.hermes/lightrag/.env`
 
-> **Where to get API keys:** Kimi/Moonshot uses [platform.kimi.ai](https://platform.kimi.ai) and the international base URL `https://api.moonshot.ai/v1`; Cerebras uses [cloud.cerebras.ai](https://cloud.cerebras.ai); Fireworks uses [fireworks.ai](https://fireworks.ai).
+> **Where to get API keys:** Kimi/Moonshot uses [platform.moonshot.ai](https://platform.moonshot.ai) and the international base URL `https://api.moonshot.ai/v1`; Cerebras uses [cloud.cerebras.ai](https://cloud.cerebras.ai); Fireworks uses [fireworks.ai](https://fireworks.ai).
 
 ### Entity Extraction Model — What to Use
 
@@ -150,7 +155,7 @@ The server starts on `http://localhost:9623` with:
 - **Web UI** at `http://localhost:9623/webui` for browsing the knowledge graph
 - **Health check** at `http://localhost:9623/health`
 
-> **Security warning:** The LightRAG REST API has **no built-in authentication**. Always bind to `127.0.0.1` (localhost only) — never `0.0.0.0`. If you need remote access, put it behind a reverse proxy (nginx, Caddy) with authentication, or use SSH tunneling / Tailscale / WireGuard. Anyone who can reach this port can query, ingest, or delete your entire knowledge graph.
+> **Security warning:** Lock the API down before you feed it anything private. Set `LIGHTRAG_API_KEY=<random-string>` in the `.env` — the server then requires an `X-API-Key` header on every REST call — and set `AUTH_ACCOUNTS` (`user:password`), `TOKEN_SECRET`, and `TOKEN_EXPIRE_HOURS` to put JWT login in front of the web UI. Even with keys set, bind to `127.0.0.1` (localhost only) — never `0.0.0.0`. If you need remote access, put it behind a reverse proxy (nginx, Caddy) with authentication, or use SSH tunneling / Tailscale / WireGuard. Anyone who can reach an unauthenticated port can query, ingest, or delete your entire knowledge graph.
 
 ### Run as a Background Service
 
@@ -416,6 +421,12 @@ Once the server is running, open `http://localhost:9623/webui` in your browser. 
 - **Visualize** entity relationships as a network graph
 - **Browse** all entities and their connections
 - **Inspect** raw chunks and their source documents
+
+Here's what a populated LightRAG knowledge graph looks like in the Web UI (screenshot from the [LightRAG project](https://github.com/HKUDS/LightRAG)):
+
+![LightRAG Knowledge Graph Web UI](./screenshots/lightrag_webui.png)
+
+*The Web UI showing entity extraction, graph relationships, and document indexing. Once you ingest your own data, your graph fills up with your specific entities — people, projects, decisions, hardware, configs — all connected by the relationships LightRAG extracts automatically.*
 
 ---
 

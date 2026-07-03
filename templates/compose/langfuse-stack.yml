@@ -4,15 +4,13 @@
 # Spins up Langfuse (web + worker), Postgres, Redis, ClickHouse, MinIO.
 # Paired with a Caddyfile (templates/caddy/Caddyfile) to expose https.
 #
-# Usage:
-#   cp .env.langfuse.example .env.langfuse
+# Usage (from the repo root):
+#   cp templates/compose/.env.langfuse.example .env.langfuse
 #   # edit .env.langfuse (generate fresh secrets!)
 #   docker compose -f templates/compose/langfuse-stack.yml --env-file .env.langfuse up -d
 #
 # Recommended sizing: 4GB RAM, 2 vCPU minimum. Hetzner CX22 works.
 # ------------------------------------------------------------
-
-version: "3.8"
 
 services:
   langfuse-web:
@@ -22,6 +20,7 @@ services:
       postgres: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
       minio: { condition: service_healthy }
+      createbuckets: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
     ports:
       - "127.0.0.1:3000:3000"
@@ -51,6 +50,7 @@ services:
       postgres: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
       minio: { condition: service_healthy }
+      createbuckets: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
@@ -98,7 +98,7 @@ services:
       retries: 20
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
     restart: unless-stopped
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
@@ -107,17 +107,37 @@ services:
     volumes:
       - miniodata:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      # Current MinIO images ship no curl; `mc ready` is the supported probe.
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # One-shot: create the `langfuse` bucket, then exit 0.
+  createbuckets:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio: { condition: service_healthy }
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+      mc mb --ignore-existing local/langfuse
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    # Password comes from the environment, not argv — keeps it out of `ps`
+    # and `docker inspect`'s Cmd.
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["/bin/sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 5s
       timeout: 5s
       retries: 10

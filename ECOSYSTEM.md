@@ -7,11 +7,11 @@ The canonical "where do I find X for Hermes" directory. Maintained alongside the
 ## MCP Servers Worth Installing
 
 ### Official / reference
-- [`@modelcontextprotocol/server-github`](https://www.npmjs.com/package/@modelcontextprotocol/server-github) — PRs, issues, code search, Actions
+- [`github/github-mcp-server`](https://github.com/github/github-mcp-server) — GitHub's official server: PRs, issues, code search, Actions (replaces the archived `@modelcontextprotocol/server-github`)
 - [`@modelcontextprotocol/server-filesystem`](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) — read/write to scoped directories
-- [`@modelcontextprotocol/server-postgres`](https://www.npmjs.com/package/@modelcontextprotocol/server-postgres) — read-only SQL
+- [`@modelcontextprotocol/server-postgres`](https://www.npmjs.com/package/@modelcontextprotocol/server-postgres) — read-only SQL *(archived/legacy — reference only; prefer a vendor Postgres MCP such as Supabase's)*
 - [`@modelcontextprotocol/server-sqlite`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite) — local SQLite
-- [`@modelcontextprotocol/server-puppeteer`](https://www.npmjs.com/package/@modelcontextprotocol/server-puppeteer) — headless browser automation
+- [`@modelcontextprotocol/server-puppeteer`](https://www.npmjs.com/package/@modelcontextprotocol/server-puppeteer) — headless browser automation *(archived/legacy — prefer Browserbase or Playwright MCP)*
 - [`@modelcontextprotocol/server-memory`](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) — lightweight KV memory
 - [`@modelcontextprotocol/server-google-drive`](https://www.npmjs.com/package/@modelcontextprotocol/server-gdrive) — Drive read
 
@@ -64,7 +64,7 @@ See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.m
 - `hermes-dashboard-langfuse` — inline Langfuse traces for the current session
 - `hermes-dashboard-costs` — per-provider / per-skill cost chart
 
-(Community-maintained; see [Part 12](./part12-web-dashboard.md#dashboard-plugins).)
+(Community-maintained; see [Part 12](./part12-web-dashboard.md#dashboard-plugins-extend-the-ui).)
 
 ---
 

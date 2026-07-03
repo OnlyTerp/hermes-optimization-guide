@@ -28,7 +28,7 @@
                     │                ├── Ollama (GPU box)  │
                     │                ├── LightRAG          │
                     │                ├── Langfuse (self)   │
-                    │                └── Dashboard :8765   │
+                    │                └── Dashboard :9119   │
                     │                                      │
                     └──────────────────────────────────────┘
                               │
@@ -73,38 +73,40 @@ ollama pull qwen2.5-coder:32b
 Start from [`templates/config/production.yaml`](../../templates/config/production.yaml), then:
 
 ```yaml
-models:
-  default: ollama/llama3.1:70b-instruct-q4_K_M
-  providers:
-    ollama:
-      base_url: http://gpu-box.tailnet-xxx.ts.net:11434
-    anthropic:
-      api_key: "${ANTHROPIC_API_KEY}"        # fallback for hard queries
+# Schema verified against Part 19 (v0.18).
+# Primary model: local via the Ollama OpenAI-compatible endpoint.
+model: llama3.1:70b-instruct-q4_K_M
+provider: ollama
 
-  routing:
-    - when: task == "reasoning"
-      use: anthropic/claude-sonnet-5
-    - when: task == "coding" && complexity == "high"
-      use: anthropic/claude-sonnet-5
+providers:
+  ollama:
+    base_url: http://gpu-box.tailnet-xxx.ts.net:11434/v1
+    api_key: ollama                            # any non-empty string
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"            # for the hard stuff
 
-gateways:
-  cli:
-    enabled: true
-  telegram:
-    enabled: true
-    bots:
-      admin:
-        token: "${TELEGRAM_ADMIN_BOT_TOKEN}"
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
+# There is no intent-routing DSL (Part 20) — you switch models explicitly.
+# Give the escalation a name and use `/model smart` when local isn't enough:
+model_aliases:
+  smart:
+    model: claude-sonnet-5
+    provider: anthropic
 
-memory:
-  backend: lightrag
-  lightrag:
-    working_dir: /var/lib/hermes/lightrag
-    llm_model: ollama/qwen2.5-coder:32b         # local extraction
-    embedding_model: openai/text-embedding-3-small  # or local (bge-m3)
+# Keep auxiliary side-tasks local too:
+auxiliary_models:
+  compression:
+    provider: ollama
+    model: qwen2.5-coder:32b
 ```
+
+Platform wiring lives in `~/.hermes/.env`, not config.yaml (Part 19, Layer 1):
+
+```bash
+TELEGRAM_BOT_TOKEN=...          # admin bot from @BotFather
+TELEGRAM_ALLOWED_USERS=123456789   # your numeric ID — default-deny otherwise
+```
+
+Memory: the native SQLite backend needs zero config (Part 7). For the knowledge-graph layer, LightRAG runs as its own server plus a query skill — it is not a `memory:` block in config.yaml; point its extraction model at Ollama (`qwen2.5-coder:32b`) and embeddings at `text-embedding-3-small` or a local bge-m3. Full setup: Part 3.
 
 ### 5. Langfuse self-host (observability inside the LAN)
 
@@ -115,7 +117,7 @@ cp templates/compose/.env.langfuse.example /opt/.env.langfuse
 docker compose -f /opt/langfuse-stack.yml --env-file /opt/.env.langfuse up -d
 ```
 
-Point Hermes `telemetry.langfuse.host` at `http://127.0.0.1:3000`.
+Then enable the plugin and point it at your box: `hermes plugins enable observability/langfuse`, and in `~/.hermes/.env` set `HERMES_LANGFUSE_BASE_URL=http://127.0.0.1:3000` plus the pk/sk keys — there is no `telemetry:` block in config.yaml (Part 20).
 
 ### 6. Skills
 
@@ -129,7 +131,7 @@ hermes /reload
 ## Honest tradeoffs
 
 - **Latency.** Local 70B Q4 ≈ 20–40 tok/s on a 3090. Flagship Sonnet ≈ 60–90 tok/s. Most "work" queries you won't notice; coding/deep reasoning you will.
-- **Quality.** Current open/local models (Qwen Coder, Llama, Kimi-class local models) are *close* on many tasks, *behind* on long-context + nuanced reasoning. Routing lets you hand the hard stuff to Sonnet.
+- **Quality.** Current open/local models (Qwen Coder, Llama, Kimi-class local models) are *close* on many tasks, *behind* on long-context + nuanced reasoning. `/model smart` hands the hard stuff to Sonnet.
 - **Patching.** You maintain the box. Enable unattended-upgrades (the bootstrap script does) and schedule monthly reboots.
 - **Reachability.** Tailscale is solid but means "no Tailscale = no Hermes". Keep a cellphone backup admin bot, or run a tiny cloud relay.
 - **Backups.** Set [`nightly-backup`](../../skills/ops/nightly-backup/SKILL.md) to write encrypted archives to a second physical disk — not the same RAID array.

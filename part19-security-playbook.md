@@ -37,7 +37,7 @@ Every in-process control below (approval prompts, secret redaction, skill scanni
 Hermes supports two OS-level isolation postures — choose deliberately:
 
 - **Terminal-backend isolation.** A non-default `terminal.backend` (Docker, Singularity, Modal, Daytona, SSH) runs LLM-emitted shell *and* file-tool operations inside a container/remote host. Confines anything the agent does *through the shell*. Does **not** confine the agent's own Python process (code-execution tool, MCP subprocesses, plugins, hooks, skills).
-- **Whole-process wrapping.** Runs the entire agent process tree in a sandbox so *every* path — shell, code-exec, MCP, file tools, plugins, hooks — is subject to one filesystem/network/process policy. Hermes supports this via its own Docker/Compose setup, or via [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) for declarative filesystem + **L7 network egress** + syscall + inference-routing policy.
+- **Whole-process wrapping.** Runs the entire agent process tree in a sandbox so *every* path — shell, code-exec, MCP, file tools, plugins, hooks — is subject to one filesystem/network/process policy. Hermes supports this via its own Docker/Compose setup, or via [OpenShell](https://github.com/NVIDIA/OpenShell) — the NVIDIA + Microsoft security runtime (Windows-native isolation runtime plus a Linux policy layer) — for declarative filesystem + **L7 network egress** + syscall + inference-routing policy.
 
 If your agent ingests content from surfaces you don't control (the open web, inbound email, multi-user channels, untrusted MCP servers), **whole-process wrapping is the supported posture.** Running the default local backend against untrusted input is operating outside Hermes' supported security model. The layers below harden a real deployment; they are not a substitute for the boundary.
 
@@ -208,7 +208,7 @@ terminal:
   ssh_key: ~/.ssh/id_rsa
 ```
 
-For **true egress allowlisting** (block private ranges, block the metadata IP `169.254.169.254`, restrict outbound domains), wrap the *whole process* with [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell), which enforces hot-reloadable L7 network policy across every code path — including MCP subprocesses and the code-execution child that a terminal-only backend leaves exposed. For a home-lab / [Home Assistant](./part15-new-platforms.md#home-assistant) setup, an explicit OpenShell egress allowlist beats hoping a config key blocks SSRF (it doesn't exist).
+For **true egress allowlisting** (block private ranges, block the metadata IP `169.254.169.254`, restrict outbound domains), wrap the *whole process* with [OpenShell](https://github.com/NVIDIA/OpenShell), which enforces hot-reloadable L7 network policy across every code path — including MCP subprocesses and the code-execution child that a terminal-only backend leaves exposed. For a home-lab / [Home Assistant](./part15-new-platforms.md#the-25-platform-lineup) setup, an explicit OpenShell egress allowlist beats hoping a config key blocks SSRF (it doesn't exist).
 
 ---
 
@@ -299,7 +299,7 @@ Cron the audits (these skills ship in this guide's `skills/security/` hub). Reme
 
 - name: monthly-rotate-secrets
   schedule: "0 4 1 * *"
-  task: /rotate-secrets all
+  task: /rotate-secrets webhook_hmac_*   # rotates non-interactively; `/rotate-secrets all` prompts for API-key kinds and is manual-only
 
 - name: weekly-approval-bypass-review
   schedule: "0 10 * * 1"

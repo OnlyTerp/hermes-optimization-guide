@@ -4,18 +4,22 @@ Documentation=https://github.com/NousResearch/hermes-agent
 Documentation=https://github.com/OnlyTerp/hermes-optimization-guide
 After=network-online.target
 Wants=network-online.target
+# Rate-limit restart storms (these belong in [Unit], not [Service])
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple
 User=hermes
 Group=hermes
 WorkingDirectory=/home/hermes
+# /usr/local/bin/hermes is a symlink created by scripts/vps-bootstrap.sh.
+# Manual installs: ln -sf ~hermes/.local/bin/hermes /usr/local/bin/hermes
+# (or point ExecStart directly at /home/hermes/.local/bin/hermes).
 ExecStart=/usr/local/bin/hermes run
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5
-StartLimitInterval=300
-StartLimitBurst=5
 
 # Environment
 EnvironmentFile=-/home/hermes/.hermes/.env
@@ -31,7 +35,7 @@ SyslogIdentifier=hermes
 # Filesystem
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/hermes/.hermes /tmp
+ReadWritePaths=/home/hermes/.hermes
 PrivateTmp=true
 PrivateDevices=true
 
@@ -49,7 +53,9 @@ ProtectHostname=true
 ProtectClock=true
 ProtectProc=invisible
 ProcSubset=pid
-RestrictNamespaces=true
+# NOTE: RestrictNamespaces=true intentionally NOT set — the browser toolset
+# spawns Chromium, whose sandbox needs user/pid/net namespaces.
+# If you never enable browser tools, add: RestrictNamespaces=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 
@@ -58,7 +64,9 @@ RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 
 # System calls
 SystemCallFilter=@system-service
-SystemCallFilter=~@privileged @resources @mount @cpu-emulation @debug @reboot @swap
+# NOTE: @resources is NOT filtered — Node child processes call setrlimit/prlimit
+# on startup and would be killed by ~@resources.
+SystemCallFilter=~@privileged @mount @cpu-emulation @debug @reboot @swap
 SystemCallArchitectures=native
 
 # Memory / file descriptor limits

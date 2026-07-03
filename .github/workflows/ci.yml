@@ -12,14 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check markdown links
+      - name: Check markdown links (full repo)
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           config-file: '.github/markdown-link-check.json'
           folder-path: '.'
           use-quiet-mode: 'yes'
-          check-modified-files-only: 'yes'
-          base-branch: 'main'
+          # Full-repo scan on every run; 403/429 from rate-limited hosts are
+          # tolerated via aliveStatusCodes in the config file.
+
+  anchor-check:
+    name: internal anchors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check relative links and #anchors resolve
+        run: python .github/scripts/check_anchors.py
 
   yaml-lint:
     name: yamllint
@@ -29,7 +40,9 @@ jobs:
       - name: Install yamllint
         run: pip install yamllint
       - name: Run yamllint
-        run: yamllint -c .github/yamllint.yml templates/ benchmarks/ skills/
+        # templates/ and benchmarks/ hold the shipped YAML; .github/ covers
+        # this workflow, the yamllint config itself, and ISSUE_TEMPLATE/config.yml.
+        run: yamllint -c .github/yamllint.yml templates/ benchmarks/ .github/
 
   skill-frontmatter:
     name: skill frontmatter
@@ -43,6 +56,21 @@ jobs:
         run: pip install pyyaml
       - name: Validate every SKILL.md frontmatter
         run: python .github/scripts/validate_skills.py
+
+  shell-syntax:
+    name: bash -n
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax-check all shell scripts
+        run: |
+          shopt -s nullglob
+          rc=0
+          for f in scripts/*.sh benchmarks/*.sh; do
+            echo "bash -n $f"
+            bash -n "$f" || rc=1
+          done
+          exit $rc
 
   prettier-check:
     name: prettier (soft)

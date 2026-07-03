@@ -1,6 +1,7 @@
-# benchmarks/matrix.yaml — the provider x task matrix Hermes evals crank through.
+# benchmarks/matrix.yaml — the provider x task matrix run.sh cranks through.
 # Prices are a dated 2026-05-25 snapshot from provider docs/aggregators;
-# `hermes evals run` should rehydrate live prices at runtime before publishing.
+# refresh them here before publishing rendered numbers (render.py costs
+# come straight from these fields).
 
 models:
   - id: google/gemini-3.1-flash

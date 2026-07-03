@@ -34,6 +34,8 @@ iex (irm https://hermes-agent.nousresearch.com/install.ps1)
 
 [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) is still a solid choice if you prefer a Linux environment for gateway work.
 
+> **Android users:** the same installer detects Termux and installs the tested `[termux]` extra bundle automatically — CLI, cron, PTY/background terminal, Telegram gateway, MCP, Honcho, ACP. See [Part 15 — Android / Termux](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
+
 ### Desktop app
 
 Want a GUI instead of a terminal? Install the [Hermes Desktop app](./part24-desktop-app.md) (macOS/Windows/Linux) — or add it to a CLI install with `--include-desktop`. It runs the same agent, config, and keys. Full tour in [Part 24](./part24-desktop-app.md).
@@ -151,7 +153,7 @@ hermes config set agent.quiet_mode true
 hermes config set prompt_caching.enabled true
 
 # Context compression (auto-summarize old messages)
-hermes config set context_compression.enabled true
+hermes config set compression.enabled true
 ```
 
 ---

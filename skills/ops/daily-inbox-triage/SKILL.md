@@ -15,7 +15,7 @@ parameters:
     description: Lookback window (e.g. 24h, 7d)
     default: "24h"
   channels:
-    type: list
+    type: array
     description: Subset of channels to sweep (default all configured)
     default: ["email", "slack", "telegram"]
 security:

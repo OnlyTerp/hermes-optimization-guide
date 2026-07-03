@@ -7,7 +7,7 @@
 **1/8**
 I got tired of Hermes guides that explain the architecture but don't give you anything to run, so I shipped the opposite:
 
-24 parts of documentation **plus** 13 installable skills, 5 production configs, 4 reference architectures, a VPS bootstrap script, hardened systemd units, a reproducible cost benchmark, and an in-browser config wizard.
+27 parts of documentation **plus** 13 installable skills, 5 production configs, 4 reference architectures, a VPS bootstrap script, hardened systemd units, a reproducible cost benchmark, and an in-browser config wizard.
 
 github.com/OnlyTerp/hermes-optimization-guide
 
@@ -52,7 +52,7 @@ The ecosystem directory (ECOSYSTEM.md) links 40+ MCP servers + coding agents + d
 **6/8**
 The Apr 15 "Comment and Control" cross-vendor prompt-injection attack hit Claude Code + Gemini CLI + Copilot Agent.
 
-Part 19 is the defensive playbook: 7 layers (provenance, approval, secret isolation, webhook sigs, SSRF, MCP trust, quarantine). If your agent reads your inbox, please read this one.
+Part 19 is the defensive playbook: 6 layers (allowlists, command approval, secret scoping, isolation backends, MCP trust, context/skill scanning). If your agent reads your inbox, please read this one.
 
 ---
 
@@ -80,5 +80,5 @@ github.com/OnlyTerp/hermes-optimization-guide
 ## Replies / follow-ups to prep
 
 - "Why not [other framework]?" → I'm not trying to push Hermes; this guide was a need *because* we run Hermes. The config-wizard + skill pattern is copy-able for any agent framework.
-- "Does this work with local models?" → Yes. `homelab` reference architecture covers Ollama routing. See `docs/reference-architectures/homelab.md`.
+- "Does this work with local models?" → Yes. `homelab` reference architecture covers an Ollama-first setup with a `/model smart` escape hatch. See `docs/reference-architectures/homelab.md`.
 - "Will you maintain it?" → CHANGELOG + ROADMAP are live. Bus factor = 1 right now, actively looking for co-maintainers.

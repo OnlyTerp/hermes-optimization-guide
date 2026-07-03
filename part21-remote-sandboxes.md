@@ -37,6 +37,10 @@ Hermes uploads your workspace on task start, delegates work, then downloads only
 
 Hermes ships native support for SSH, Modal, Daytona, and Vercel Sandbox. Fly Machines and E2B work via thin plugins.
 
+> **Schema note:** in the real config schema the supported key is `terminal.backend:` (`local | docker | singularity | modal | daytona | ssh` — see [Part 19, Layer 4](./part19-security-playbook.md#layer-4-isolation-backends--where-egress-control-actually-lives)). The named `sandboxes:` profiles below are this guide's working notation for multi-sandbox setups — verify any key against `hermes config edit` before relying on it, and treat unrecognized keys as aspirational.
+
+> ⚠️ **`push: ~/.hermes` ships your credentials.** Your `.env` (every API key), `sessions.db` (full conversation history), and any secrets files live in `~/.hermes`. Pushing that directory to Modal/Daytona/Vercel/an SSH host without an `ignore:` list moves your keys onto infrastructure you don't control — the exact opposite of [Part 19 Layer 4](./part19-security-playbook.md#layer-4-isolation-backends--where-egress-control-actually-lives)'s point that keys stay host-side and the sandbox never sees them. Every `sync:` example below ignores `.env`, `sessions.db`, and `secrets*`. Keep it that way.
+
 ---
 
 ## SSH Backend (Homelab / Always-On Dev Box)
@@ -67,6 +71,9 @@ sandboxes:
         - .hermes
         - projects                    # Grabs any code changes made in-sandbox
       ignore:
+        - .env
+        - sessions.db
+        - "secrets*"
         - .git
         - node_modules
         - __pycache__
@@ -119,6 +126,7 @@ sandboxes:
       push: ~/.hermes
       pull_on_teardown: true
       pull_paths: [.hermes, projects]
+      ignore: [.env, sessions.db, "secrets*", .git, node_modules, __pycache__]
 ```
 
 Sync uses Modal's `exec tar cf -` → `proc.stdout.read()` → local file pattern — same diff/apply logic as SSH.
@@ -161,6 +169,7 @@ sandboxes:
     hibernate_after: 900
     sync:
       push: ~/.hermes
+      ignore: [.env, sessions.db, "secrets*", .git, node_modules, __pycache__]
       pull_on_teardown: false        # Work persists, no need to sync every time
       pull_on_command: "/sync-home"  # Manual sync when you want it
 ```
@@ -185,6 +194,8 @@ sandboxes:
       pull_paths:
         - .
       ignore:
+        - .env
+        - "secrets*"
         - node_modules
         - .next
         - dist
@@ -257,16 +268,19 @@ Each project has its own workspace with its own deps, env, and git state. Hermes
 
 ### Pattern C: Sandboxed MCP Servers
 
-Route untrusted MCP servers (see [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust)) into a sandbox:
+Hermes has no per-server `trust:` or `run_in_sandbox:` config keys ([Part 19, Layer 5](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust)). To isolate an untrusted MCP server, isolate it yourself: run the server *inside* the sandbox (e.g. launch it on the E2B/Modal host and point Hermes at it over HTTP/SSE), or run the whole agent under whole-process wrapping. On the Hermes side, lock the server down with the real knobs:
 
 ```yaml
+# Schema verified against Part 19 (v0.18)
 mcp_servers:
   random-scraper:
-    trust: untrusted
-    run_in_sandbox: e2b-scratch       # Isolate execution
+    url: https://e2b-scratch.internal:8931/sse   # server runs in the sandbox, not on your host
+    enabled: true
+    tools:
+      include: [read_docs]      # expose only the tools you audited
 ```
 
-Sandbox catches any malicious behavior — even if the scraper is compromised, it can't touch your host.
+Even if the scraper is compromised, it's executing on disposable infrastructure with a minimal tool surface — it can't touch your host.
 
 ---
 
@@ -304,4 +318,4 @@ Enable `HERMES_SANDBOX_LOG=debug` to get full tar/ssh command traces.
 - [Part 18: Coding Agents](./part18-coding-agents.md) — delegate Claude Code / Codex / Gemini CLI *into* these sandboxes
 - [Part 19: Security Playbook](./part19-security-playbook.md) — isolate untrusted MCPs in sandboxes
 - [Part 20: Observability & Cost](./part20-observability.md) — track sandbox-hour costs alongside LLM spend
-- [Part 1: Setup](./README.md#part-1-setup-stop-fumbling-with-installation) — the base VPS install these extend
+- [Part 1: Setup](./part1-setup.md) — the base VPS install these extend

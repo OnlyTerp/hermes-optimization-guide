@@ -2,78 +2,96 @@
 # Hermes — COST-OPTIMIZED config
 # ------------------------------------------------------------
 # Target: <$5/mo for personal daily-driver usage.
-#   - Gemini Flash / Pro for 90% of calls
-#   - Kimi K2.6 / Moonshot for bulk / background
-#   - Cerebras Qwen 3 32B (free-ish tier) for classification
-#   - Gemini OAuth free tier
-#   - Anthropic Sonnet only when `intent: coding` on complex files
+#   - Gemini Flash as the primary (cheap + fast + huge context)
+#   - Every auxiliary task on cheap/free-tier models (Part 20, Rule 1 —
+#     auxiliary calls are where the silent cost bloat lives)
+#   - Prompt caching on, aggressive compression
+#   - Sonnet only when YOU say so (/model smart)
+# Schema verified against Part 19 (v0.18).
+#
+# Note: Hermes has no intent/complexity routing DSL (the old routing:
+# block was removed upstream — see Part 20). The real levers are the
+# primary model, auxiliary_models, aliases, and fallback.
 # ------------------------------------------------------------
 
-version: 1
+# Primary — cheap default that handles 90% of turns.
+model: gemini-3.1-flash
+provider: google
 
-models:
-  default: google/gemini-3.1-flash
-  classification: cerebras/qwen-3-32b
-  long_context: google/gemini-3.1-pro
-  coding: moonshot/kimi-k2.6            # Fallback to Claude only for hard coding
-  coding_complex: anthropic/claude-sonnet-5
-  reasoning: zai/glm
-  providers:
-    google:
-      oauth_enabled: true               # Hermes-managed Gemini OAuth free tier
-      api_key: ${GOOGLE_API_KEY}        # Used only when OAuth is unavailable
-    anthropic:
-      api_key: ${ANTHROPIC_API_KEY}
-      prompt_caching: true              # 90% discount on repeat context
-    openai:
-      api_key: ${OPENAI_API_KEY}        # Required for LightRAG embeddings below
-    moonshot:
-      api_key: ${MOONSHOT_API_KEY}
-    cerebras:
-      api_key: ${CEREBRAS_API_KEY}
-    zai:
-      api_key: ${ZAI_API_KEY}
+providers:
+  google:
+    oauth_enabled: true              # Hermes-managed Gemini OAuth free tier
+    api_key: ${GOOGLE_API_KEY}       # Used only when OAuth is unavailable
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+  moonshot:
+    api_key: ${MOONSHOT_API_KEY}
+  cerebras:
+    api_key: ${CEREBRAS_API_KEY}
+    base_url: https://api.cerebras.ai/v1
+  zai:
+    api_key: ${ZAI_API_KEY}
 
-routing:
-  rules:
-    - intent: classification
-      model: cerebras/qwen-3-32b
-    - intent: coding
-      when: { complexity: high }
-      model: anthropic/claude-sonnet-5
-    - intent: coding
-      model: moonshot/kimi-k2.6
-    - intent: long_context
-      model: google/gemini-3.1-pro
-    - intent: reasoning
-      model: zai/glm
-  prefer_cached: true                   # Reroute if prompt is >80% cache-hit
+# Anthropic prompt caching for the opt-in Sonnet sessions.
+prompt_caching:
+  cache_ttl: "5m"
 
-context:
-  compress_trigger_tokens: 32000        # Aggressive — Flash handles small windows
-  compress_model: cerebras/qwen-3-32b
-  preserve_last_k: 4
+# Side-tasks to the cheapest adequate model. Cerebras Qwen 3 32B is
+# near-free and 2000+ tok/s — perfect for compression/classification-ish jobs.
+auxiliary_models:
+  compression:
+    provider: cerebras
+    model: qwen-3-32b
+    timeout: 30
+  web_extract:
+    provider: cerebras
+    model: qwen-3-32b
+  vision:
+    provider: google
+    model: gemini-3.1-flash          # needs a multimodal model
+  session_search: auto
+  approval: auto
 
-gateways:
-  cli: { enabled: true }
-  telegram:
-    enabled: true
-    fast_mode_default: false            # Fast Mode is a cost premium
-    bots:
-      admin:
-        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
+# Escalate by hand when a task deserves it: /model coder, /model smart.
+model_aliases:
+  fast:
+    model: qwen-3-32b
+    provider: cerebras
+  coder:
+    model: kimi-k2.6
+    provider: moonshot
+  smart:
+    model: claude-sonnet-5
+    provider: anthropic
+  glm:
+    model: glm-5
+    provider: zai
 
-memory:
-  backend: lightrag
-  lightrag:
-    llm_model: google/gemini-3.1-flash
-    embedding_model: openai/text-embedding-3-small
-    # Or fully local: sentence-transformers/all-MiniLM-L6-v2
+# Compress early — Flash is cheap but context is still the real cost
+# (Part 20, Rule 4).
+compression:
+  enabled: true
+  threshold: 0.35                    # trigger earlier than the 0.50 default
+  target_ratio: 0.20
+  protect_last_n: 12
 
-telemetry:
-  level: info
-  alerts:
-    cost_per_hour_usd: 0.50             # ALARM if spending > $0.50/h
-    daily_budget_usd: 0.20              # Hard cap: pause all non-interactive skills
+# Fast Mode is a runtime toggle (/fast on), not a config key — leave it
+# off for cron/background work; it's a cost premium.
+
+approvals:
+  mode: manual
+  timeout: 60
+  cron_mode: deny
+
+command_allowlist: []
+
+security:
+  redact_secrets: true
+
+# Telegram wiring lives in ~/.hermes/.env (Part 4):
+#   TELEGRAM_BOT_TOKEN=...
+#   TELEGRAM_ALLOWED_USERS=<your-numeric-user-id>
+#
+# Cost visibility: /usage 7d --by-provider, plus the weekly /cost-report
+# cron. Hermes has no built-in cost-alert block — put alerts in your
+# tracing layer (Langfuse/Helicone) or a log-tailing script (Part 20, Rule 5).

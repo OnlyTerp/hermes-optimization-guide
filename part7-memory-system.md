@@ -20,7 +20,7 @@ The `memory` tool saves durable facts that get injected into every future sessio
 
 **What to save:**
 - User preferences ("Terp hates manual steps")
-- Environment details ("5090 PC at 192.168.1.67, port 11434")
+- Environment details ("GPU box at 192.0.2.10, port 11434")
 - Tool quirks ("PowerShell needs -Encoding utf8 for Unicode files")
 - Stable conventions ("Use OnlyTerp for GitHub repos")
 
@@ -35,7 +35,7 @@ The `memory` tool saves durable facts that get injected into every future sessio
 
 ```python
 # Good
-memory(action="add", target="memory", content="OpenClaw migrated. LightRAG: 4528 entities, float16 vectors (4096d). Telegram bot 8624585264, group -5216536760.")
+memory(action="add", target="memory", content="OpenClaw migrated. LightRAG: 4528 entities, float16 vectors (4096d). Telegram bot 123456789, group -100EXAMPLE.")
 
 # Bad — too verbose, task-specific
 memory(action="add", target="memory", content="Today I worked on the lead gen pipeline. First I fixed the API key issue, then I updated the quality gate scoring to use a new algorithm, then I tested with 50 leads...")

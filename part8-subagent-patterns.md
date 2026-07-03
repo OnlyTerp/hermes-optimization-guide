@@ -107,7 +107,7 @@ For coding tasks, delegate to dedicated coding agents via ACP:
 # Claude Code
 delegate_task(
     goal="Implement the user settings page with React",
-    context="Repo at /home/terp/my-app. Use existing component library in src/components/",
+    context="Repo at ~/projects/my-app. Use existing component library in src/components/",
     acp_command="claude",
     acp_args=["--acp", "--stdio", "--model", "claude-sonnet-5"]
 )
@@ -125,21 +125,9 @@ delegate_task(
 - Regular delegate_task is better for research, analysis, and multi-tool workflows
 - ACP agents are faster for single-file edits
 
-## SWE-1.6 via Windsurf Cascade
+## Other Coding Agents (Windsurf, Gemini CLI, …)
 
-For complex coding tasks, use Windsurf's SWE-1.6:
-
-```python
-# Send a coding task to Windsurf Cascade
-# Requires Windsurf running with --remote-debugging-port=9222
-subprocess.run([
-    "python", 
-    "~/.hermes/skills/autonomous-ai-agents/windsurf-cascade/scripts/cascade_send.py",
-    "Build a React dashboard with real-time WebSocket updates"
-])
-```
-
-**Orchestrator pattern:** Hermes handles APIs, data, decisions. SWE-1.6 handles UI, components, bug fixes. Each does what it's best at.
+Anything with a CLI or ACP endpoint can be a worker — see [Part 18: Delegating to Coding Agents](./part18-coding-agents.md) for the full routing pattern (Claude Code, Codex, Gemini CLI, and friends, each bound to a persistent thread).
 
 ## Parallelization Rules
 
@@ -147,7 +135,6 @@ subprocess.run([
 |----------|----------|
 | 3 independent research tasks | Batch `delegate_task` with `tasks` array (`background=True` if you want to keep working) |
 | 1 complex coding task | ACP subagent (Claude Code or Codex) |
-| Multiple code changes in different files | SWE-1.6 via Cascade |
 | Single API call | Just call the tool, don't delegate |
 | Task needs user input | Do it yourself, can't delegate interactive work |
 

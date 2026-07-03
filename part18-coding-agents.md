@@ -25,10 +25,10 @@ Hermes keeps state, memory, conversation, approvals, Kanban lifecycle, and platf
 ```bash
 # Claude Code
 npm install -g @anthropic-ai/claude-code
-claude auth login                 # Or set ANTHROPIC_API_KEY
+claude login                      # Or set ANTHROPIC_API_KEY
 
 # Codex
-npm install -g @openai/codex-cli
+npm install -g @openai/codex
 codex auth login
 
 # Gemini CLI
@@ -103,24 +103,7 @@ Each specialist has a sweet spot. Let Hermes route:
 | Bulk surgical edits with deterministic diffs | Aider | Smallest token footprint, git-native |
 | Anything on a budget | OpenCode + Kimi K2.6 / GLM | Much cheaper than frontier models for routine edits |
 
-A sensible `~/.hermes/config.yaml`:
-
-```yaml
-delegation:
-  default: claude-code
-  routing:
-    - match: { type: refactor, files_changed_gte: 5 }
-      agent: claude-code
-    - match: { type: bugfix, single_file: true }
-      agent: codex
-    - match: { type: explore, repo_tokens_gte: 200000 }
-      agent: gemini-cli
-    - match: { type: dependency_audit }
-      agent: gemini-cli
-    - match: { budget: low }
-      agent: opencode
-      model: moonshot/kimi-k2.6
-```
+How do you encode that routing? Not in YAML. There is no `delegation.routing:` match-rule DSL in Hermes — [Part 20's warning](./part20-observability.md) applies: if you see a routing DSL in a config example, treat it as a feature request, not a feature. The primitives that actually exist are the primary `model:`/`provider:`, the per-task `auxiliary:` block, `provider_routing:` for OpenRouter, and `hermes fallback`. For delegation, routing is behavioral: tell Hermes the table above (put it in a memory or a skill's instructions) and let the orchestrator pick the specialist per task — or just name the specialist explicitly (`/codex ...`, `/claude-code ...`).
 
 ## Mode 1B: Kanban Worker Lanes (Preferred for Long Work)
 
@@ -203,26 +186,20 @@ acp:
       args: ["--acp"]
 ```
 
-The `/delegate_task` tool then picks an ACP client based on `delegation.routing` rules and streams progress back over a single WebSocket.
+The `delegate_task` tool then invokes the chosen ACP client and streams progress back over a single WebSocket.
 
 ---
 
 ## Git Hygiene When Agents Share a Workspace
 
-The #1 footgun with coding-agent orchestration is two agents touching the same files. Guardrails:
+The #1 footgun with coding-agent orchestration is two agents touching the same files. There is no `delegation.git:`/`locks:` config block that enforces this for you (again: feature request, not a feature — see [Part 20](./part20-observability.md)). The guardrails are git-native and worth stating in your delegation prompts or skills:
 
-```yaml
-delegation:
-  git:
-    isolate_branches: true            # Each delegation gets its own branch
-    branch_prefix: devin/             # Use your convention
-    auto_commit: true                 # Commit before handing back
-    require_clean_tree: true          # Refuse if the working tree is dirty
-  locks:
-    strategy: file-level              # Or "workspace" if you want full serialization
-```
+- **One branch per delegation.** Have each specialist work on its own branch (e.g. `devin/claude-code-refactor-auth`) and commit before handing back — every major coding agent will do this when told to.
+- **Kanban `--workspace worktree`** (Mode 1B above) gives each card its own git worktree, which is real, supported isolation.
+- **Require a clean tree** before starting a delegation; refuse to dispatch onto uncommitted local changes.
+- **Leave merges to a human** (or a dedicated reviewer lane) — agents return branch names, not merged main.
 
-Hermes creates `devin/claude-code-1723487-refactor-auth`, runs the specialist there, commits, returns the branch name, and leaves the merge decision to you. The same pattern works for parallel delegation — each agent gets its own branch.
+The same pattern works for parallel delegation — each agent gets its own branch or worktree.
 
 ---
 
@@ -231,19 +208,14 @@ Hermes creates `devin/claude-code-1723487-refactor-auth`, runs the specialist th
 Coding agents run shell commands and write files. You need an approval policy or you'll lose a weekend debugging an accidental `rm -rf node_modules` in the wrong dir.
 
 ```yaml
-delegation:
-  approval:
-    default: prompt                   # Prompt on every write
-    trusted_agents:
-      - claude-code                   # These inherit parent approval posture
-    auto_approve_read: true           # Read-only tools never prompt
-    denylist:
-      - "rm -rf"
-      - "git push --force"
-      - "curl * | bash"
+# ~/.hermes/config.yaml — schema verified against Part 19 (v0.18)
+approvals:
+  mode: manual        # prompt on every dangerous command a specialist emits
+  timeout: 60         # fail-closed deny
+  cron_mode: deny     # unattended delegations never auto-approve
 ```
 
-See [Part 19](./part19-security-playbook.md#layer-2-dangerous-command-approval) for the full story. Approval bypass inheritance landed in v0.10 ([Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents)) — use it for trusted specialists, not for every agent.
+The dangerous-command patterns (`rm -rf`, `git push --force`, pipe-to-shell, ...) are built into Hermes (`tools/approval.py`) — there is no `delegation.approval.denylist:` where you write your own, and a small hardline blocklist can't be overridden at all. Subagents inherit the parent session's approval posture by default and you can override it per delegation (`delegate_task(..., approvals="ask")`). See [Part 19](./part19-security-playbook.md#layer-2-dangerous-command-approval) for the full story, and [Part 16](./part16-backup-debug.md#approval-bypass-for-trusted-subagents) for inheritance — use relaxed postures for trusted specialists, not for every agent.
 
 ---
 
@@ -266,13 +238,15 @@ Skill source: `~/.hermes/skills/github-pr-review/SKILL.md` (bundled, plus the ag
 ## Recipe: Nightly Cron Maintenance
 
 ```yaml
-# ~/.hermes/cron.yaml
-- name: weekly-dep-audit
-  schedule: "0 3 * * 1"                # Mondays 3am
-  task: |
-    /gemini-cli audit package.json for security advisories
-    If any CRITICAL, open a GitHub issue in this repo with the list
-  notify: telegram:#engineering
+# ~/.hermes/config.yaml
+cron:
+  jobs:
+    weekly-dep-audit:
+      schedule: "0 3 * * 1"            # Mondays 3am
+      prompt: |
+        /gemini-cli audit package.json for security advisories
+        If any CRITICAL, open a GitHub issue in this repo with the list
+      deliver: telegram_engineering
 ```
 
 Hermes runs the delegation unattended, Gemini's 1M context reads the whole lockfile, a GitHub MCP opens the issue. You wake up to a triage ticket, not a surprise CVE.

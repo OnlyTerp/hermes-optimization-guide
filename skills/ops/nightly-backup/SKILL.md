@@ -16,6 +16,13 @@ parameters:
   retain_days:
     type: integer
     default: 30
+security:
+  trust: trusted
+  notes: |
+    No untrusted input. Handles the backup archive and encryption key
+    material — never logs key contents; the age identity/passphrase must
+    live outside this host's .env (see Security notes below).
+model_hint: google/gemini-3.1-flash
 ---
 
 # nightly-backup — Hermes Backup Automation
@@ -26,19 +33,37 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 
 1. **Snapshot.** Run:
    ```bash
-   hermes backup --output /tmp/hermes-backup-$(date +%Y%m%d-%H%M%S).tar
+   STAMP=$(date +%Y%m%d-%H%M%S)
+   hermes backup --output /tmp/hermes-backup-$STAMP.tar
    ```
    This bundles config, sessions, skills, memory, and cron entries per [Part 16](../../../part16-backup-debug.md).
 
-2. **Encrypt.** Use age (if available) or gpg symmetric:
+2. **Encrypt.** Non-interactively — this runs from cron, so nothing may prompt.
+
+   **Route A — age with a keyfile (preferred):**
+   ```bash
+   # One-time setup (NOT in the nightly run): generate the identity, store a
+   # copy somewhere that is not this host.
+   age-keygen -o ~/.age-backup-key && chmod 600 ~/.age-backup-key
+
+   # Nightly: encrypt to the key's recipient (public half) — no prompt, and
+   # the nightly path never needs the private key at all.
+   age -r "$(age-keygen -y ~/.age-backup-key)" \
+       -o /tmp/hermes-backup-$STAMP.tar.age /tmp/hermes-backup-$STAMP.tar
+   ```
+   (`age -p` is interactive passphrase mode — it cannot run from cron.)
+
+   **Route B — gpg symmetric with a passphrase:**
    ```bash
    BACKUP_PASSPHRASE=$(hermes secrets get BACKUP_PASSPHRASE)
-   age -p -o /tmp/hermes-backup-*.tar.age /tmp/hermes-backup-*.tar
-   # or
    gpg --batch --yes --symmetric --cipher-algo AES256 \
        --passphrase "$BACKUP_PASSPHRASE" \
-       /tmp/hermes-backup-*.tar
-   shred -u /tmp/hermes-backup-*.tar
+       /tmp/hermes-backup-$STAMP.tar
+   ```
+
+   Then either way:
+   ```bash
+   shred -u /tmp/hermes-backup-$STAMP.tar
    ```
 
 3. **Upload.** Based on `remote:` parameter:
@@ -55,7 +80,11 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 
 5. **Verify.** Download a random recent backup and test-decrypt:
    ```bash
-   age -d -i ~/.age-backup-key backup.tar.age > /tmp/verify.tar && tar tf /tmp/verify.tar | head -5
+   # Route A (age keyfile):
+   age -d -i ~/.age-backup-key backup.tar.age > /tmp/verify.tar
+   # Route B (gpg passphrase):
+   # gpg --batch --passphrase "$BACKUP_PASSPHRASE" -d backup.tar.gpg > /tmp/verify.tar
+   tar tf /tmp/verify.tar | head -5 && shred -u /tmp/verify.tar
    ```
    Fail loud if the verification fails — a backup you can't restore is not a backup.
 
@@ -78,5 +107,5 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 ## Security notes
 
 - **Never** back up `.env` plaintext — `hermes backup` already excludes it. If you're using a fork, verify with `tar tf backup.tar | grep .env` and bail if it appears.
-- The encryption passphrase must live in a separate secret store (not in `.env`), otherwise a stolen Hermes host gets both.
-- Rotate the backup passphrase yearly with `skills/security/rotate-secrets`.
+- The decryption secret must live outside this host's `.env` — Route A: keep an offline copy of `~/.age-backup-key` (that file is the only way back into your archives); Route B: keep `BACKUP_PASSPHRASE` in a separate secret store. Otherwise a stolen Hermes host gets both the backups and the key to them.
+- Rotate the backup key/passphrase yearly with `skills/security/rotate-secrets`, then re-encrypt (or at least re-verify) the archives you still need.

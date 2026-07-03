@@ -1,10 +1,16 @@
 ---
 name: audit-approval-bypass
-description: Audit which subagents and skills bypass approval; flag any that touch untrusted input
+description: Audit every path that bypasses dangerous-command approval — YOLO, approvals off, command_allowlist entries, cron approve mode, container backends
 when_to_use:
   - User asks to audit approval / bypass configuration
   - Scheduled monthly security check
-  - Before granting a new subagent bypass
+  - After choosing "always" on an approval prompt
+security:
+  trust: trusted
+  notes: |
+    Read-only audit of config.yaml and cron.yaml. Never modifies the
+    approval posture without explicit confirmation.
+model_hint: google/gemini-3.1-flash
 toolsets:
   - terminal
   - file
@@ -12,69 +18,64 @@ toolsets:
 
 # audit-approval-bypass — Verify Approval Posture
 
-Approval bypass is how power users make trusted subagents run unattended. It's also how attackers escalate if misconfigured. This skill catches drift.
+Approval bypass is how power users make trusted automation run unattended. It's also how attackers escalate if misconfigured. This skill catches drift.
+
+Hermes' approval layer is the built-in dangerous-command detector plus the top-level `approvals:` and `command_allowlist:` blocks — there is no `security.approval.bypass_subagents` / `require_approval` regex config ([Part 19, Layer 2](../../../part19-security-playbook.md#layer-2-dangerous-command-approval)). The bypass surfaces that actually exist are the ones below.
 
 ## Procedure
 
-1. **Load** `~/.hermes/config.yaml` → `security.approval` block. Capture:
-   - `bypass_subagents[]`
-   - `auto_approve_read`
-   - `require_approval[]` rules
-   - `denylist[]`
+1. **Load** `~/.hermes/config.yaml` and capture:
+   - `approvals.mode` (`manual` / `smart` / `off`)
+   - `approvals.timeout` and `approvals.cron_mode` (`deny` / `approve`)
+   - The full `command_allowlist:` (every entry is a standing "always approve")
+   - `terminal.backend` (container backends skip approval entirely — by design)
+   - `security.redact_secrets`
 
-2. **For each subagent in `bypass_subagents`:**
-   a. Locate its skill file: `~/.hermes/skills/<name>/SKILL.md`.
-   b. Parse the frontmatter `when_to_use:` and `toolsets:`.
-   c. Flag if the skill reads any of:
-      - Telegram / Discord / Slack message body (anything with `gateway:` trigger pattern)
-      - Email inbox or any SMTP/IMAP tool
-      - Webhook body (generic or GitHub PR/issue body)
-      - Scraped web content (tool names matching `/scrape|fetch_url|crawl/`)
-      - Voice transcription output
-   d. Flag if `toolsets:` includes `terminal` or `bash` AND the skill accepts any user-supplied argument.
+2. **Flag config-level bypasses:**
+   - 🔴 `approvals.mode: off` — equivalent to permanent `--yolo`.
+   - 🔴 `approvals.cron_mode: approve` — headless cron jobs auto-approve dangerous commands.
+   - 🟡 `approvals.mode: smart` on a deployment that reads untrusted input — the auxiliary risk-assessor is itself operating on attacker-influenced strings.
+   - 🟡 Any broad `command_allowlist` entry (e.g. `recursive delete`, `shell command via -c/-lc flag`) — these approve *every* future match, including paths you didn't intend.
+   - 🟡 `security.redact_secrets: false`.
 
-3. **Check the denylist:**
-   - Verify every entry is still syntactically valid regex.
-   - Flag if `rm -rf /` or `curl * | sh` style patterns are missing.
-   - Suggest additions based on 2026 attack patterns (e.g. `cat ~/.ssh/`, `aws s3 sync`, `curl.*169.254.169.254`).
+3. **Check environment bypasses:**
+   - `HERMES_YOLO_MODE` set in `~/.hermes/.env` or the service unit (check the systemd unit's `Environment=` lines).
+   - Any wrapper script / alias invoking `hermes --yolo`.
 
-4. **Check `require_approval` layers:**
-   - Confirm every production tool class is covered:
-     - `github`: `[create_pr, merge_pr, delete_branch]`
-     - `email`: `[send]`
-     - `twilio`: `[send_sms]`
-     - `terminal`: pattern-based
-     - `any_mcp`: `sampling: true` present
+4. **Check the container caveat:**
+   - If `terminal.backend` is `docker` / `singularity` / `modal` / `daytona`, dangerous-command checks are **skipped** — the container is the boundary. Verify that's intentional: flag if `docker_mount_cwd_to_workspace: true` or a broad host mount undermines it.
 
-5. **Render a report:**
+5. **Cross-check cron.** For each entry in `~/.hermes/cron.yaml`, flag any task that can hit shell writes while `cron_mode: approve` is set, or that reads untrusted content (inbox sweeps, web scrapes) headlessly.
+
+6. **Render a report:**
+
    ```markdown
-   ## Approval Bypass Audit — 2026-04-17
-   
-   ### Bypass subagents
-   - ✅ nightly-backup — read-only, no untrusted input
-   - ✅ build-and-test — CI-triggered, clean workspace
-   - 🔴 telegram-triage — BYPASSED but reads Telegram messages (untrusted input)
-   
-   ### Denylist coverage
-   - ✅ rm -rf patterns
-   - ✅ curl | bash patterns
-   - 🟡 Missing: AWS metadata IP exfil (169.254.169.254)
-   - 🟡 Missing: SSH key reads (cat ~/.ssh/)
-   
-   ### Require-approval layers
-   - ✅ github destructive actions
-   - ✅ email send
-   - 🔴 Missing: any_mcp with sampling:true
-   
+   ## Approval Bypass Audit — 2026-06-17
+
+   ### Config
+   - ✅ approvals.mode: manual
+   - ✅ approvals.cron_mode: deny
+   - 🟡 command_allowlist has 2 entries — review below
+
+   ### command_allowlist
+   - 🟡 "recursive delete" — approves EVERY rm -r; added 2026-04-02
+   - ✅ "shell command via -c/-lc flag" — used by nightly-backup only
+
+   ### Environment
+   - ✅ no HERMES_YOLO_MODE in .env or unit file
+
+   ### Backend
+   - 🟡 terminal.backend: docker — approval skipped by design; verify no host mounts
+
    ### Recommendations
-   1. Remove telegram-triage from bypass_subagents (it reads untrusted input).
-   2. Add denylist entries for 169.254 and ~/.ssh.
-   3. Add require_approval for MCP sampling calls.
+   1. Remove "recursive delete" from command_allowlist (edit config.yaml or `hermes config edit`).
+   2. Keep cron skills read-only so cron_mode: deny never fires.
    ```
 
-6. **Offer to apply fixes.** Never auto-apply.
+7. **Offer to apply fixes.** Never auto-apply.
 
 ## Notes
 
-- If `security.approval` is missing entirely, treat that as 🔴 HIGH across the board and suggest the full config from [Part 19](../../../part19-security-playbook.md).
-- Cross-check with the `audit-mcp` skill's output — an MCP flagged HIGH there often correlates with a bypass misconfig here.
+- The hardline `UNRECOVERABLE_BLOCKLIST` (rm -rf /, fork bomb, mkfs on root, …) cannot be bypassed by any of the above — it's the floor, not the posture. Don't report it as configurable.
+- If `approvals:` is missing entirely, that's fine — defaults are `manual` / `deny`. Flag only explicit weakening.
+- Cross-check with the `audit-mcp` skill's output — an MCP with a broad tool surface plus `approvals.mode: off` is the worst-case combination.

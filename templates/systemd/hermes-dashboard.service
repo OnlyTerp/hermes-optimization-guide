@@ -3,14 +3,20 @@ Description=Hermes Web Dashboard
 Documentation=https://github.com/OnlyTerp/hermes-optimization-guide/blob/main/part12-web-dashboard.md
 After=network-online.target hermes.service
 Wants=network-online.target
-BindsTo=hermes.service
+# PartOf (not BindsTo): stop/restart with hermes.service, but let
+# Restart=on-failure recover this unit independently.
+PartOf=hermes.service
 
 [Service]
 Type=simple
 User=hermes
 Group=hermes
 WorkingDirectory=/home/hermes
-ExecStart=/usr/local/bin/hermes dashboard --listen 127.0.0.1:8765
+# /usr/local/bin/hermes is a symlink created by scripts/vps-bootstrap.sh.
+# Manual installs: ln -sf ~hermes/.local/bin/hermes /usr/local/bin/hermes
+# (or point ExecStart directly at /home/hermes/.local/bin/hermes).
+# Flags per part12: --host/--port; --no-open skips launching a browser.
+ExecStart=/usr/local/bin/hermes dashboard --host 127.0.0.1 --port 9119 --no-open
 Restart=on-failure
 RestartSec=5
 
@@ -24,7 +30,7 @@ SyslogIdentifier=hermes-dashboard
 # Hardening (same as hermes.service; expose only loopback)
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/hermes/.hermes /tmp
+ReadWritePaths=/home/hermes/.hermes
 PrivateTmp=true
 PrivateDevices=true
 NoNewPrivileges=true
@@ -37,12 +43,13 @@ ProtectHostname=true
 ProtectClock=true
 ProtectProc=invisible
 ProcSubset=pid
-RestrictNamespaces=true
+# RestrictNamespaces intentionally unset — see hermes.service note.
 RestrictRealtime=true
 RestrictSUIDSGID=true
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 SystemCallFilter=@system-service
-SystemCallFilter=~@privileged @resources @mount @cpu-emulation @debug @reboot @swap
+# @resources not filtered — Node calls setrlimit/prlimit (see hermes.service).
+SystemCallFilter=~@privileged @mount @cpu-emulation @debug @reboot @swap
 SystemCallArchitectures=native
 
 MemoryMax=1G

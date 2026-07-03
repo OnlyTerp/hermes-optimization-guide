@@ -125,11 +125,12 @@ Pattern:
 
 ```yaml
 cron:
-  - name: disk-watchdog
-    schedule: "*/15 * * * *"
-    mode: no_agent
-    command: "df -h / | awk 'NR==2 && $5+0 > 85 {print \"Disk usage high: \"$5}'"
-    notify: telegram_private
+  jobs:
+    disk-watchdog:
+      schedule: "*/15 * * * *"
+      mode: no_agent
+      command: "df -h / | awk 'NR==2 && $5+0 > 85 {print \"Disk usage high: \"$5}'"
+      deliver: telegram_private
 ```
 
 Keep LLM-backed cron for jobs that need judgment, synthesis, or tool use. Use no-agent for deterministic checks.
@@ -150,7 +151,7 @@ Use it for:
 Pattern:
 
 ```yaml
-auxiliary_models:
+auxiliary:
   vision:
     provider: google
     model: gemini-3.1-pro

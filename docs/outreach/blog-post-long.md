@@ -21,14 +21,14 @@ So I wrote the opposite.
 
 ## What "ships code" means
 
-The [Hermes Optimization Guide](https://github.com/OnlyTerp/hermes-optimization-guide) has 24 parts of documentation. That's the part that looks like every other guide.
+The [Hermes Optimization Guide](https://github.com/OnlyTerp/hermes-optimization-guide) has 27 parts of documentation. That's the part that looks like every other guide.
 
 But it also has, in the same repo:
 
 - **13 installable `SKILL.md` files.** Not examples. Not snippets. Actual files with YAML frontmatter, procedure sections, and security notes. You drop them into `~/.hermes/skills/` and they work.
 - **5 opinionated production configs.** `minimum`, `telegram-bot`, `production`, `cost-optimized`, `security-hardened`. One `cp` to `~/.hermes/config.yaml` and you have a working deployment. Every non-obvious field is commented.
 - **A VPS bootstrap script.** Fresh Hetzner CX22 to hardened production Hermes in one `curl | bash`. Caddy + UFW + fail2ban + systemd + skill symlinks + unattended-upgrades.
-- **Reproducible benchmarks.** 12 flagship models × 5 canonical tasks, with the methodology, the dates, the exact reproduction command. Not vibes.
+- **Reproducible benchmarks.** 13 flagship models × 5 canonical tasks, with the methodology, the dates, the exact reproduction command. Not vibes.
 - **4 reference architectures.** Homelab, Solo Developer, Small Agency, Road Warrior. Each with a full parts list, cost line-items, install commands, and scaling ceilings.
 - **A static config wizard.** 8 questions → a ready-to-drop `config.yaml`. Runs in your browser. Nothing uploaded.
 
@@ -74,15 +74,14 @@ On April 15, 2026, researchers disclosed "Comment and Control" — a prompt-inje
 
 The fact that this hit *three vendor agents* on the same day, with the same vector, is the single most important thing to internalize about this era: **your agent is only as safe as the least-trusted input it processes.**
 
-So Part 19 of the guide is the 7-layer defensive playbook:
+So Part 19 of the guide is the 6-layer defensive playbook:
 
-1. **Provenance labels.** Every input carries a trust level. Nothing from email / public Telegram / PR bodies is ever treated as instruction unless the user confirms.
-2. **Approval gates on the write side.** Reads free, writes approved.
-3. **Secret isolation.** API keys live in env files with 0600 perms, redacted in logs, never written to memory.
-4. **Webhook signatures.** Stripe-style HMAC verification, rejected at the gateway.
-5. **SSRF denylist.** 169.254.169.254 and friends.
-6. **MCP trust levels.** Sampling disabled by default for every server; explicit opt-in per server.
-7. **Quarantine profile.** Public-facing bot runs as a separate Hermes profile with no MCPs, no memory, no approval chain.
+1. **User allowlists.** Every gateway is default-deny — no allowlist, nobody gets in. The public bot's allowlist is the real defense.
+2. **Dangerous-command approval.** A curated, built-in pattern list pauses risky shell commands for a human; cron jobs fail closed.
+3. **Secrets redaction + credential scoping.** Known-pattern scrubbing in logs and output, provider keys stripped from MCP subprocess environments.
+4. **Isolation backends.** The only real boundary: LLM-emitted shell runs in a container (or the whole process runs sandboxed); the agent can't read its own `.env`.
+5. **MCP/plugin trust.** No magic `trust:` knob — tool filtering, credential filtering, and operator review before install.
+6. **Context-file + skill scanning.** Injection-pattern scanning of project context files and installable skills (Skills Guard) — a review aid, not a boundary.
 
 If you run agents in production, read Part 19 before reading anything else.
 

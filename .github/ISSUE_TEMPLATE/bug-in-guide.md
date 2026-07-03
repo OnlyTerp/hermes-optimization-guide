@@ -18,4 +18,4 @@ _Expected vs actual — include command output or screenshot._
 _Debian 12, macOS 14, Termux on Android 14, …_
 
 **Suggested fix (optional)**
-_If you know what should say, paste the corrected text._
+_If you know what it should say, paste the corrected text._

@@ -1,24 +1,24 @@
 # Part 4: Telegram Setup (Chat From Anywhere)
 
-*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 22+ messaging adapters — start here, branch out to the others as needed.*
+*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 25+ messaging adapters — start here, branch out to the others as needed.*
 
 ---
 
-## The 22+ Platform Gateway
+## The 25+ Platform Gateway
 
-As of v0.14.0 (May 2026), the Hermes gateway ships adapters/plugins for **22+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. v0.14 also improves Discord history/search fetches, so large server channels are more useful as context sources instead of one-message-only triggers.
+As of v0.17, the Hermes gateway ships adapters/plugins for **25+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. v0.14 also improved Discord history/search fetches, so large server channels are more useful as context sources instead of one-message-only triggers.
 
-| Flagship | New in v0.9 | Enterprise / regional | Self-hosted / generic |
-|----------|-------------|-----------------------|-----------------------|
+| Flagship | Consumer / regional | Enterprise / regional | Self-hosted / generic |
+|----------|---------------------|-----------------------|-----------------------|
 | Telegram (this part) | iMessage (BlueBubbles) | DingTalk | Signal |
-| Discord | WeChat / Weixin | Feishu / Lark | Matrix |
-| Slack | WeCom | Mattermost | SMS (Twilio) |
-| Google Chat | QQBot | Microsoft Teams | Email (IMAP+SMTP) |
-| LINE | SimpleX Chat | WhatsApp | |
-| | Tencent Yuanbao | | Home Assistant |
-| | | | Webhook (generic) |
+| Discord | Photon iMessage | Feishu / Lark | Matrix |
+| Slack | WeChat / Weixin | Mattermost | SMS (Twilio) |
+| Google Chat | WeCom | Microsoft Teams | Email (IMAP+SMTP) |
+| LINE | QQBot | WhatsApp | Raft |
+| | SimpleX Chat | WhatsApp Business Cloud | Home Assistant |
+| | Tencent Yuanbao | | Webhook (generic) |
 
-- For **LINE, SimpleX, Teams, iMessage, WeChat, and Android/Termux**, see [Part 15](./part15-new-platforms.md).
+- For the **full, current roster** and per-platform setup (LINE, SimpleX, Teams, iMessage, WeChat, WhatsApp Business Cloud, Android/Termux, and more), see [Part 15](./part15-new-platforms.md).
 - For **gateway crash recovery** and health checks across all platforms, see [Part 11](./part11-gateway-recovery.md).
 - For the browser UI that manages every platform's state, see [Part 12](./part12-web-dashboard.md).
 
@@ -198,9 +198,11 @@ The bot supports Telegram's native command menu (the `/` button in chat).
 Cron job results are delivered directly to your Telegram chat:
 
 ```bash
-# Deliver cron results to Telegram
-hermes cron create --deliver telegram "Check server status every hour" --schedule "every 1h"
+# Deliver cron results to Telegram (cron expression: hourly)
+hermes cron create --deliver telegram --schedule "0 * * * *" "Check server status"
 ```
+
+Cron schedules are standard cron expressions — the same format the dashboard's Cron page uses ([Part 12](./part12-web-dashboard.md#cron)). Since v0.17, **Automation Blueprints** give you pre-built scheduled workflows (morning briefings, monitors, digests) you can enable instead of writing cron jobs from scratch.
 
 ---
 
@@ -254,7 +256,7 @@ Each user gets their own conversation session. The bot tracks sessions per user 
 
 ### Bot not responding
 
-1. Check the token is set (without printing it in full): `echo ${TELEGRAM_BOT_TOKEN:0:10}...`
+1. Check the token is set — it lives in `~/.hermes/.env`, not your shell env: `grep -c '^TELEGRAM_BOT_TOKEN=' ~/.hermes/.env` (prints `1` if set, without leaking the value)
 2. Verify the gateway is running: `hermes gateway status`
 3. Check logs: `hermes gateway logs`
 
