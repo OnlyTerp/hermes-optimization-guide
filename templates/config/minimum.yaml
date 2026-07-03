@@ -3,29 +3,22 @@
 # ------------------------------------------------------------
 # The smallest possible working setup:
 #   - 1 provider (Anthropic)
-#   - 1 gateway (CLI only; no Telegram/Discord)
-#   - No memory backend (vector only)
+#   - CLI only (messaging platforms are wired via ~/.hermes/.env later)
+#   - Native local memory (SQLite — zero config, see Part 7)
 #   - No MCP servers
 # For when you just want to see Hermes work before committing to more.
+# Schema verified against Part 19 (v0.18).
 # ------------------------------------------------------------
 
-version: 1
+# Primary model — the one that drives the tool-calling loop.
+model: claude-sonnet-5
+provider: anthropic
 
-models:
-  default: anthropic/claude-sonnet-5
-  providers:
-    anthropic:
-      api_key: ${ANTHROPIC_API_KEY}
+# API keys stay in ~/.hermes/.env (chmod 600); config only references them.
+providers:
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
 
-gateways:
-  cli:
-    enabled: true
-
-memory:
-  backend: vector
-  vector:
-    driver: qdrant
-    path: ~/.hermes/vector
-
-# Everything else uses Hermes defaults. Run `hermes dashboard` later
-# to layer on skills, platforms, MCP servers, etc.
+# That's genuinely it. Memory, session search, and skills work with zero
+# extra config. Run `hermes dashboard` later to layer on platforms, MCP
+# servers, plugins, etc.

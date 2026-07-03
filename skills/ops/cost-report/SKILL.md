@@ -16,6 +16,11 @@ parameters:
     type: string
     enum: [markdown, json, csv]
     default: markdown
+security:
+  trust: trusted
+  notes: |
+    Read-only over local usage logs. No untrusted input, no external writes.
+model_hint: google/gemini-3.1-flash
 ---
 
 # cost-report — LLM Cost Breakdown

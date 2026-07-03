@@ -21,7 +21,7 @@ If the gateway dies, your agent is unreachable.
 hermes status
 
 # Or directly
-ps aux | grep hermes-gateway
+pgrep -af "[h]ermes gateway"
 
 # Check logs
 tail -50 ~/.hermes/logs/gateway.log
@@ -33,14 +33,11 @@ tail -50 ~/.hermes/logs/gateway.log
 
 **Symptoms:** Gateway dies mid-response, logs show token count errors.
 
-**Fix:** Reduce context injection in `~/.hermes/.env`:
+**Fix:** Compress earlier so context never hits the window limit (see [Part 6](./part6-context-compression.md)):
 
 ```bash
-# Lower the max context (default is usually model max)
-MAX_CONTEXT_TOKENS=80000
-
-# Enable compression earlier
-CONTEXT_COMPRESSION_THRESHOLD=70
+# Trigger compression at 70% of the window instead of the 0.8 default
+hermes config set compression.threshold 0.7
 ```
 
 ### 2. OOM (Out of Memory)
@@ -56,26 +53,19 @@ free -h
 # If using local models via Ollama, they eat VRAM/RAM
 # Move Ollama to a separate machine or reduce model size
 
-# Limit gateway memory
-# In systemd service or launcher script:
-systemctl edit hermes-gateway
-# Add: MemoryMax=4G
+# Limit gateway memory (templates/systemd/hermes.service already sets MemoryMax=4G)
+sudo systemctl edit hermes
+# Add under [Service]: MemoryMax=4G
 ```
 
 ### 3. API Provider Down
 
 **Symptoms:** Gateway running but all responses fail, logs show connection errors.
 
-**Fix:** Configure fallback providers (see Part 9):
+**Fix:** Configure fallback models (see [Part 9](./part9-custom-models.md#fallback-chain)):
 
-```yaml
-model_fallback:
-  - provider: cerebras
-    model: qwen-3-32b
-  - provider: openrouter
-    model: anthropic/claude-sonnet-5
-  - provider: local
-    model: nemotron:latest
+```bash
+hermes config set fallback_models '["cerebras/qwen-3-32b", "openrouter/anthropic/claude-sonnet-5", "local/nemotron:latest"]'
 ```
 
 ### 4. Disk Full
@@ -89,10 +79,10 @@ model_fallback:
 df -h
 
 # Clean old session files (safe to delete)
-find ~/.hermes/sessions -mtime +30 -delete
+find ~/.hermes/sessions -type f -mtime +30 -delete
 
 # Clean old logs
-find ~/.hermes/logs -mtime +7 -delete
+find ~/.hermes/logs -type f -mtime +7 -delete
 
 # Check LightRAG data size
 du -sh ~/.hermes/skills/research/lightrag/data/
@@ -122,49 +112,47 @@ hermes gateway
 
 ## Auto-Recovery (systemd)
 
-Set up systemd to auto-restart the gateway:
-
-```ini
-# /etc/systemd/system/hermes-gateway.service
-[Unit]
-Description=Hermes Agent Gateway
-After=network.target
-
-[Service]
-Type=simple
-User=terp
-WorkingDirectory=/home/terp/.hermes
-ExecStart=/home/terp/.hermes/venv/bin/python -m hermes_gateway
-Restart=always
-RestartSec=5
-MemoryMax=4G
-
-[Install]
-WantedBy=multi-user.target
-```
+Don't hand-roll a unit file. This repo ships a hardened one — [`templates/systemd/hermes.service`](./templates/systemd/hermes.service) — with a dedicated `hermes` user, `ProtectSystem=strict`, syscall filtering, and `MemoryMax=4G` already set:
 
 ```bash
+sudo cp templates/systemd/hermes.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable hermes-gateway
-sudo systemctl start hermes-gateway
+sudo systemctl enable --now hermes
 
 # Check status
-sudo systemctl status hermes-gateway
+sudo systemctl status hermes
 
 # View logs
-journalctl -u hermes-gateway -f
+journalctl -u hermes -f
 ```
+
+Or let Hermes do it for you — `hermes gateway install` (see [Part 4](./part4-telegram-setup.md)) generates and enables a user-level unit without any manual file copying.
+
+Either way, `Restart=on-failure` + `RestartSec=5` means a crashed gateway is back within seconds.
 
 ## Auto-Recovery (Cron Fallback)
 
-If you can't use systemd, use a cron watchdog:
+If you can't use systemd, use a cron watchdog. **Don't inline the `pgrep` into the crontab line** — `pgrep -f "hermes.*gateway"` would match the cron shell's own command line (it contains the pattern), so the check always "passes" and the gateway never restarts. Put the check in a script and use a bracketed pattern that can't match itself:
 
 ```bash
-# Add to crontab -e
-* * * * * pgrep -f "hermes.*gateway" > /dev/null || (cd ~/.hermes && nohup ./venv/bin/python -m hermes_gateway >> logs/watchdog.log 2>&1 &)
+#!/bin/bash
+# ~/.hermes/bin/gateway-watchdog.sh
+# The [h] bracket trick: the pattern "[h]ermes gateway" matches the
+# process "hermes gateway" but never matches this script's own cmdline.
+if ! pgrep -f "[h]ermes gateway" > /dev/null; then
+    echo "$(date -Is) gateway down, restarting" >> ~/.hermes/logs/watchdog.log
+    nohup hermes gateway >> ~/.hermes/logs/watchdog.log 2>&1 &
+fi
 ```
 
-Checks every minute. If gateway isn't running, starts it.
+```bash
+chmod +x ~/.hermes/bin/gateway-watchdog.sh
+
+# Add to crontab -e
+* * * * * $HOME/.hermes/bin/gateway-watchdog.sh
+```
+
+Checks every minute. If the gateway isn't running, starts it.
 
 ## Health Check
 
@@ -174,14 +162,19 @@ Quick script to verify everything is working:
 #!/bin/bash
 # ~/.hermes/scripts/health-check.sh
 
-# Gateway running?
-if ! pgrep -f "hermes.*gateway" > /dev/null; then
+# Port of the gateway's local HTTP API. There is no fixed default —
+# it's whatever you enabled via API_SERVER_ENABLED / the api_server
+# settings in ~/.hermes/.env. Adjust to match your setup.
+GATEWAY_PORT="${GATEWAY_PORT:-8642}"
+
+# Gateway running? (bracket trick avoids matching this script itself)
+if ! pgrep -f "[h]ermes gateway" > /dev/null; then
     echo "CRITICAL: Gateway not running"
     exit 1
 fi
 
 # Can we reach the API? (gateway should only listen on localhost)
-if ! curl -s http://localhost:8642/health > /dev/null 2>&1; then
+if ! curl -s "http://localhost:${GATEWAY_PORT}/health" > /dev/null 2>&1; then
     echo "CRITICAL: Gateway not responding"
     exit 1
 fi

@@ -9,7 +9,7 @@ toolsets:
   - classify
 parameters:
   since_days:
-    type: number
+    type: integer
     default: 7
   repo:
     type: string

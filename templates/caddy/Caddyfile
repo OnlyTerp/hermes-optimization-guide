@@ -2,7 +2,7 @@
 # Caddyfile for a production Hermes host
 # ------------------------------------------------------------
 # Terminates TLS (auto Let's Encrypt), reverse-proxies:
-#   - hermes.yourdomain.com       -> Hermes dashboard (127.0.0.1:8765)
+#   - hermes.yourdomain.com       -> Hermes dashboard (127.0.0.1:9119)
 #   - langfuse.yourdomain.com     -> Langfuse web (127.0.0.1:3000)
 #   - hooks.yourdomain.com        -> Hermes webhook listener (127.0.0.1:8766)
 #
@@ -15,18 +15,19 @@
 # ------------------------------------------------------------
 
 {
-	# Global options — replace the email with your own for Let's Encrypt
+	# Global options — replace the email with your own for Let's Encrypt.
+	# Keep the admin API on loopback: `systemctl reload caddy` needs it.
+	admin localhost:2019
 	email ops@yourdomain.com
-	admin off
 }
 
-# Dashboard — protected by basicauth. Generate hash with: caddy hash-password
+# Dashboard — protected by basic_auth. Generate hash with: caddy hash-password
 hermes.yourdomain.com {
 	encode zstd gzip
-	basicauth * {
+	basic_auth * {
 		admin $2a$14$REPLACE_WITH_caddy_hash-password_OUTPUT
 	}
-	reverse_proxy 127.0.0.1:8765 {
+	reverse_proxy 127.0.0.1:9119 {
 		header_up X-Real-IP {remote_host}
 		header_up X-Forwarded-For {remote_host}
 	}
@@ -56,7 +57,9 @@ langfuse.yourdomain.com {
 	}
 }
 
-# Webhooks — no basicauth (signature-validated in Hermes), but rate-limited
+# Webhooks — no basic_auth (signature-validated in Hermes). Body size is
+# capped below; add upstream rate limiting (e.g. fail2ban or a rate-limit
+# plugin) if the endpoint gets abused — stock Caddy has no rate-limit directive.
 hooks.yourdomain.com {
 	encode zstd gzip
 

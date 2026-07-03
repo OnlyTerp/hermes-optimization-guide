@@ -14,7 +14,7 @@ This project follows the [Contributor Covenant](https://www.contributor-covenant
 - ❌ No harassment, doxxing, sexualized content, or personal attacks.
 - ❌ No political gotchas or baiting — it wastes everyone's time.
 
-Enforcement: issues go to onerobby@gmail.com or any repo maintainer. Actions range from a warning to a permanent ban depending on severity and pattern.
+Enforcement: report violations privately via GitHub — use the "Report content" option on the offending comment/issue, or DM a repo maintainer through their GitHub profile. Actions range from a warning to a permanent ban depending on severity and pattern.
 
 ## Scope
 

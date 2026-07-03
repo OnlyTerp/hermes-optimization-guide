@@ -7,7 +7,7 @@
 
 - name: nightly-backup
   schedule: "0 3 * * *"            # Every day 3am local
-  task: /nightly-backup s3://my-backups/hermes/ 30
+  task: /nightly-backup s3://backups/hermes/ 30   # same bucket as templates/config/production.yaml
   notify: telegram_private
 
 - name: weekly-mcp-audit
@@ -35,10 +35,13 @@
   task: /rotate-secrets webhook_hmac_*
   notify: telegram_private
 
-- name: daily-injection-sweep
-  schedule: "0 2 * * *"
-  task: /audit-injection-attempts since=24h
-  notify: telegram_private
+# Injection sweep — commented out: there is no /audit-injection-attempts skill
+# in skills/ (yet). If you write one, wire it here; until then the weekly
+# /audit-mcp + /audit-approval-bypass runs above are your injection coverage.
+# - name: daily-injection-sweep
+#   schedule: "0 2 * * *"
+#   task: /audit-injection-attempts since=24h
+#   notify: telegram_private
 
 - name: disk-watchdog
   schedule: "*/15 * * * *"

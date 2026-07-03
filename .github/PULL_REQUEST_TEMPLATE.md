@@ -14,7 +14,7 @@
 - [ ] Cross-links are relative (`./partN-foo.md`) and resolve
 - [ ] No secrets in any example — `${VAR}` placeholders only
 - [ ] Dates / prices / PR numbers are current (or marked with the date)
-- [ ] For skills: security notes included; `trust:` / `bypass_subagents` posture documented
+- [ ] For skills: security notes included; untrusted-input handling and `approvals:` posture documented (see part19-security-playbook.md)
 - [ ] For templates: every non-obvious field is commented
 - [ ] CHANGELOG.md updated if user-facing
 

@@ -1,19 +1,27 @@
 ---
 name: audit-mcp
-description: Audit every configured MCP server — trust level, allowlist, last-update, risk flags
+description: Audit every configured MCP server — tool filtering, credential scope, last-update, risk flags
 when_to_use:
   - User asks to audit or review MCP configuration
   - Scheduled weekly security check
   - After installing a new MCP server
-  - Before granting `allow_sampling: true`
+  - Before widening a server's tools.include list
 toolsets:
   - terminal
   - file
+security:
+  trust: trusted
+  notes: |
+    Read-only audit. Reads config.yaml and .env key NAMES (never values),
+    runs npm view / git log. Never modifies config without confirmation.
+model_hint: google/gemini-3.1-flash
 ---
 
 # audit-mcp — MCP Server Security Audit
 
 Walk every server declared in `~/.hermes/config.yaml` under `mcp_servers:` and produce a structured report with risk flags.
+
+Hermes has no per-server `trust:` levels or `allow_sampling:` knobs — the real controls are **tool filtering** (`tools.include` / `tools.exclude`), **credential scoping** (what you pass via `env:`), and **operator review before install** ([Part 19, Layer 5](../../../part19-security-playbook.md#layer-5-mcp-and-plugin-trust)). This audit checks exactly those.
 
 ## Procedure
 
@@ -21,9 +29,9 @@ Walk every server declared in `~/.hermes/config.yaml` under `mcp_servers:` and p
 
 2. **For each server, collect:**
    - Server name and transport (`stdio` if `command:` present, `http` if `url:` present)
-   - Declared `trust:` level (`trusted` / `community` / `untrusted`; default `community` if unset)
-   - `allow_sampling:` flag (default `false`)
-   - `tools_allowlist:` presence and length
+   - `enabled:` flag and `timeout:`
+   - `tools.include` / `tools.exclude` — present? how many tools locked in vs exposed?
+   - `env:` entries — which credentials this server receives
    - Source identifier: npm package (parse from `args:`), git URL, or HTTP origin
    - Last-updated timestamp:
      - npm: `npm view <pkg> time.modified`
@@ -31,24 +39,25 @@ Walk every server declared in `~/.hermes/config.yaml` under `mcp_servers:` and p
      - http: attempt a `HEAD` and grab `Last-Modified`
 
 3. **Risk-flag each server:**
-   - 🔴 **HIGH**: `trust: trusted` AND reads untrusted content (web scraping, email parsing, public RSS). List any tool names matching `/scrape|fetch|email|rss|crawl/i` as evidence.
-   - 🔴 **HIGH**: `allow_sampling: true` AND `trust` is not `trusted`.
+   - 🔴 **HIGH**: server ingests untrusted content (web scraping, email parsing, public RSS — tool names matching `/scrape|fetch|email|rss|crawl/i`) AND has an empty `tools.include` (= all tools exposed) or write-capable tools included.
+   - 🔴 **HIGH**: `env:` passes a broad credential (e.g. an unscoped `GITHUB_PERSONAL_ACCESS_TOKEN`) to a server that reads attacker-influenced text (the Comment-and-Control pattern).
    - 🟡 **MEDIUM**: last updated > 90 days ago.
-   - 🟡 **MEDIUM**: no `tools_allowlist` for a server with > 10 tools exposed.
-   - 🟡 **MEDIUM**: referenced `${VAR}` in `env:` is not set in `~/.hermes/.env`.
-   - 🟢 **LOW**: unscoped `enabled_for`, making the server available in every profile.
+   - 🟡 **MEDIUM**: empty `tools.include` on a server with > 10 tools exposed.
+   - 🟡 **MEDIUM**: referenced `${VAR}` in `env:` is not set in `~/.hermes/.env` (check key names only — never read values).
+   - 🟢 **LOW**: `enabled: true` on a server the logs show unused for 30+ days — dead attack surface.
 
-4. **Render a table.** Columns: name, transport, trust, sampling, tools-allowed / tools-exposed, last-update age, flags.
+4. **Render a table.** Columns: name, transport, enabled, tools-included / tools-exposed, credentials passed, last-update age, flags.
 
 5. **Summarize next steps.** Group findings by flag color and recommend:
-   - HIGH: "Change `trust:` to `community` or `untrusted`, disable sampling, add tools_allowlist."
+   - HIGH: "Set `tools.include:` to the specific read-only tools you audited; swap the credential for a scoped read-only one."
    - MEDIUM stale: "Run `npm update <pkg>` or rebuild the git source; verify release notes."
-   - MEDIUM missing allowlist: "Add `tools_allowlist:` with the specific tools you actually use."
+   - MEDIUM missing include list: "Add `tools.include:` with the specific tools you actually use."
+   - For servers that ingest untrusted content: "Run under whole-process isolation, or launch the server inside a sandbox — see [Part 21](../../../part21-remote-sandboxes.md)."
 
 6. **Offer to apply fixes.** Ask the user if they'd like to:
-   - Downgrade any `trusted` → `community`
-   - Disable `allow_sampling` on flagged servers
-   - Write a suggested `tools_allowlist` based on `hermes logs` usage history
+   - Write a suggested `tools.include:` based on `hermes logs` usage history
+   - Disable (`enabled: false`) servers unused for 30+ days
+   - Downscope any credential in `env:` flagged as broad
 
 Never auto-apply without confirmation.
 
@@ -57,20 +66,20 @@ Never auto-apply without confirmation.
 Report as markdown. Paste into Telegram / Discord / dashboard as-is. Example:
 
 ```markdown
-## MCP Security Audit — 2026-04-17
+## MCP Security Audit — 2026-06-17
 
 ### 🔴 HIGH (1)
-- **random-scraper** — trusted + reads untrusted content (`scrape_url`, `fetch_rss`)
+- **random-scraper** — reads untrusted content with empty tools.include (`scrape_url`, `fetch_rss`, 12 more exposed)
 
 ### 🟡 MEDIUM (2)
 - **postgres** — last updated 127 days ago (package @modelcontextprotocol/server-postgres)
-- **github** — no tools_allowlist, 34 tools exposed
+- **github** — empty tools.include, 34 tools exposed
 
 ### 🟢 LOW (1)
-- **filesystem** — enabled_for empty, loads in every profile
+- **filesystem** — enabled but no tool calls in 30 days
 
 ### Recommendations
-1. Change `random-scraper` to `trust: untrusted` and add tools_allowlist.
+1. Lock `random-scraper` to `tools.include: [read_docs]` and run it inside a sandbox.
 2. `npm update @modelcontextprotocol/server-postgres`.
 3. Scope `github` to the 6 tools actually used in last 30d.
 ```
@@ -78,5 +87,5 @@ Report as markdown. Paste into Telegram / Discord / dashboard as-is. Example:
 ## Notes
 
 - Runs entirely locally. No data leaves the host.
-- Pair with `cron.yaml` to run weekly (see [Part 19](../../../part19-security-playbook.md#periodic-security-hygiene)).
+- Pair with `cron.yaml` to run weekly (see [Part 19](../../../part19-security-playbook.md#periodic-security-hygiene)) — this skill is read-only, so `approvals.cron_mode: deny` won't block it.
 - Uses `terminal` to exec `npm view` / `git log`; uses `file` to read the config.

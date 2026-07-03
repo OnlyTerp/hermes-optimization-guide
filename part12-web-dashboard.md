@@ -2,6 +2,8 @@
 
 *Introduced in v0.9 and substantially upgraded through v0.14. The dashboard is now a browser-based control panel for config, Chat/TUI, Kanban, plugins, profiles, and analytics — not just a YAML editor.*
 
+> **Update (v0.16–v0.18):** This part describes the v0.14 baseline; every page below still exists, but the dashboard has kept growing. v0.16 added a **Channels** page (per-platform gateway management) and a **System** page with a check-before-update flow and one-click **Debug Share** (the one [Part 1's update section](./part1-setup.md#updating) points at). v0.17 added the **profile builder**, a rehauled **Skills Hub**, and **hardened dashboard auth** — the server now issues a session token and validates `Origin`/`Host` on state-changing requests instead of relying on the loopback bind alone. v0.18 continues to build on this UI. If your dashboard shows pages this part doesn't, that's why.
+
 ---
 
 ## Why This Matters
@@ -65,7 +67,7 @@ hermes dashboard --host 0.0.0.0
 hermes dashboard --no-open
 ```
 
-> **Security:** The dashboard reads and writes your `.env` file. It has **no authentication of its own**. Keep it on `127.0.0.1`. If you must expose it (e.g., a homelab), put it behind a reverse proxy with authentication or use SSH port-forwarding: `ssh -L 9119:127.0.0.1:9119 user@your-server`.
+> **Security:** The dashboard reads and writes your `.env` file. Since v0.17 it ships **hardened auth**: a per-instance session token (printed at startup and auto-attached when the browser is auto-opened) plus `Origin`/`Host` validation, which closes the classic DNS-rebinding / cross-origin hole against `127.0.0.1` services. On older versions (≤v0.16) the dashboard has **no authentication of its own** — the loopback bind is the only barrier, and any local process or rebinding webpage could hit it, so update. Either way, keep it on `127.0.0.1`. If you must expose it (e.g., a homelab), put it behind a reverse proxy with authentication (see `templates/caddy/Caddyfile`) or use SSH port-forwarding: `ssh -L 9119:127.0.0.1:9119 user@your-server`.
 
 ---
 
@@ -104,7 +106,7 @@ Form-based editor for `config.yaml`. Fields are auto-discovered from `DEFAULT_CO
 - **agent** — max iterations, gateway timeout, `service_tier` (Fast Mode), `/goal` behavior
 - **delegation** — subagent limits, reasoning effort
 - **memory** — provider, context injection settings
-- **approvals** — dangerous command mode (`ask` / `yolo` / `deny`)
+- **approvals** — dangerous command mode (`manual` / `smart` / `off` — see [Part 19](./part19-security-playbook.md))
 - **plugins** — enabled/disabled plugin allowlists
 - **curator** — schedule, pruning thresholds, pinned/archived behavior
 - **kanban** — board location, worker profiles, retry budget, stale heartbeat reclaim policy
@@ -254,7 +256,7 @@ The dashboard frontend is just a client of a documented REST API. You can script
 | `POST /api/cron/jobs/{id}/trigger` | Trigger a job immediately |
 | `GET /api/skills` | List skills and toolsets |
 
-Requests are unauthenticated and only listen on `127.0.0.1` — trust the local-machine boundary.
+Requests listen on `127.0.0.1` only. On v0.17+ send the dashboard's session token (shown at startup) with each request — state-changing endpoints also require a valid `Origin`/`Host`. On ≤v0.16 the API is unauthenticated; don't rely on the local-machine boundary alone — anything that can make a request to `127.0.0.1:9119` (including a malicious webpage via DNS rebinding) could write your `.env`. Update to v0.17+.
 
 ---
 
@@ -330,7 +332,7 @@ Plugins live next to existing CLI/gateway plugins under `~/.hermes/plugins/`. Yo
 ### "Missing web dependencies"
 
 ```bash
-pip install hermes-agent[web]
+pip install 'hermes-agent[web]'
 ```
 
 Or reinstall with `[all]` to get every optional extra.

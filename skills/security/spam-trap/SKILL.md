@@ -6,6 +6,7 @@ when_to_use:
   - User invokes /spam-trap-audit to review recent decisions
 toolsets:
   - classify
+  - file
 parameters:
   text:
     type: string

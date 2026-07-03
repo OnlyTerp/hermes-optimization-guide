@@ -12,7 +12,6 @@ What's landing next. PRs welcome.
 ## Queued
 
 - [ ] **Skill templates** — `hermes skills new <name>` scaffolding generator
-- [ ] **Cross-link checker** — CI check that fails if any `[...](./...)` link 404s (partial: markdown-link-check on modified files is live)
 - [ ] **Security CVE feed** — `.github/workflows/cve-watch.yml` that monitors OSV for relevant advisories
 - [ ] **Dashboard screenshots pass** — embed actual screens in parts 12 / 17 / 20
 
@@ -24,6 +23,8 @@ What's landing next. PRs welcome.
 
 ## Done (recent)
 
+- ✅ 2026-07-03 — Cross-link checker: anchor checking added (CI now fails on dead relative `./partN-foo.md` links *and* dead heading anchors; markdown-link-check shipped 2026-04-17)
+- ✅ 2026-07-01 — v0.17 "Reach" + v0.18 "Judgment" refresh: Part 26 MoA / verification / `/learn` + `/journey`, iMessage via Photon Spectrum, WhatsApp Business Cloud, Vertex AI provider, background subagent fan-out, desktop Projects + multi-terminal, gateway scale-to-zero, 25+ platform count, 27-part TOC
 - ✅ 2026-06-17 — v0.16 "Surface" refresh: Part 24 Hermes Desktop App, Part 25 NVIDIA & local hardware (DGX Spark / OpenShell / NemoClaw), new banner graphics, `/undo` + default-interface + fuzzy-picker power moves, native Windows installer, `hermes portal` Quick Setup, and a trim of stale per-version model tables to a model-agnostic section
 - ✅ 2026-05-25 — v0.14 refresh: PyPI install, Grok OAuth, `hermes proxy`, `x_search`, Teams end-to-end, LINE/SimpleX, `/handoff`, Windows beta, and May 25 model SOTA
 - ✅ 2026-05-14 — v0.13 refresh: Kanban, `/goal`, Checkpoints v2, Google Chat, no-agent cron, provider plugins, and May 2026 model SOTA

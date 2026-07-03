@@ -2,85 +2,72 @@
 # Hermes — TELEGRAM BOT config
 # ------------------------------------------------------------
 # Opinionated setup for a personal Telegram assistant:
-#   - Anthropic primary + Gemini Flash for classification
-#   - OpenAI embeddings for LightRAG memory
-#   - Telegram gateway with a private admin DM + (optional) public bot
-#   - LightRAG memory backend
+#   - Anthropic primary + Gemini Flash for the cheap auxiliary tasks
+#   - Telegram gateway (token + allowlist live in ~/.hermes/.env — see below)
+#   - Native local memory (Part 7); add LightRAG later via Part 3
 #   - Sensible approval defaults
-#   - Ready for the telegram-triage skill on public bot
+# Schema verified against Part 19 (v0.18).
 # ------------------------------------------------------------
 
-version: 1
+# Primary model — drives the tool-calling loop.
+model: claude-sonnet-5
+provider: anthropic
 
-models:
-  default: anthropic/claude-sonnet-5
-  classification: google/gemini-3.1-flash
-  providers:
-    anthropic:
-      api_key: ${ANTHROPIC_API_KEY}
-      prompt_caching: true
-    google:
-      api_key: ${GOOGLE_API_KEY}
-    openai:
-      api_key: ${OPENAI_API_KEY}
+providers:
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+  google:
+    api_key: ${GOOGLE_API_KEY}
 
-gateways:
-  cli:
-    enabled: true
-  telegram:
-    enabled: true
-    bots:
-      # Primary / admin bot — this is YOU
-      admin:
-        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
-        trust_label: high
-        default_skill: default
-      # Public bot — strangers talk to this one (optional, comment out to skip)
-      # public:
-      #   token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
-      #   trust_label: untrusted
-      #   default_skill: telegram-triage
+# Anthropic prompt caching — stable prefixes (system prompt, skills, memory)
+# are auto-marked cacheable; cached reads are ~90% off.
+prompt_caching:
+  cache_ttl: "5m"                    # "5m" or "1h" — the only two Anthropic tiers
 
-memory:
-  backend: lightrag
-  lightrag:
-    working_dir: ~/.hermes/lightrag
-    llm_model: google/gemini-3.1-flash
-    embedding_model: openai/text-embedding-3-small
+# Route the side-tasks (classification-ish work) to a cheap model.
+auxiliary_models:
+  compression:
+    provider: google
+    model: gemini-3.1-flash
+  web_extract:
+    provider: google
+    model: gemini-3.1-flash
+  vision:
+    provider: google
+    model: gemini-3.1-flash
+
+# ------------------------------------------------------------
+# Telegram wiring lives in ~/.hermes/.env, not here (Part 4):
+#
+#   TELEGRAM_BOT_TOKEN=<from @BotFather>
+#   TELEGRAM_ALLOWED_USERS=<your-numeric-user-id>   # comma-separated
+#
+# Hermes is default-deny: no allowlist = nobody gets in. Never set
+# GATEWAY_ALLOW_ALL_USERS=true on a bot strangers can find.
+#
+# Want a public-facing bot too? Run it as a SEPARATE Hermes instance /
+# profile with its own token and a hardened config — see Part 19 and
+# templates/config/security-hardened.yaml. Don't mix trust levels in
+# one deployment.
+# ------------------------------------------------------------
+
+group_sessions_per_user: true        # Each group participant gets an isolated session
+
+# Dangerous-command approval (Part 19, Layer 2). The dangerous patterns
+# are built into Hermes (tools/approval.py) — you don't write regex here.
+approvals:
+  mode: manual                       # manual | smart | off
+  timeout: 60                        # seconds before fail-closed deny
+  cron_mode: deny                    # cron jobs never auto-approve dangerous commands
+
+# "Always approve" pattern descriptions land here when you answer
+# "always" at a prompt. Start empty; review anything that appears.
+command_allowlist: []
 
 security:
-  approval:
-    bypass_subagents: []               # Start empty; add after review
-    auto_approve_read: true
-    denylist:
-      - 'rm\s+-rf\s+/'
-      - 'curl\s+.+\|\s*(sh|bash)'
-      - '169\.254\.169\.254'           # AWS/GCP metadata IP
-      - 'cat\s+~?/?\.?ssh/'
-    require_approval:
-      - tool: github
-        actions: [create_pr, merge_pr, delete_branch]
-      - tool: terminal
-        actions: [exec]
-      - tool: any_mcp
-        sampling: true
-    approval_channel: telegram_dm       # Always DM, never group
-  secrets:
-    # Redaction is on by default in Hermes v0.13+; keep patterns explicit
-    # so hardened deployments know what is being scrubbed.
-    redaction_patterns:
-      - 'sk-[A-Za-z0-9]{40,}'           # OpenAI / Anthropic style
-      - 'xoxb-[A-Za-z0-9-]{40,}'        # Slack bot
-      - 'ghp_[A-Za-z0-9]{36}'           # GitHub PAT
-      - 'AKIA[0-9A-Z]{16}'              # AWS access key id
+  redact_secrets: true               # default on — keep it on
 
-telemetry:
-  level: info
-  # Uncomment when you add Langfuse (see templates/compose/langfuse-stack.yml)
-  # exporters:
-  #   langfuse:
-  #     public_key: ${LANGFUSE_PUBLIC_KEY}
-  #     secret_key: ${LANGFUSE_SECRET_KEY}
-  #     host: http://localhost:3000
+# Cron jobs live in ~/.hermes/cron.yaml (see Part 19 for examples), e.g.:
+#   - name: nightly-backup
+#     schedule: "0 3 * * *"
+#     task: /nightly-backup local 30

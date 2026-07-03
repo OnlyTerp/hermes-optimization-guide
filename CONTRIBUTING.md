@@ -29,27 +29,15 @@ This guide is built in public. PRs welcome.
 
 ## Repo layout reference
 
+The [README Repo Map](./README.md#repo-map) is the canonical, row-by-row description of every folder. The short version:
+
 ```
 .
-├── README.md
-├── CHANGELOG.md
+├── README.md (+ README-zh.md, README-ja.md)
+├── CHANGELOG.md · ROADMAP.md · ECOSYSTEM.md · CODE_OF_CONDUCT.md · LICENSE
 ├── CONTRIBUTING.md                  ← you are here
-├── ECOSYSTEM.md
-├── ROADMAP.md
-├── LICENSE
-├── part1-setup.md … part23-tenacity-stack.md
-├── diagrams/architecture.md
-├── skills/
-│   ├── README.md
-│   ├── security/audit-mcp/SKILL.md
-│   ├── security/rotate-secrets/SKILL.md
-│   ├── security/audit-approval-bypass/SKILL.md
-│   ├── ops/nightly-backup/SKILL.md
-│   ├── ops/weekly-dep-audit/SKILL.md
-│   ├── ops/cost-report/SKILL.md
-│   ├── ops/telegram-triage/SKILL.md
-│   ├── dev/pr-review/SKILL.md
-│   └── dev/release-notes/SKILL.md
+├── part1-setup.md … part26-moa-verification.md   # the 27-part guide (README + 26 part files)
+├── skills/                          # 13 installable SKILL.md files under dev/, ops/, security/
 ├── templates/
 │   ├── config/{minimum,telegram-bot,production,cost-optimized,security-hardened}.yaml
 │   ├── compose/langfuse-stack.yml (+ .env example)
@@ -57,8 +45,14 @@ This guide is built in public. PRs welcome.
 │   ├── systemd/hermes.service + hermes-dashboard.service
 │   └── cron/production-crons.yaml
 ├── scripts/vps-bootstrap.sh
-├── benchmarks/README.md + matrix.yaml
-└── docs/quickstart.md
+├── benchmarks/                      # reproducible 13-model × 5-task matrix
+├── diagrams/architecture.md         # 6 Mermaid diagrams
+├── assets/ · screenshots/
+└── docs/
+    ├── quickstart.md
+    ├── wizard/                      # interactive config wizard
+    ├── reference-architectures/     # 4 blueprints
+    └── outreach/
 ```
 
 ## Style notes

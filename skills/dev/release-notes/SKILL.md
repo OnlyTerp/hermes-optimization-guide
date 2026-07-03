@@ -15,6 +15,12 @@ parameters:
   repo:
     type: string
     description: "owner/repo (default is current dir's origin)"
+security:
+  trust: trusted
+  notes: |
+    Reads commit messages and PR titles (low-risk but externally authored);
+    writes only a draft document. Publishing the notes stays behind approval.
+model_hint: anthropic/claude-sonnet-5
 ---
 
 # release-notes — Generate Release Notes

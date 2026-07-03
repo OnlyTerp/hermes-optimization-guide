@@ -69,18 +69,18 @@ Then:
 ```bash
 # For each dev or client:
 adduser --disabled-password --gecos "" alice
-sudo -u alice curl -sSL https://install.hermes.nous.ai | bash
+sudo -u alice bash -c 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash'
 cp templates/config/production.yaml /home/alice/.hermes/config.yaml
 chown alice:alice /home/alice/.hermes/config.yaml
 systemctl enable --now hermes@alice.service
 ```
 
-3. **Centralize Langfuse** per [Solo Developer](./solo-developer.md#install), then every `config.yaml` points `telemetry.langfuse.host` at the same internal URL. Each profile ships under its own Langfuse project for isolation.
+3. **Centralize Langfuse** per [Solo Developer](./solo-developer.md#install), then every user enables the plugin (`hermes plugins enable observability/langfuse`) with `HERMES_LANGFUSE_BASE_URL` in their `.env` pointing at the same internal URL — there is no `telemetry:` block in config.yaml (Part 20). Each profile ships under its own Langfuse project for isolation.
 
 ## Per-client separation
 
 - **`profile:`** in the Hermes config — `quarantine` (untrusted input for a public bot) vs `trusted` (the dev's admin DM)
-- **Approval channels** — the dev's DM is the only trusted approval source; client support channels are *never* trusted
+- **Approvals** — prompts route to the channel the request came from, so the *real* control is allowlists: the dev's DM is the only surface that reaches the trusted profile; client support channels stay in quarantine (Part 19)
 - **LightRAG dirs** — `~/.hermes/lightrag-<client>/` per client; never mix
 - **MCP** — per-client read-only PATs (`GITHUB_PAT_CLIENT_A`, `GITHUB_PAT_CLIENT_B`)
 - **Audit log** — append-only JSONL per session, centralized to a single append-only bucket the dev can *read* but not *delete* (makes client reviews easy)
@@ -99,10 +99,10 @@ With weekly `cost-report` → Discord ops channel, cost anomalies surface before
 
 ## Compliance-friendly defaults
 
-- `memory_write_redaction: true` (skip writing secrets to LightRAG)
-- `log_redaction: true`
-- `security.webhook.max_body_bytes: 524288`
-- `security.approval.approval_timeout: 120` — no action sits in pending queue forever
+- `security.redact_secrets: true` (on by default — keep it on; scrubs known patterns from logs and model-visible output)
+- `approvals.timeout: 120` — pending actions fail closed instead of sitting in the queue forever
+- `approvals.cron_mode: deny` — scheduled jobs can never self-approve a dangerous command
+- Webhook payload caps + signature validation live at your reverse proxy (Caddy/nginx), not in config.yaml
 - Nightly backup encrypted with per-client age keys
 
 ## When to graduate

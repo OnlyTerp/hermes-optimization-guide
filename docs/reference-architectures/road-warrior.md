@@ -50,49 +50,38 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 Then customize:
 
 ```yaml
-# /home/hermes/.hermes/config.yaml
-version: 1
+# /home/hermes/.hermes/config.yaml — schema verified against Part 19 (v0.18)
+model: gemini-3.1-flash                     # Cheap + fast for "plan the work" phase
+provider: google
 
-models:
-  default: google/gemini-3.1-flash          # Cheap + fast for "plan the work" phase
-  providers:
-    google:
-      api_key: "${GOOGLE_API_KEY}"
-    anthropic:
-      api_key: "${ANTHROPIC_API_KEY}"       # Used by sandboxed Claude Code
+providers:
+  google:
+    api_key: "${GOOGLE_API_KEY}"
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"         # Used by sandboxed Claude Code
 
-gateways:
-  cli: { enabled: true }
-  telegram:
-    enabled: true
-    bots:
-      admin:
-        token: "${TELEGRAM_ADMIN_BOT_TOKEN}"
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
-
-# The money section
+# The money section — remote sandbox lanes from PR #8018 (Part 21).
+# Backend credentials (MODAL_TOKEN_ID/SECRET, ssh identity) live in
+# ~/.hermes/.env; pick the lane per-run with /sandbox modal | ssh.
 remote_sandbox:
   default_backend: modal          # Or daytona / fly / e2b / ssh
   backends:
     modal:
-      token_id: "${MODAL_TOKEN_ID}"
-      token_secret: "${MODAL_TOKEN_SECRET}"
       image: "python:3.12-slim"
       timeout_idle: 600           # 10m idle → auto-shutdown
     ssh:                          # your home beast, if any
       host: "beast.tailnet-xxx.ts.net"
       user: "hermes"
-      identity_file: "~/.ssh/id_ed25519"
-
-# Hermes loads skills from here; these let you orchestrate from Telegram
-skills:
-  allowlist:
-    - pr-review
-    - release-notes
-    - cost-report
-    - remote-run          # triggers a sandbox
 ```
+
+Telegram wiring goes in `~/.hermes/.env` — Hermes is default-deny (Part 19, Layer 1):
+
+```bash
+TELEGRAM_BOT_TOKEN=...              # from @BotFather
+TELEGRAM_ALLOWED_USERS=123456789    # your numeric user ID
+```
+
+Install the four skills this pattern leans on into `~/.hermes/skills/`: [pr-review](../../skills/dev/pr-review/SKILL.md), [release-notes](../../skills/dev/release-notes/SKILL.md), [cost-report](../../skills/ops/cost-report/SKILL.md), and a `remote-run` trigger skill.
 
 ## The workflow
 

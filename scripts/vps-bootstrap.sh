@@ -50,8 +50,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
 # 2. Node.js (required by MCP servers)
 # ------------------------------------------------------------
 if ! command -v node >/dev/null 2>&1; then
-  log "Installing Node.js 20..."
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  log "Installing Node.js 22 (LTS)..."
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y -qq nodejs
 fi
 
@@ -92,10 +92,17 @@ fi
 # ------------------------------------------------------------
 # 6. Hermes install (as hermes user)
 # ------------------------------------------------------------
-if ! sudo -u hermes bash -c 'command -v hermes >/dev/null 2>&1'; then
+HERMES_BIN=/home/hermes/.local/bin/hermes
+if [ ! -x "$HERMES_BIN" ]; then
   log "Installing Hermes..."
-  sudo -u hermes bash -c 'curl -sSL https://install.hermes.nous.ai | bash' \
+  sudo -u hermes bash -c 'curl -sSL https://hermes-agent.nousresearch.com/install.sh | bash' \
     || warn "Hermes installer not reachable yet — install manually and re-run."
+fi
+
+# Expose the CLI system-wide so the systemd units (ExecStart=/usr/local/bin/hermes)
+# and root shells can find it without a login shell for the hermes user.
+if [ -x "$HERMES_BIN" ]; then
+  ln -sf "$HERMES_BIN" /usr/local/bin/hermes
 fi
 
 # ------------------------------------------------------------
@@ -104,10 +111,14 @@ fi
 log "Linking skills from the guide into ~hermes/.hermes/skills/..."
 sudo -u hermes mkdir -p /home/hermes/.hermes/skills /home/hermes/.hermes/logs /home/hermes/.hermes/lightrag
 
+shopt -s nullglob
 for skill_dir in "$GUIDE_DIR"/skills/*/*/; do
   name=$(basename "$skill_dir")
   ln -sfn "$skill_dir" "/home/hermes/.hermes/skills/$name"
 done
+shopt -u nullglob
+# Prune symlinks whose target vanished (skill removed/renamed upstream)
+find /home/hermes/.hermes/skills -maxdepth 1 -xtype l -delete
 chown -R hermes:hermes /home/hermes/.hermes
 
 # Drop a stub config if none exists
@@ -126,6 +137,12 @@ ANTHROPIC_API_KEY=
 GOOGLE_API_KEY=
 TELEGRAM_ADMIN_BOT_TOKEN=
 TELEGRAM_OWNER_ID=
+# Optional providers referenced by the seeded cost-optimized.yaml —
+# uncomment and fill in the ones you route to.
+#OPENAI_API_KEY=        # required for LightRAG embeddings
+#MOONSHOT_API_KEY=
+#CEREBRAS_API_KEY=
+#ZAI_API_KEY=
 EOF
   chmod 600 /home/hermes/.hermes/.env
   chown hermes:hermes /home/hermes/.hermes/.env
@@ -152,9 +169,12 @@ fi
 # 10. UFW + fail2ban
 # ------------------------------------------------------------
 log "Hardening: UFW..."
-ufw --force reset
-ufw default deny incoming
-ufw default allow outgoing
+# Additive + idempotent on purpose: never `ufw reset` here — a reset wipes any
+# operator-added rules and transiently drops the firewall on re-runs.
+if ! ufw status | grep -q "Status: active"; then
+  ufw default deny incoming
+  ufw default allow outgoing
+fi
 ufw allow 22/tcp  comment 'ssh'
 ufw allow 80/tcp  comment 'http-acme-challenge'
 ufw allow 443/tcp comment 'https'

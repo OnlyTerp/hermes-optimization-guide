@@ -21,7 +21,7 @@ As of v0.14.0 (May 2026), Hermes ships **native adapters** for a large provider 
 | **LM Studio** | Yes | Local `/models` discovery, optional auth, reasoning transport, `hermes doctor` checks |
 | **xAI / SuperGrok** | Yes | SuperGrok OAuth, Grok 4.3 1M context, `x_search`, and xAI image/STT/TTS integrations including Custom Voices |
 | **Xiaomi MiMo** | Yes | Native reasoning modes (`low`/`medium`/`high`) exposed as config |
-| **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](./README.md#part-3-lightrag--graph-rag-that-actually-works)) |
+| **Kimi / Moonshot** | Yes | 200K+ context, great for LightRAG entity extraction (see [Part 3](./part3-lightrag-setup.md)) |
 | **z.ai / GLM** | Yes | Strong open-weight tool-use models; good cheap fallback for planning/exploration |
 | **Google Gemini (direct)** | Yes | 1M context; native prompt caching on Pro; image/video-capable model routing |
 | **Google Vertex AI** | Yes | Gemini via your GCP service account / ADC; short-lived OAuth2 tokens auto-minted and refreshed |
@@ -64,7 +64,7 @@ Keep it out of cheap cron loops; route it explicitly for live events, X threads,
 
 Pick the native adapter when one exists — you get the provider-specific features for free. Fall back to the generic OpenAI-compatible path only for endpoints that don't have a native adapter yet.
 
-### Provider Cheat Sheet (May 25, 2026)
+### Provider Cheat Sheet (July 1, 2026)
 
 The exact "best model" moves weekly, so treat this as a routing posture rather than a leaderboard. Use `hermes model` for live picker data, then pin only what you need reproducible.
 
@@ -169,9 +169,8 @@ Models are configured in `~/.hermes/config.yaml`:
 
 > **Security note:** Never put real API keys directly in `config.yaml`. Use environment variable references so keys stay in `~/.hermes/.env` (which should be `chmod 600` and never committed to git). You can also use `hermes auth` to set them securely.
 ```yaml
-# Default model
-model: claude-sonnet-5
-provider: anthropic
+# Default model (combined provider/model form, same as `hermes config set model`)
+model: anthropic/claude-sonnet-5
 
 # Provider configurations
 # API keys are loaded from ~/.hermes/.env automatically.
@@ -295,7 +294,7 @@ Use in chat:
 
 | Provider | Speed | Cost | Best For |
 |----------|-------|------|----------|
-| Cerebras | 3000+ tok/s | Cheap | Fast inference, bulk tasks, coding |
+| Cerebras | 2000+ tok/s | Cheap | Fast inference, bulk tasks, coding |
 | Anthropic | ~100 tok/s | Premium | Complex reasoning, long context |
 | OpenRouter | Varies | Varies | Model variety, fallback provider |
 | Fireworks | Fast | Cheap | Embeddings, specialized models |
@@ -378,18 +377,20 @@ embedding:
 
 ## Auxiliary Models (Task-Specific Models)
 
-Hermes supports dedicated models for eight task types. Each can have its own provider, model, base_url, api_key, and timeout.
+Hermes supports dedicated models for auxiliary task types — the dashboard's Models page ([Part 12](./part12-web-dashboard.md#models)) exposes the everyday ones (compression, vision, title generation, session search, curator), and `config.yaml` covers the full set. Each can have its own provider, model, base_url, api_key, and timeout.
 
 | Task Type | What It Does | Default |
 |-----------|-------------|---------|
 | `vision` | Image/video analysis, screenshot understanding | auto |
 | `web_extract` | Summarizing scraped web pages | auto |
 | `compression` | Context compression (summarizing old messages) | auto |
-| `session_search` | Searching past conversation transcripts | auto |
+| `title_generation` | Naming sessions | auto |
+| `session_search` | Synthesizing answers over past-session search hits | auto |
 | `approval` | Deciding whether to auto-approve tool calls | auto |
 | `skills_hub` | Skill discovery and matching | auto |
 | `mcp` | MCP tool routing | auto |
 | `flush_memories` | Memory consolidation and cleanup | auto |
+| `curator` | Skill-library hygiene runs ([Part 5](./part5-creating-skills.md)) | auto |
 
 When set to `"auto"` (default), Hermes walks a provider resolution chain: OpenRouter → Nous Portal → Custom endpoint → etc.
 
@@ -409,14 +410,8 @@ auxiliary_models:
     model: google/gemini-3.1-flash
     timeout: 60
 
-  # Use local model for session search (free, frequent calls)
-  session_search:
-    provider: local
-    model: nemotron:latest
-    base_url: http://localhost:11434/v1
-    api_key: ollama
-
   # Everything else stays on auto
+  session_search: auto
   web_extract: auto
   approval: auto
   skills_hub: auto
@@ -427,21 +422,15 @@ auxiliary_models:
 **Why bother:**
 - **Compression** runs on every long session. Using a cheap/fast model saves money without affecting quality (summarization doesn't need Opus).
 - **Vision/video** needs a multimodal model. If your main model doesn't do media, set this to one that does.
-- **Session search** is called frequently. A local model makes it free.
+- **Session search** itself is free — since v0.15 the search is local FTS over the session DB (see Part 7), so there's no per-query model cost to optimize away. The `session_search` aux slot only affects the answer-synthesis step over the hits.
 - **Approval** controls auto-execution. A fast model here means less latency on every tool call.
 
 ## Fallback Chain
 
-Configure automatic fallback if the primary model fails:
+Configure automatic fallback if the primary model fails (same combined `provider/model` strings as [Part 1](./part1-setup.md#model-settings)):
 
-```yaml
-model_fallback:
-  - provider: cerebras
-    model: qwen-3-32b
-  - provider: openrouter
-    model: anthropic/claude-sonnet-5
-  - provider: local
-    model: nemotron:latest
+```bash
+hermes config set fallback_models '["cerebras/qwen-3-32b", "openrouter/anthropic/claude-sonnet-5", "local/nemotron:latest"]'
 ```
 
 Hermes tries each in order. If Cerebras is down, it falls back to OpenRouter, then local.

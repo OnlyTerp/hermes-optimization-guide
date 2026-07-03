@@ -25,43 +25,28 @@ Don't use it for:
 
 ### How to Toggle
 
-In any interactive session (CLI or messaging platform):
+Fast Mode is a **runtime toggle**, not a YAML key — there is no `agent.service_tier:` (or `fast_mode:`) block in `config.yaml` (see [Part 20](./part20-observability.md)). In any interactive session (CLI or messaging platform):
 
 ```text
-You → /fast
-  Fast mode: ON (service_tier=priority)
+/fast on        # opt the current session into Priority Processing / Fast Mode
+/fast off       # back to normal
+/fast status    # show the current state
 ```
 
-It persists until you toggle it off:
-
-```text
-You → /fast
-  Fast mode: OFF (service_tier=default)
-```
-
-### Or Set It Globally
-
-In `~/.hermes/config.yaml`:
-
-```yaml
-agent:
-  service_tier: priority   # default, priority, or flex
-```
-
-This makes Fast Mode the default for every new session. The `/fast` slash command still overrides per-session.
+It persists for the session until you turn it off. For non-interactive entry points (cron, webhooks), simply never run `/fast on` from them and they stay on normal pricing.
 
 ### Where It Works
 
 - ✅ Interactive CLI (`hermes`)
-- ✅ Every gateway platform as of v0.9 — Telegram, Discord, Slack, WhatsApp, Signal, iMessage (BlueBubbles), WeChat, Matrix, Email, SMS, DingTalk, Feishu, WeCom, Mattermost, Home Assistant, Webhooks
-- ✅ Cron jobs (set `agent.service_tier: priority` in config)
+- ✅ Every gateway platform — the full 25+ lineup ([Part 15](./part15-new-platforms.md)): Telegram, Discord, Slack, Google Chat, LINE, SimpleX, Microsoft Teams, WhatsApp (personal + Business Cloud API), Signal, iMessage (Photon or BlueBubbles), Weixin/WeChat, WeCom, QQBot, Tencent Yuanbao, Matrix, Email, SMS, DingTalk, Feishu, Mattermost, Home Assistant, ntfy, Raft, Webhooks
+- ✅ Cron jobs started from a session where `/fast on` is active
 - ✅ Subagents (`delegate_task` inherits the parent's tier)
 - ❌ Local/Ollama models (no priority tier exists)
 - ❌ Free OpenRouter variants (the `:free` suffix forces default tier)
 
 ### Pricing Heads-Up
 
-Priority tier is more expensive per token. Watch the **Analytics** tab in the dashboard (Part 12) for per-day cost deltas after enabling it. If you're surprised by a bill, the most common cause is leaving `agent.service_tier: priority` on globally for cron jobs that don't need it.
+Priority tier is more expensive per token. Watch the **Analytics** tab in the dashboard (Part 12) for per-day cost deltas after enabling it. If you're surprised by a bill, the most common cause is leaving `/fast on` in a long-lived session that's driving work which doesn't need it.
 
 ---
 
@@ -181,23 +166,19 @@ Pair this with a messaging platform gateway (Part 4 / Part 15) and you have a ch
 
 ### Inspecting What's Running
 
-List background processes with active watchers:
+List background processes with active watchers — in-session:
 
-```bash
+```text
 /background list
-```
-
-or via the CLI:
-
-```bash
-hermes background list
 ```
 
 Each row shows the PID, command, uptime, watcher count, and recent match count. Click a row (in the dashboard) to tail live output.
 
 ### Killing a Background Process
 
-```bash
+In-session:
+
+```text
 /background kill <pid>
 ```
 
@@ -282,13 +263,13 @@ Without a topic, it runs with its default heuristics. With one, the summarizer p
 
 ## `/goal` — Persistent Target Locking
 
-v0.13 added `/goal`, and v0.14 pairs it with live `/handoff` for model/profile transfers for the long-loop version of this problem: not "compress this context," but "keep working until this observable objective is done."
+v0.13 added `/goal` for the long-loop version of this problem: not "compress this context," but "keep working until this observable objective is done." v0.14 pairs it with live `/handoff`, which transfers a running goal to a different model or profile mid-flight.
 
 ```text
 /goal Migrate the gateway to Google Chat, run checks, and leave a PR link.
 ```
 
-Use it when the agent should continue across tool calls and intermediate updates until the exit condition is satisfied. For multi-agent work, pair it with [Part 23's Kanban board](./part23-tenacity-stack.md); for one focused session, `/goal` is enough.
+Use it when the agent should continue across tool calls and intermediate updates until the exit condition is satisfied. As of v0.18, `/goal` enforces a **completion contract**: the agent won't declare a goal done until the stated exit condition is observably met. For multi-agent work, pair it with [Part 23's Kanban board](./part23-tenacity-stack.md); for one focused session, `/goal` is enough.
 
 ---
 
@@ -296,4 +277,4 @@ Use it when the agent should continue across tool calls and intermediate updates
 
 - **Save keys + streamline setup:** [Part 13 — Nous Tool Gateway](./part13-tool-gateway.md)
 - **Expand reach:** [Part 15 — New Platforms (Teams, LINE, SimpleX, iMessage, WeChat, Android)](./part15-new-platforms.md)
-- **Disaster recovery:** [Part 16 — Backup, Debug, and Pluggable Context](./part16-backup-debug.md)
+- **Disaster recovery:** [Part 16 — Backup & Debug](./part16-backup-debug.md)

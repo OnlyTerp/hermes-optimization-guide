@@ -3,119 +3,137 @@
 # ------------------------------------------------------------
 # For operators whose agent reads untrusted content (public bots,
 # webhook-driven flows, email inbox, GitHub PR comments).
-# Every layer from Part 19 enabled + extras:
-#   - Quarantine mode as default
-#   - Strict approval on everything
-#   - No sampling allowed on community/untrusted MCPs
-#   - Memory-write redaction
+# Every layer from Part 19, dialed to maximum:
+#   - OS-level isolation (container terminal backend) — the only real boundary
+#   - Quarantine profile as the default; trusted profile is opt-in
+#   - approvals.mode: manual, cron_mode: deny, empty command_allowlist
+#   - MCP servers tool-filtered to an audited include list
 #   - Periodic security crons
+# Schema verified against Part 19 (v0.18).
+#
+# Layer 1 (who can talk to the agent) lives in ~/.hermes/.env, not here:
+#   TELEGRAM_ALLOWED_USERS=<owner-id-only>
+#   DISCORD_ALLOWED_USERS=...
+#   GATEWAY_ALLOWED_USERS=...
+# Never set GATEWAY_ALLOW_ALL_USERS on anything public — Hermes is
+# default-deny without an allowlist.
 # ------------------------------------------------------------
 
-version: 1
-
-profile: quarantine                     # Default to quarantine; explicit /trusted to leave
+# Default profile: quarantine. Untrusted-facing surfaces get the locked-down
+# posture unless a session is explicitly started with the trusted profile
+# (`hermes -p trusted`, or per-bot routing below). Build/edit profiles in
+# the dashboard's profile builder (v0.17+, Part 12).
+profile: quarantine
 
 profiles:
   quarantine:
-    description: Untrusted-input-facing. Cheap model, approval on everything, no memory writes.
-    models: { default: google/gemini-3.1-flash }
-    tools_allowlist: [classify, reply, escalate]
-    memory: { write: false, read: true }
-    security:
-      approval:
-        bypass_subagents: []
-        auto_approve_read: false        # Even reads require approval here
-        require_approval:
-          - { tool: "*", actions: [exec, write, send, create, update, delete] }
+    # Untrusted-input-facing: cheap model, no MCP servers, approval on
+    # everything. A successful injection lands in a capability desert.
+    model: gemini-3.1-flash
+    provider: google
+    mcp_servers: []
+    approvals:
+      mode: manual
+      timeout: 60
+      cron_mode: deny
   trusted:
-    description: Admin-only. Full capability.
-    models: { default: anthropic/claude-sonnet-5 }
+    # Admin-only (owner DM / local CLI). Full capability, still manual approval.
+    model: claude-sonnet-5
+    provider: anthropic
 
-models:
-  default: anthropic/claude-sonnet-5
-  providers:
-    anthropic:
-      api_key: "${ANTHROPIC_API_KEY}"
-    google:
-      api_key: "${GOOGLE_API_KEY}"
+# Per-bot profile routing: the public bot's token maps to the quarantine
+# profile; only the owner-allowlisted admin bot reaches trusted. Approvals
+# route to the channel the request came from (there is no separate
+# "approval channel" key) — so the REAL defense is keeping the public
+# bot's allowlist tight and driving privileged actions from the admin bot.
+telegram:
+  bots:
+    admin:
+      token: ${TELEGRAM_ADMIN_BOT_TOKEN}
+      profile: trusted
+    public:
+      token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
+      profile: quarantine
+      default_skill: telegram-triage
 
-gateways:
-  cli: { enabled: true, profile: trusted }        # Local CLI = admin
-  telegram:
-    enabled: true
-    bots:
-      admin:
-        token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-        allowed_user_ids:
-          - ${TELEGRAM_OWNER_ID}
-        profile: trusted
-      public:
-        token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
-        profile: quarantine                       # Public bot locked down
-        default_skill: telegram-triage
-  discord:
-    enabled: true
-    bot_token: ${DISCORD_BOT_TOKEN}
-    profile: quarantine
+discord:
+  require_mention: true
+  free_response_channels: ""
+
+group_sessions_per_user: true
+
+providers:
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+  google:
+    api_key: ${GOOGLE_API_KEY}
+
+# OS-level isolation — the single control Part 19 calls the only real
+# boundary. LLM-emitted shell + file ops run inside a container; the agent
+# cannot read ~/.hermes/.env or modify its own code.
+# NOTE: container backends intentionally SKIP dangerous-command approval
+# (the container is the boundary). If you drop back to backend: local,
+# the approvals block below becomes your primary gate again.
+terminal:
+  backend: docker
+  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  cwd: /workspace
+  docker_mount_cwd_to_workspace: false
+  container_persistent: false        # reset filesystem every session
+
+# Dangerous-command approval (applies on the local backend and to
+# anything outside the container path). Patterns are built into Hermes.
+approvals:
+  mode: manual                       # never smart/off on an untrusted-facing box
+  timeout: 60                        # fail-closed deny on timeout
+  cron_mode: deny
+  mcp_reload_confirm: true
+  destructive_slash_confirm: true
+
+# Empty by design. Every entry here is a standing approval bypass —
+# audit-approval-bypass flags anything that shows up.
+command_allowlist: []
 
 security:
-  approval:
-    bypass_subagents: []                # Empty by design
-    auto_approve_read: false            # Even directory listings require approval
-    denylist:
-      - 'rm\s+-rf\s+/'
-      - 'curl\s+.+\|\s*(sh|bash)'
-      - '169\.254\.169\.254'
-      - 'cat\s+~?/?\.?ssh/'
-      - 'aws\s+s3\s+sync'
-      - 'scp\s+.+@'
-      - 'nc\s+-l'
-      - 'base64\s+-d.*\|.*bash'
-    require_approval:
-      - { tool: "*", actions: [exec, write, send, create, update, delete, post] }
-    approval_channel: telegram_dm
-    approval_timeout_seconds: 300       # Reject if operator doesn't respond
-  secrets:
-    # Redaction is on by default in Hermes v0.13+; keep patterns explicit
-    # for auditability and memory/log hygiene.
-    redaction_patterns:
-      - 'sk-[A-Za-z0-9]{40,}'
-      - 'xoxb-[A-Za-z0-9-]{40,}'
-      - 'ghp_[A-Za-z0-9]{36}'
-      - 'github_pat_[A-Za-z0-9_]{80,}'
-      - 'AKIA[0-9A-Z]{16}'
-      - 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'     # JWT
-    memory_write_redaction: true
-    log_redaction: true
-  webhook:
-    require_signature: true
-    max_body_bytes: 524288
-    ttl_seconds: 300                    # Reject webhooks older than 5 min
-  mcp:
-    default_trust: untrusted            # Must be explicitly elevated per-server
-    require_allowlist: true
+  redact_secrets: true               # default on; never disable on this box
+  # Optional pre-exec scanning on top of the native detector:
+  # tirith_enabled: true
+  # tirith_path: tirith
+  # tirith_timeout: 5
+  # tirith_fail_open: false          # fail closed here, unlike a dev box
 
-telemetry:
-  level: info
-  exporters:
-    langfuse:
-      public_key: ${LANGFUSE_PUBLIC_KEY}
-      secret_key: ${LANGFUSE_SECRET_KEY}
-      host: ${LANGFUSE_HOST}
-  alerts:
-    # Tight budget + any injection-attempt pings operator immediately
-    cost_per_hour_usd: 1.0
-    injection_attempts_per_hour: 1
-    webhook: ${ALERT_WEBHOOK_URL}
+# MCP: only audited tools, read-only creds, nothing that ingests untrusted
+# content gets a broad surface. No trust:/allow_sampling: keys exist —
+# review + tools.include IS the control (Part 19, Layer 5).
+mcp_servers:
+  github:
+    command: npx
+    args: [-y, "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_RO_TOKEN}   # read-only, one-repo PAT
+    enabled: true
+    timeout: 120
+    tools:
+      include:
+        - get_pull_request
+        - list_pull_requests
+        - get_issue
+      exclude: []
 
-cron:
-  - { name: weekly-mcp-audit,    schedule: "0 9 * * 1",   task: "/audit-mcp",                              notify: telegram_dm }
-  - { name: weekly-bypass-audit, schedule: "0 10 * * 1",  task: "/audit-approval-bypass",                  notify: telegram_dm }
-  - { name: monthly-rotate,      schedule: "0 4 1 * *",   task: "/rotate-secrets all",                     notify: telegram_dm }
-  - { name: daily-log-sweep,     schedule: "0 2 * * *",   task: "/audit-injection-attempts since=24h",     notify: telegram_dm }
-  - name: disk-watchdog
-    schedule: "*/15 * * * *"
-    mode: no_agent                  # v0.13: script-only, no LLM session
-    command: >-
-      df -h / | awk 'NR==2 && $5+0 > 85 {print "Disk usage high: "$5}'
-    notify: telegram_dm
+# For true egress allowlisting (block 169.254.169.254, restrict outbound
+# domains) wrap the WHOLE process — e.g. NVIDIA OpenShell — because the
+# terminal backend alone doesn't confine MCP subprocesses or code-exec.
+# There is no security.network.egress_allowlist key (Part 19, Layer 4).
+
+# ~/.hermes/cron.yaml — the periodic hygiene loop. cron_mode: deny means
+# a cron job that trips a dangerous command is blocked headlessly, so keep
+# these read-only:
+#   - name: weekly-mcp-audit
+#     schedule: "0 9 * * 1"
+#     task: /audit-mcp
+#   - name: weekly-bypass-audit
+#     schedule: "0 10 * * 1"
+#     task: /audit-approval-bypass
+#   - name: monthly-rotate
+#     schedule: "0 4 1 * *"
+#     task: /rotate-secrets webhook_hmac_*    # interactive kinds prompt; run "all" manually

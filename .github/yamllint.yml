@@ -3,6 +3,8 @@ extends: default
 # Goal: catch real syntax errors in template YAMLs, not formatting nits.
 # Templates often align values / use flow-mapping shorthand for cron/approval rules;
 # those are legit, so we relax those rules.
+#
+# CI runs: yamllint -c .github/yamllint.yml templates/ benchmarks/ .github/
 
 rules:
   line-length: disable

@@ -33,6 +33,7 @@ As of v0.17, the gateway ships built-in adapters plus plugin-shipped platforms:
 | Mattermost | WebSocket | Self-hosted Slack alternative |
 | Matrix | Client-server | Federated chat |
 | Email (IMAP+SMTP) | Polling | Plain email |
+| **ntfy** | HTTP pub/sub | **New in v0.15**, push notifications to any device |
 | Home Assistant | WebSocket | Voice + automation triggers |
 | Webhook (generic) | HTTP POST | Wire up anything |
 

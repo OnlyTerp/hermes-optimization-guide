@@ -8,7 +8,7 @@ All diagrams are Mermaid — they render natively on GitHub. Copy-paste into you
 
 ```mermaid
 flowchart LR
-  subgraph Inputs[16 Inputs]
+  subgraph Inputs["Inputs (25+ platforms)"]
     CLI[CLI]
     Telegram
     Discord
@@ -20,6 +20,11 @@ flowchart LR
     Webhooks
     Cron
     Voice
+    GoogleChat[Google Chat]
+    Teams
+    LINE
+    SimpleX
+    More[…and more]
   end
 
   subgraph Core[Hermes Agent]
@@ -94,7 +99,7 @@ sequenceDiagram
   H->>M: tools/list
   M-->>H: [create_pull_request, ...]
   H->>H: Select tool
-  H->>H: Approval layer (denylist, allowlist, channel)
+  H->>H: Approval layer (dangerous-command detector + command_allowlist)
   H->>M: tools/call create_pull_request
   M->>E: HTTPS to GitHub
   E-->>M: {html_url, number}
@@ -109,7 +114,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-  subgraph Telegram[Telegram Topic "feature-x"]
+  subgraph Telegram["Telegram Topic 'feature-x'"]
     Msg1[msg: implement foo]
     Msg2[msg: add tests]
     Msg3[msg: fix the null check]
@@ -180,13 +185,12 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  Input[Input<br/>Telegram/Discord/Email/Webhook] --> L1[Layer 1<br/>Origin labeling]
-  L1 --> L2[Layer 2<br/>Approval + denylist]
-  L2 --> L3[Layer 3<br/>Secrets redaction]
-  L3 --> L4[Layer 4<br/>Webhook sig validation]
-  L4 --> L5[Layer 5<br/>SSRF / redirect guard]
-  L5 --> L6[Layer 6<br/>MCP trust levels]
-  L6 --> L7[Layer 7<br/>Quarantine profile]
-  L7 --> Exec[Tool execution]
+  Input[Input<br/>Telegram/Discord/Email/Webhook] --> L1[Layer 1<br/>User allowlists — default deny]
+  L1 --> L2[Layer 2<br/>Dangerous-command approval]
+  L2 --> L3[Layer 3<br/>Secrets redaction + credential scoping]
+  L3 --> L4[Layer 4<br/>Isolation backend — the real boundary]
+  L4 --> L5[Layer 5<br/>MCP/plugin trust — tool filtering + review]
+  L5 --> L6[Layer 6<br/>Context-file + skill scanning]
+  L6 --> Exec[Tool execution]
   Exec --> Audit[(Audit log)]
 ```

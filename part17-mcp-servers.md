@@ -82,24 +82,24 @@ mcp_servers:
 
 HTTP servers can add/remove tools live. Hermes handles reconnection with exponential backoff.
 
-### Scoped Enablement
+### Scoped Tool Exposure
 
-Some servers are chatty — you don't want every tool they expose loaded into every conversation. Scope them:
+Some servers are chatty — you don't want every tool they expose loaded into every conversation. The real schema knob is per-server `tools.include` / `tools.exclude` (there is no per-profile or per-channel `enabled_for:` scoping — see [Part 19, Layer 5](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust)):
 
 ```yaml
+# Schema verified against Part 19 (v0.18)
 mcp_servers:
   postgres:
     command: npx
     args: ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
-    enabled_for:                     # Only load in these sessions
-      - profile: engineering
-      - channel: "#data-questions"
-    tools_allowlist:                 # Only expose these tools
-      - query
-      - describe_table
+    enabled: true
+    timeout: 120
+    tools:
+      include: [query, describe_table]   # empty = all tools exposed
+      exclude: []
 ```
 
-Without a `tools_allowlist`, every tool the server exposes is available.
+With an empty `tools.include`, every tool the server exposes is available. If you need a server only in specific contexts, toggle it at runtime with `/mcp disable <name>` / `/mcp enable <name>` (below) rather than reaching for a config key that doesn't exist.
 
 ---
 
@@ -107,7 +107,7 @@ Without a `tools_allowlist`, every tool the server exposes is available.
 
 These are the ones that pay for themselves within a day:
 
-> **2026 reality check:** MCP is also a supply-chain boundary. Prefer official servers, pin package versions, restrict filesystem roots, and keep `allow_sampling: false` unless the server genuinely needs to call an LLM.
+> **2026 reality check:** MCP is also a supply-chain boundary. Prefer official servers, pin package versions, restrict filesystem roots, and use `tools.include` to expose only the tools you audited — trust is enforced by review and isolation, not a config flag ([Part 19, Layer 5](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust)).
 
 | Server | What it adds | Why you want it |
 |--------|--------------|-----------------|
@@ -187,18 +187,9 @@ This is MCP's killer feature and the reason it matters for agents specifically. 
 - A security-review MCP reads a diff → asks the LLM to classify severity → returns a triage label.
 - A translation MCP reads a file → asks the LLM to localize it → writes the output.
 
-Hermes handles the inference request with the active provider and meters the tokens against the current session. Enable sampling for a server:
+Hermes handles the inference request with the active provider and meters the tokens against the current session.
 
-```yaml
-mcp_servers:
-  scraper:
-    command: node
-    args: ["./scraper-mcp.js"]
-    allow_sampling: true              # Off by default
-    sampling_model: gpt-5-mini        # Optional: pin a cheaper model for sampling
-```
-
-**Security note:** Sampling means an MCP server can burn your tokens. Only enable it for servers you trust. See [Part 19](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust).
+**Security note:** Sampling means an MCP server can burn your tokens. There is no per-server `allow_sampling:` or `sampling_model:` config knob in Hermes — sampling exposure is controlled the same way all MCP trust is: operator review before install, `tools.include` filtering, and isolation. Only run sampling-capable servers you've actually read. See [Part 19, Layer 5](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust).
 
 ---
 
@@ -240,12 +231,12 @@ Use MCP when you want:
 | Server shows connected but 0 tools | Permissions — server's env vars are missing its auth token | Check `env:` entries and that referenced `${VARS}` exist in `.env` |
 | Tools show up in CLI but not Telegram | Gateway process has its own env — restart it after config change | `hermes gateway restart` |
 | Constant reconnects on HTTP server | SSE timeout behind a reverse proxy | Set `proxy_read_timeout 300s` in nginx/Caddy |
-| `sampling not permitted` in server logs | `allow_sampling: false` (default) | Set `allow_sampling: true` in the server's block |
+| Runaway token spend from one server | A sampling-capable server looping on `sampling/createMessage` | `/mcp disable <name>`, then review the server's code before re-enabling |
 
 ---
 
 ## What's Next
 
 - [Part 18: Delegating to Coding Agents](./part18-coding-agents.md) — use Claude Code, Codex, and Gemini CLI as sub-agents invoked through Hermes (some ship MCP servers too)
-- [Part 19: Security Playbook](./part19-security-playbook.md) — MCP trust model, sampling limits, and how untrusted MCPs get quarantined
+- [Part 19: Security Playbook](./part19-security-playbook.md) — the MCP trust model and why review-before-install is the real control
 - [Part 12: Web Dashboard](./part12-web-dashboard.md) — the MCP Servers panel
