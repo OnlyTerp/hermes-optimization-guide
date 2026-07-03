@@ -1,5 +1,9 @@
 # Hermes 最適化ガイド（日本語ショート版）
 
+<p align="center">
+  <img src="./assets/hero-banner.png" alt="Hermes Optimization Guide" width="880">
+</p>
+
 > [英語版はこちら](./README.md) · このページは入口の要約。本文の章は英語のまま。 · 最終同期：2026-07-03
 
 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（**v0.18.0 “The Judgment Release”（v2026.7.1）** まで反映。Mixture-of-Agents のファーストクラスモデル化、エビデンスに基づくタスク検証、ネイティブデスクトップアプリ、NVIDIA ローカルハードウェアを含む）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。

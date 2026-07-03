@@ -22,6 +22,10 @@ Every part you need to go from fresh install to a production Hermes deployment �
 
 Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
 
+<p align="center">
+  <img src="./assets/runnable-artifacts.svg" alt="Docs plus runnable artifacts — 27 guide parts, 13 installable skills, 5 config templates, 4 reference architectures, one-command VPS bootstrap, 8-question config wizard" width="920">
+</p>
+
 *By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **July 1, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
 
 ---
@@ -68,7 +72,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`templates/cron/`](./templates/cron) | Recommended production cron schedule. |
 | [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) | One-command fresh VPS → production Hermes. |
 | [`diagrams/`](./diagrams) | 6 Mermaid diagrams (architecture, MCP flow, delegation, sandbox sync, observability, security layers). |
-| [`assets/`](./assets) | Banner graphics used across the guide. |
+| [`assets/`](./assets) | Banner art + the SVG infographics used across the guide (architecture, paths, timeline). |
 | [`benchmarks/`](./benchmarks) | Reproducible cost + latency table across 13 models × 5 tasks. |
 | [`docs/wizard/`](./docs/wizard) | **Interactive config wizard** — 8 questions → ready-to-drop `config.yaml`. Runs in your browser. |
 | [`docs/reference-architectures/`](./docs/reference-architectures) | **4 blueprints** — Homelab, Solo Dev, Small Agency, Road Warrior. Full parts list + cost + install. |
@@ -81,6 +85,12 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 ---
 
 ## Architecture at a glance
+
+<p align="center">
+  <img src="./assets/architecture.svg" alt="Hermes architecture — surfaces (desktop, CLI/TUI, web, 25+ chat platforms, cron) flow into the gateway (model router, approval layer, context engine, scale-to-zero), which fans out to any model, tools, memory, and observability" width="920">
+</p>
+
+Prefer Mermaid? The same picture, editable:
 
 ```mermaid
 flowchart LR
@@ -105,6 +115,10 @@ Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 ---
 
 ## Pick Your Path
+
+<p align="center">
+  <img src="./assets/pick-your-path.svg" alt="Pick your path — ten curated reading paths through the guide's 27 parts, from a 10-minute setup to production hardening, local GPU, and MoA verification" width="920">
+</p>
 
 This guide grew to 27 parts because *Hermes grew*. Every part lives in its own file (`part1-setup.md` … `part26-moa-verification.md`); this README keeps a short summary of Parts 1–5 (plus the full SOUL.md personality section) and links out. You don't have to read them all — pick the shortest path to what you need:
 
@@ -141,6 +155,10 @@ Skip the terminal: install the [desktop app](./part24-desktop-app.md) and let fi
 ---
 
 ## What's New (July 2026)
+
+<p align="center">
+  <img src="./assets/release-timeline.svg" alt="Release timeline — v0.13 Tenacity, v0.14 Foundation, v0.15 Velocity, v0.16 Surface, v0.17 Reach, and the current v0.18 Judgment release" width="920">
+</p>
 
 Two huge releases landed since the Surface refresh — **v0.17.0 "Reach" (v2026.6.19)** and **[v0.18.0 "The Judgment Release" (v2026.7.1)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.7.1)**. Combined: ~3,200 commits, ~1,800 merged PRs, 1,200+ issues closed, and — as of v0.18 — **every P0 and P1 issue in the entire Hermes repo resolved** (~700 highest-priority items cleared in twelve days, with a standing commitment to keep the count at zero). None of it is model-specific — bring whatever weights you want.
 
@@ -260,20 +278,9 @@ After this guide:
 
 ## How the Pieces Fit Together
 
-```
-You (any device)
-    ↓
-Hermes Agent (lean context, ~5KB injected per message)
-    ↓
-┌──────────────────────────────────────────┐
-│  Skills (loaded on demand, 0 cost idle) │
-│  Memory (compact, vector-searched)       │
-│  LightRAG (entity graph, deep recall)    │
-│  Telegram (mobile + group access)        │
-└──────────────────────────────────────────┘
-    ↓
-LLM Provider (Claude, GPT, local models)
-```
+<p align="center">
+  <img src="./assets/how-it-fits.svg" alt="How the pieces fit together — you on any device, through the Hermes Agent's lean context, into modular layers (skills, memory, LightRAG, chat platforms), out to any LLM provider" width="920">
+</p>
 
 **The key insight:** Everything is modular. Install what you need, skip what you don't. The agent adapts.
 

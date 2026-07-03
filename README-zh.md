@@ -1,5 +1,9 @@
 # Hermes 优化指南（中文简版）
 
+<p align="center">
+  <img src="./assets/hero-banner.png" alt="Hermes Optimization Guide" width="880">
+</p>
+
 > [English 完整版](./README.md) · 本页是入口摘要，章节正文仍为英文。 · 最后同步：2026-07-03
 
 实用指南 + 可安装制品（Skills、配置模板、基础设施脚本），针对 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（当前覆盖到 **v0.18.0 “The Judgment Release”（v2026.7.1）**，含 Mixture-of-Agents 一等模型、基于证据的任务验证、原生桌面应用与 NVIDIA 本地硬件）。
