@@ -178,7 +178,7 @@ OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production
 
 If you want LLM-shaped `gen_ai.*` spans (OpenInference conventions), enable
 Langfuse's plugin and point its OTLP exporter at your collector via the Langfuse
-self-hosted route; or run [Arize Phoenix](https://phoenix.arize.com) as your
+self-hosted route; or run [Arize Phoenix](https://github.com/Arize-ai/phoenix) as your
 collector and let it ingest the raw OTLP stream.
 
 ---
