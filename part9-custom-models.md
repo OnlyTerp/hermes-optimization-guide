@@ -138,6 +138,34 @@ hermes model
 
 Hermes probes the endpoint, detects OpenAI-style `/chat/completions` vs Anthropic-style `/messages`, discovers deployments when possible, and stores the right `api_mode` in `config.yaml`.
 
+### MiniMax M3 Models and Regional Endpoints
+
+The `minimax` provider supports both current MiniMax models. Add aliases when you want to pin either model without changing your default:
+
+```yaml
+model_aliases:
+  minimax-m3:
+    provider: minimax
+    model: MiniMax-M3
+  minimax-m2.7:
+    provider: minimax
+    model: MiniMax-M2.7
+```
+
+Model metadata (July 8, 2026):
+
+| Model | Context | Input | Thinking | Input / 1M | Output / 1M | Cache read / 1M | Cache write / 1M |
+|-------|--------:|-------|----------|-----------:|------------:|----------------:|-----------------:|
+| `MiniMax-M3` | 1,000,000 | text, image, video | adaptive or disabled | $0.60 | $2.40 | $0.12 | — |
+| `MiniMax-M2.7` | 204,800 | text | always on | $0.30 | $1.20 | $0.06 | $0.375 |
+
+Choose the API region and protocol together. Keep `/anthropic/v1` intact for Anthropic-compatible clients:
+
+| Region | OpenAI-compatible base URL | Anthropic-compatible base URL | Documentation |
+|--------|----------------------------|-------------------------------|---------------|
+| Global | `https://api.minimax.io/v1` | `https://api.minimax.io/anthropic/v1` | `https://platform.minimax.io/docs` |
+| Mainland China | `https://api.minimaxi.com/v1` | `https://api.minimaxi.com/anthropic/v1` | `https://platform.minimaxi.com/docs` |
+
 ### Remote Model Catalog: Stop Hardcoding This Week's Winner
 
 OpenRouter and Nous Portal model pickers now fetch:
@@ -216,6 +244,7 @@ providers:
 
   minimax:
     api_key: ${MINIMAX_API_KEY}
+    # Models: MiniMax-M3 or MiniMax-M2.7; choose a regional API base from the table above
 
   gmi:
     api_key: ${GMI_API_KEY}
