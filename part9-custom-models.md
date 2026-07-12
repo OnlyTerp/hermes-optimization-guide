@@ -159,12 +159,12 @@ Model metadata (July 8, 2026):
 | `MiniMax-M3` | 1,000,000 | text, image, video | adaptive or disabled | $0.60 | $2.40 | $0.12 | — |
 | `MiniMax-M2.7` | 204,800 | text | always on | $0.30 | $1.20 | $0.06 | $0.375 |
 
-Choose the API region and protocol together. Keep `/anthropic/v1` intact for Anthropic-compatible clients:
+Choose the API region and protocol together. For Anthropic-compatible clients, configure the `/anthropic` base URL; the SDK appends `/v1/messages` for the final request:
 
 | Region | OpenAI-compatible base URL | Anthropic-compatible base URL | Documentation |
 |--------|----------------------------|-------------------------------|---------------|
-| Global | `https://api.minimax.io/v1` | `https://api.minimax.io/anthropic/v1` | `https://platform.minimax.io/docs` |
-| Mainland China | `https://api.minimaxi.com/v1` | `https://api.minimaxi.com/anthropic/v1` | `https://platform.minimaxi.com/docs` |
+| Global | `https://api.minimax.io/v1` | `https://api.minimax.io/anthropic` | `https://platform.minimax.io/docs` |
+| Mainland China | `https://api.minimaxi.com/v1` | `https://api.minimaxi.com/anthropic` | `https://platform.minimaxi.com/docs` |
 
 ### Remote Model Catalog: Stop Hardcoding This Week's Winner
 
