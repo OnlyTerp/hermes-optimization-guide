@@ -140,7 +140,7 @@ Hermes probes the endpoint, detects OpenAI-style `/chat/completions` vs Anthropi
 
 ### MiniMax M3 Models and Regional Endpoints
 
-The `minimax` provider supports both current MiniMax models. Add aliases when you want to pin either model without changing your default:
+Hermes registers `minimax` for the global API and `minimax-cn` for the mainland China API. Both providers support `MiniMax-M3` and `MiniMax-M2.7`. Add aliases when you want to pin either model without changing your default:
 
 ```yaml
 model_aliases:
@@ -154,17 +154,37 @@ model_aliases:
 
 Model metadata (July 8, 2026):
 
-| Model | Context | Input | Thinking | Input / 1M | Output / 1M | Cache read / 1M | Cache write / 1M |
-|-------|--------:|-------|----------|-----------:|------------:|----------------:|-----------------:|
-| `MiniMax-M3` | 1,000,000 | text, image, video | adaptive or disabled | $0.60 | $2.40 | $0.12 | — |
-| `MiniMax-M2.7` | 204,800 | text | always on | $0.30 | $1.20 | $0.06 | $0.375 |
+| Model | Total context | Input | Thinking |
+|-------|--------------:|-------|----------|
+| `MiniMax-M3` | 1,000,000 | text, image, video | adaptive or disabled |
+| `MiniMax-M2.7` | 204,800 | text | always on |
 
-Choose the API region and protocol together. For Anthropic-compatible clients, configure the `/anthropic` base URL; the SDK appends `/v1/messages` for the final request:
+Pay-as-you-go pricing in USD per million tokens (July 8, 2026):
 
-| Region | OpenAI-compatible base URL | Anthropic-compatible base URL | Documentation |
-|--------|----------------------------|-------------------------------|---------------|
-| Global | `https://api.minimax.io/v1` | `https://api.minimax.io/anthropic` | `https://platform.minimax.io/docs` |
-| Mainland China | `https://api.minimaxi.com/v1` | `https://api.minimaxi.com/anthropic` | `https://platform.minimaxi.com/docs` |
+| Model | Service tier | Input-token band | Input | Output | Cache read | Cache write |
+|-------|--------------|------------------|------:|-------:|-----------:|------------:|
+| `MiniMax-M3` | standard | <= 512,000 | $0.30 | $1.20 | $0.06 | - |
+| `MiniMax-M3` | standard | > 512,000 | $0.60 | $2.40 | $0.12 | - |
+| `MiniMax-M3` | priority | <= 512,000 | $0.45 | $1.80 | $0.09 | - |
+| `MiniMax-M3` | priority | > 512,000 | $0.90 | $3.60 | $0.18 | - |
+| `MiniMax-M2.7` | - | all | $0.30 | $1.20 | $0.06 | $0.375 |
+
+Choose the API region and protocol together. Set `provider`, `base_url`, and `api_mode` under `model` from one complete row below; `default` can be either model ID. The Anthropic SDK appends `/v1/messages` to the `/anthropic` base URL, while the OpenAI SDK appends `/chat/completions` to the `/v1` base URL.
+
+```yaml
+model:
+  provider: minimax
+  default: MiniMax-M3
+  base_url: https://api.minimax.io/anthropic
+  api_mode: anthropic_messages
+```
+
+| Region | Protocol | `provider` | `base_url` | `api_mode` | Documentation |
+|--------|----------|------------|------------|------------|---------------|
+| Global | OpenAI-compatible | `minimax` | `https://api.minimax.io/v1` | `chat_completions` | `https://platform.minimax.io/docs` |
+| Global | Anthropic-compatible | `minimax` | `https://api.minimax.io/anthropic` | `anthropic_messages` | `https://platform.minimax.io/docs` |
+| Mainland China | OpenAI-compatible | `minimax-cn` | `https://api.minimaxi.com/v1` | `chat_completions` | `https://platform.minimaxi.com/docs` |
+| Mainland China | Anthropic-compatible | `minimax-cn` | `https://api.minimaxi.com/anthropic` | `anthropic_messages` | `https://platform.minimaxi.com/docs` |
 
 ### Remote Model Catalog: Stop Hardcoding This Week's Winner
 
@@ -244,7 +264,9 @@ providers:
 
   minimax:
     api_key: ${MINIMAX_API_KEY}
-    # Models: MiniMax-M3 or MiniMax-M2.7; choose a regional API base from the table above
+
+  minimax-cn:
+    api_key: ${MINIMAX_CN_API_KEY}
 
   gmi:
     api_key: ${GMI_API_KEY}
