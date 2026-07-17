@@ -2,6 +2,34 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-07-17 — The Power Secrets modernization (v0.18.2 era)
+
+### Added
+- **Part 28 — The Recipe Book**: twelve end-to-end community builds mapped onto real primitives — the morning finance loop (read-only), staged Gmail (drafts-only scopes), the SMB approval office, the overnight Kanban shift, the GPU FIFO board, the content swarm, the carousel factory, the job-hunt pipeline, the accountability coach, the health correlator (local backend), the Blender room, and the secretary office — each with its primitives, its approval posture, and the trap that bit its builders first.
+- **New house-style SVG artwork**: Part 27 hero, the one-page cheat-sheet poster, the seven-layer security stack (Part 19), the seven-rung agent ladder (Part 8), the gateway token tax (Part 20), and the Recipe Book map (Part 28); release timeline refreshed to v0.18.2.
+- Part 3: "Scaling LightRAG: the July 2026 playbook" — role-specific LLMs, structural chunking, multimodal ingestion, production stores (OpenSearch), RAGAS-style evals via Langfuse, multi-agent retrieval.
+- Part 5: ≤60-char skill-description hygiene, built-ins-before-skills, and `/skills` + `/memory` approval gating.
+- **Part 27 — Power Secrets**: a new field manual distilling the official Wingtips series (#1–#22) and the highest-signal July community research into 25 verified non-obvious mechanics — memory/USER snapshot semantics, compression internals (`protect_last_n`, cheap auxiliary compression, compaction's structured brief), the messaging-gateway token tax, credential pools vs fallbacks and their cache-miss cost, model-switch cache resets, profiles-as-rooms (and the filesystem-isolation caveat), Kanban's `toolsets` and workspace traps, `state.db`/disk hygiene, session export with `--redact`, `/steer`//`/queue`//`/busy` timing semantics, supervised self-improvement gates, and a printable one-page cheat sheet.
+- Part 17: **MCP Security — July 2026 state of play**: CVE table (LiteLLM CVE-2026-30623, Windsurf CVE-2026-30615, Cursor MCPoison CVE-2025-54136, MCP Inspector CVE-2025-49596, LibreChat CVE-2026-22252), npm-impersonator warning, and a 7-point hardening checklist.
+- Part 19: the **seven-layer security mental model** mapped onto real Hermes primitives, the **action-ontology** containment pattern (host = brain, credential-less container = hands, typed action API), and **external spend kernels** for money-touching agents (Custodian / `CommercePolicy` / Latch / payguard patterns).
+- Part 20: **the gateway token tax** (CLI ~6–8k vs messaging ~15–20k tokens/turn), **benchmark-the-stack-not-the-model** (WolfBench Codex-vs-Hermes data, Terra-vs-Sol economics, busywork anti-pattern, free-tier warning), and a **Langfuse v4 / OTEL Collector** section (local model pricing, double-counted spans, root-observation default change).
+- Part 8: the **seven-rung agent ladder** (basic tools → MCP → pipelines → parallel → routed specialists → human-in-the-loop → dynamic spawning) and a one-agent-vs-profiles decision guide.
+- Part 9: **mid-July model landscape** (Kimi K3 day-one support incl. the Kimi-Direct update requirement, GPT Sol/Terra/Luna routing posture, Anthropic-subscription limitation, local reference points) and **credential pools**.
+- Part 14: `/steer` / `/queue` / `/busy` timing semantics and the **segmented tool batch dispatch** (safe-tool parallelism) behavior.
+- Part 24: **Hermes Cloud** third connection mode (labelled preview) and the remote-backend "code runs on the server" gotcha.
+- Part 25: background **computer use** on macOS (`hermes computer-use install`), current local model reference points, and a local KV-cache note.
+- Parts 6/7: compression levers and compaction internals; the memory **snapshot rule**, `/memory` + `/skills` approval gates, and a memory-stack comparison table (native vs LightRAG vs Mem0 vs skills).
+- Part 21: 10-second sandbox decision guide (Daytona / Modal / E2B / Vercel / OpenShell).
+- ECOSYSTEM: "Community projects on the radar" (Scarf, zhc-fabric, Sibyl, Latch, payguard, hermes-sonus, OpenKnowledge, HOODRADAR, Hermes Pong, Camofox + its context-tax warning).
+
+### Changed
+- Version currency: badges, intro, and "What's New" now target **v0.18.2 (v2026.7.7.2)** with the v0.18.1 patch-rollup note, the WhatsApp/Baileys fix (Part 15 Docker-tag guidance), and an explicit "main → v0.19.0, untagged = experimental" framing.
+- Part 18 agent-lane updates: Claude Code 2.1.20x, Codex 0.144.x stable pin (avoid 0.145 alpha unattended), OpenCode MCP resources + provider change, the Hermes Pong subscription workaround, and Teknium's "keep Hermes in the loop" guidance.
+- Parts 11/16/23 operational updates: `loginctl enable-linger` for headless gateways, real disk-growth hot spots (`state-snapshots/`, cron output, piped stdout), `hermes sessions prune`/`export --redact`, Kanban toolset opt-in + absolute `dir:` workspaces, and overnight/GPU-FIFO board shapes.
+- README: 29-part navigation, new "power secrets" and "recipe book" reading paths, mid-July status section.
+- Community claims are labelled as such throughout; all new config snippets stay within the real v0.18 schema (no invented keys).
+- Note: `README-zh.md` / `README-ja.md` remain synced to the 2026-07-03 state; a translation sync is queued.
+
 ## 2026-07-03 — Accuracy & consistency maintenance pass
 
 ### Fixed

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <linearGradient id="laneMoney" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#059669"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="laneContent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="laneLife" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="#7c3aed" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="560" fill="url(#bg)"/>
+
+  <text x="800" y="54" text-anchor="middle" fill="#f5f3ff" font-size="27" font-weight="800" letter-spacing="5" filter="url(#glow)">THE RECIPE BOOK</text>
+  <text x="800" y="84" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="2">TWELVE PRODUCTION BUILDS · SAME FIVE PIECES, ARRANGED DIFFERENTLY</text>
+
+  <!-- skeleton bar -->
+  <g filter="url(#soft)">
+    <rect x="230" y="106" width="1140" height="44" rx="22" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.6" stroke-width="1.4"/>
+  </g>
+  <text x="800" y="134" text-anchor="middle" fill="#c4b5fd" font-size="14" font-weight="600">cron (schedule) → profile (identity) → skill (procedure) → tool / MCP (hands) → approval gate (brake)</text>
+
+  <!-- lane headers -->
+  <rect x="60"   y="176" width="480" height="5" rx="2.5" fill="url(#laneMoney)"/>
+  <rect x="560"  y="176" width="480" height="5" rx="2.5" fill="url(#laneContent)"/>
+  <rect x="1060" y="176" width="480" height="5" rx="2.5" fill="url(#laneLife)"/>
+  <text x="300"  y="206" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="800" letter-spacing="2">MONEY &amp; OPERATIONS</text>
+  <text x="800"  y="206" text-anchor="middle" fill="#c4b5fd" font-size="16" font-weight="800" letter-spacing="2">CONTENT &amp; CAREER</text>
+  <text x="1300" y="206" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="800" letter-spacing="2">LIFE &amp; LAB</text>
+
+  <!-- lane cards -->
+  <g filter="url(#soft)">
+    <rect x="60"   y="224" width="480" height="250" rx="14" fill="url(#cardTop)" stroke="#34d399" stroke-opacity="0.45" stroke-width="1.4"/>
+    <rect x="560"  y="224" width="480" height="250" rx="14" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.5" stroke-width="1.4"/>
+    <rect x="1060" y="224" width="480" height="250" rx="14" fill="url(#cardTop)" stroke="#22d3ee" stroke-opacity="0.45" stroke-width="1.4"/>
+  </g>
+
+  <g font-size="14">
+    <g fill="#d1fae5">
+      <text x="92" y="262" font-weight="700">1 · Morning finance loop</text><text x="92" y="281" fill="#6ee7b7" font-size="12">read-only brief · never trades</text>
+      <text x="92" y="310" font-weight="700">2 · Staged Gmail</text><text x="92" y="329" fill="#6ee7b7" font-size="12">drafts only — no send scope exists</text>
+      <text x="92" y="358" font-weight="700">3 · SMB approval office</text><text x="92" y="377" fill="#6ee7b7" font-size="12">one-tap human gates on every send</text>
+      <text x="92" y="406" font-weight="700">4 · Overnight Kanban shift</text><text x="92" y="425" fill="#6ee7b7" font-size="12">checkable tickets, diffs by coffee</text>
+      <text x="92" y="452" font-weight="700">5 · GPU FIFO board</text><text x="92" y="468" fill="#6ee7b7" font-size="12">capacity-1 lane = free job queue</text>
+    </g>
+    <g fill="#e9d5ff">
+      <text x="592" y="262" font-weight="700">6 · Content swarm</text><text x="592" y="281" fill="#c4b5fd" font-size="12">parallel drafts · human publishes</text>
+      <text x="592" y="310" font-weight="700">7 · Carousel factory</text><text x="592" y="329" fill="#c4b5fd" font-size="12">/learn your slide formula once</text>
+      <text x="592" y="358" font-weight="700">8 · Job-hunt pipeline</text><text x="592" y="377" fill="#c4b5fd" font-size="12">scrape → score → draft, staged</text>
+      <text x="592" y="418" fill="#a78bfa" font-size="12" font-style="italic">the rubric is the product —</text>
+      <text x="592" y="436" fill="#a78bfa" font-size="12" font-style="italic">a tight skill beats a smart model</text>
+    </g>
+    <g fill="#cffafe">
+      <text x="1092" y="262" font-weight="700">9 · Accountability coach</text><text x="1092" y="281" fill="#67e8f9" font-size="12">two crons + streaks in MEMORY.md</text>
+      <text x="1092" y="310" font-weight="700">10 · Health correlator</text><text x="1092" y="329" fill="#67e8f9" font-size="12">local backend — data stays home</text>
+      <text x="1092" y="358" font-weight="700">11 · Blender room</text><text x="1092" y="377" fill="#67e8f9" font-size="12">heavy toolset gets its own profile</text>
+      <text x="1092" y="406" font-weight="700">12 · Secretary office</text><text x="1092" y="425" fill="#67e8f9" font-size="12">3 roles · 1 board · 1 human brake</text>
+      <text x="1092" y="454" fill="#a5f3fc" font-size="12" font-style="italic">the minimal production stack</text>
+    </g>
+  </g>
+
+  <g filter="url(#soft)">
+    <rect x="380" y="496" width="840" height="46" rx="23" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="1.5"/>
+  </g>
+  <text x="800" y="525" text-anchor="middle" fill="#e9d5ff" font-size="14.5" font-weight="700" letter-spacing="1">COMMUNITY FIELD REPORTS, MAPPED TO REAL PRIMITIVES — PART 28</text>
+</svg>

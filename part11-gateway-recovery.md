@@ -88,6 +88,19 @@ find ~/.hermes/logs -type f -mtime +7 -delete
 du -sh ~/.hermes/skills/research/lightrag/data/
 ```
 
+**Where the disk actually goes** (it's usually not logs). The three unbounded growers reported in the wild: **`state-snapshots/`** (750MB+ observed), **per-run cron output** (1500+ files piling up), and **host-piped stdout**. Check those first:
+
+```bash
+du -sh ~/.hermes/state-snapshots ~/.hermes/cron* 2>/dev/null
+```
+
+And keep `~/.hermes/state.db` lean — auto-prune is **off by default**. Hundreds of sessions is ~10–15MB; expect drag near ~384MB / ~1000 sessions:
+
+```bash
+hermes sessions prune        # removes ended sessions only, never active
+# or: sessions.auto_prune: true in config.yaml
+```
+
 ### 5. Crash Loop
 
 **Symptoms:** Gateway starts, crashes immediately, repeats.
@@ -127,6 +140,16 @@ journalctl -u hermes -f
 ```
 
 Or let Hermes do it for you — `hermes gateway install` (see [Part 4](./part4-telegram-setup.md)) generates and enables a user-level unit without any manual file copying.
+
+> **Headless VPS gotcha — the gateway that never survives a reboot.** A *user-level* systemd unit is killed when your login session ends, and on a headless box there may never be a login session after reboot. Enable lingering (or install system-wide):
+>
+> ```bash
+> hermes gateway install
+> sudo loginctl enable-linger $USER
+> # or: sudo hermes gateway install --system
+> ```
+>
+> If your gateway is mysteriously down every time you SSH in after a reboot, this is why.
 
 Either way, `Restart=on-failure` + `RestartSec=5` means a crashed gateway is back within seconds.
 

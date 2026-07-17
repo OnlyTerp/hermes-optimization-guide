@@ -25,6 +25,8 @@ Hermes uploads your workspace on task start, delegates work, then downloads only
 
 ## Pick Your Backend
 
+The 10-second decision guide, July 2026 edition: **Daytona** for fast cold starts on short agent loops · **Modal** for heavy/GPU jobs · **E2B** when what you want is a code interpreter · **Vercel Sandbox** for web-flavored build/deploy work · **OpenShell** ([Part 25](./part25-nvidia-local.md#5-openshell--kernel-level-isolation)) when the job must stay local/on-prem but hard-isolated. The long version:
+
 | Backend | Billing | Idle cost | Best for |
 |---------|---------|-----------|----------|
 | **SSH** | Your infra | Whatever your host costs | Homelab / always-on dev box |

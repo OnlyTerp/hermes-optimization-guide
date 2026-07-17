@@ -348,6 +348,10 @@ Hermes creates a skill with:
 
 **Keep skills focused.** A skill that tries to cover "all of DevOps" will be too long and too vague. A skill that covers "deploy a Python app to Fly.io" is specific enough to be genuinely useful.
 
+**Give every skill a ≤60-character description.** The description of *every* skill rides along in the prompt so the agent can pick between them — long descriptions tax every turn. This especially applies to `/learn`-generated skills ([Part 26](./part26-moa-verification.md)), whose auto-written descriptions tend to be paragraphs: trim them after creation. And before writing a skill at all, check whether a built-in tool already does the job.
+
+**Gate self-written skills in production.** `/skills approval on` makes the agent propose skill creations/updates for your sign-off instead of applying them silently — pair it with `/memory approval on` on any shared or long-running agent ([Part 7](./part7-memory-system.md)).
+
 ---
 
 ## How Hermes Decides to Save Skills

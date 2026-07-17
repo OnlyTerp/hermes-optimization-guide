@@ -151,13 +151,18 @@ The same binding works for Codex, Gemini CLI, OpenCode, and any ACP-compatible c
 
 ---
 
-## Agent Tooling Updates (May 25, 2026)
+## Agent Tooling Updates (July 2026)
 
-- **Claude Code Week 20+**: agent view, `/goal`, and faster Opus 4.7 make it the best premium worker lane for high-stakes PRs.
-- **Codex v0.133+**: goals are enabled by default; point it at `hermes proxy` when you want ChatGPT/Codex OAuth without another API key.
-- **Gemini CLI v0.43**: better surgical edit steering, session export/import, and headless OAuth fixes make it safer as a repo-scale reader.
-- **Zed ACP Registry**: v0.14 exposes Hermes through `uvx`/ACP so Zed and other ACP-aware editors can drive Hermes directly.
-- **Aider/Cline/Continue**: all benefit from `hermes proxy` because they only need an OpenAI-compatible base URL.
+- **Claude Code 2.1.20x**: rapid-fire patch series — extended `/doctor` diagnostics, a browser interface rolling out, subagent text-forwarding fixes, and (notably) Claude Code available *as a plugin inside Codex*. Still the best premium worker lane for high-stakes PRs.
+- **Codex 0.144.x (stable)**: pin production lanes here — **avoid the 0.145 alpha line for unattended work**. Point it at `hermes proxy` when you want ChatGPT/Codex OAuth without another API key.
+- **Gemini**: the Gemini-CLI OAuth providers were **removed from Hermes in v0.18** — use a `GEMINI_API_KEY` or Vertex AI ([Part 9](./part9-custom-models.md)); the standalone CLI still works as a delegated reader lane.
+- **OpenCode**: now exposes MCP resources/prompts and dropped its OpenCode-Zen provider mid-July — re-check your model config after upgrading. Useful with Kimi K3 / GLM budget lanes.
+- **Zed ACP Registry / Aider / Cline / Continue**: unchanged posture — ACP for editors, `hermes proxy` for anything that just needs an OpenAI-compatible base URL.
+
+Two July-specific notes worth their own lines:
+
+- **Anthropic subscriptions don't work natively in Hermes** (API keys do). If all you have is a Claude subscription, the community workaround is orchestrating a Claude Code terminal from Hermes — e.g. the *Hermes Pong* pattern — which effectively lends Hermes the subscription's brain through this part's worker-lane machinery. Community-maintained; treat with the same caution as any third-party skill.
+- **Keep Hermes in the loop** (official guidance from Teknium): don't invert the relationship and make another agent the orchestrator with Hermes as a dumb launcher. Routing through a second brain breaks Hermes's trace — memory stops accumulating, `/learn` sees nothing, plugins go blind. Models run *inside* Hermes; coding CLIs are *workers*.
 
 ---
 

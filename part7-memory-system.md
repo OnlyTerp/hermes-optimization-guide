@@ -122,6 +122,38 @@ The memory system is no longer write-only. Two v0.18 additions close the loop:
 
 Do a `/journey` pruning pass monthly — a wrong memory gets injected into every future session and compounds. Full guidance: [Part 26](./part26-moa-verification.md#3-learn-and-journey--self-improvement-you-can-see).
 
+## The Snapshot Rule (Why the Agent "Forgets" Mid-Session)
+
+The most-hit memory gotcha in the wild: memory writes hit disk **immediately**, but the memory block injected into the *system prompt* is **snapshotted at session start** and stays fixed for the whole session — deliberately, to keep the provider prefix cache warm (see [Part 20](./part20-observability.md)). The same applies to `USER.md`.
+
+- Need a just-saved fact live *now*? Start a new session, or `hermes -c`.
+- Tool calls that read memory always see live disk — only the injected block is frozen.
+- This is not a bug to fix; it's a cost trade you should know you're making.
+
+## Approval Gates for Self-Improvement
+
+For shared or production agents, gate what gets written before it compounds:
+
+```text
+/memory approval on
+/skills approval on
+```
+
+The agent keeps proposing memories and skills, but every write waits for your yes. One wrong "fact" in memory gets injected into every future session — cheap insurance.
+
+## Community Memory Layers (When Native Isn't Enough)
+
+Native memory + `/journey` covers session continuity and user preferences. For other shapes of the problem:
+
+| Need | Prefer |
+|------|--------|
+| Session continuity + user prefs | **Hermes native memory** (this part) |
+| Knowledge graph over a document corpus | **LightRAG** ([Part 3](./part3-lightrag-setup.md)) |
+| Cross-app / multi-client memory | **Mem0 MCP** — official packages only ([Part 17](./part17-mcp-servers.md)) |
+| Long-horizon procedural knowledge | **Skills via `/learn`** ([Part 26](./part26-moa-verification.md)) |
+
+Community plugins like Sibyl Memory (Hermes Atlas) advertise big LongMemEval numbers and token savings — treat vendor benchmarks as marketing until you've reproduced them on your own workload, and audit anything that reads your whole session history.
+
 ## Anti-Patterns
 
 | Don't Do This | Do This Instead |

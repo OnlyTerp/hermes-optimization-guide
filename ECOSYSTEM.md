@@ -46,6 +46,23 @@ See [Part 22](./part22-latest-power-moves.md#4-use-plugins-for-integrations-not-
 
 ---
 
+## Community projects on the radar (July 2026)
+
+*Community-maintained; audit before installing — anything that reads sessions or executes code deserves a code review first ([Part 19](./part19-security-playbook.md)).*
+
+- **Scarf** — swarm orchestration for Hermes agents (topologies, consensus, shared state, cost tracking; MIT)
+- **zhc-fabric** — distributed multi-node control plane: mesh networking + mTLS + hardware-attested identity for Hermes fleets
+- **Sibyl Memory (Hermes Atlas)** — alternative memory plugin advertising strong LongMemEval numbers; verify vendor benchmarks on your own workload
+- **Latch** — payments/spend-control layer for agents (see the spend-kernel pattern in [Part 19](./part19-security-playbook.md#external-spend-kernels-when-the-agent-touches-money))
+- **payguard** — self-hostable payment approval firewall: agent requests, human approves
+- **hermes-sonus** — voice for Hermes on Windows/macOS (hotkey push-to-talk, TTS replies)
+- **OpenKnowledge** — Wikipedia-style knowledge dumps distilled for agent consumption
+- **HOODRADAR** — example of a Hermes-built production app (real-time crime mapping); useful as an architecture reference
+- **Hermes Pong** — orchestrate a Claude Code terminal from Hermes (the Anthropic-subscription workaround; see [Part 18](./part18-coding-agents.md))
+- **Camofox** — anti-detect browsing for agents. **Warning:** its `AGENTS.md` injects ~22k chars into every prompt if it's in your cwd ([Part 6](./part6-context-compression.md#the-context-you-didnt-order-third-party-rule-files))
+
+---
+
 ## Coding-agent integrations
 
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) — `claude -p` + ACP; best unattended PR lane with Sonnet 5 / Opus 4.7

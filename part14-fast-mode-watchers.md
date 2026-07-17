@@ -71,6 +71,19 @@ Best practice:
 
 This is the practical replacement for repeatedly interrupting and restating the whole task.
 
+**The timing semantics people miss:** `/steer <instruction>` is delivered **after the current tool call completes**, inside the same turn — it is *not* a new turn and doesn't reset anything. `/queue` (alias `/q`) stages the next prompt without touching the current run at all. And `/busy` configures what a plain **Enter** does while the agent is working — queue, steer, or interrupt — so your muscle memory stops accidentally killing 20-minute runs.
+
+---
+
+## Segmented Tool Batch Dispatch (Safe-Tool Parallelism)
+
+A mid-July quality-of-life change to how tool batches execute: **safe operations (read / search / fetch / list / check) now run in parallel**, and one unsafe call in a batch no longer serializes the whole batch — dependent or risky calls wait, results merge in order. In practice: five independent 2-second lookups complete in ~2 seconds of wall time instead of ~10.
+
+You don't configure anything — but you can *write for it*:
+
+- Research, content, and file-analysis workloads benefit most — phrase multi-source questions so the agent can fan out reads ("check A, B, and C, then compare") instead of forcing sequential steps.
+- Anything mutating (writes, sends, deploys) still serializes and still respects the approval layer ([Part 19](./part19-security-playbook.md)) — parallelism never bypasses approvals.
+
 ---
 
 ## Background Process Monitoring (`watch_patterns`)

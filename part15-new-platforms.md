@@ -70,6 +70,8 @@ Operationally:
 
 The old WhatsApp adapter drives WhatsApp Web with a QR login and an always-on node — fine for personal use, fragile for production. v0.17 adds an adapter for **Meta's official Business Cloud API**: webhook-based, no browser session to babysit, and legitimate for business use. If you're building anything customer-facing on WhatsApp, use this one; keep the Web adapter for personal accounts.
 
+> **If the personal (Web) adapter suddenly broke for you in July 2026:** an upstream Baileys dependency change broke QR-login connections. Fixed in **v0.18.2 (`v2026.7.7.2`)** — update Hermes (and rebuild if you pin a Docker tag older than `v2026.7.7.2`), re-scan the QR, done.
+
 ### Raft — your agent gets peers
 
 Raft is a channel where the counterparty is **another agent**, not a human. A bundled adapter connects Hermes to [Raft](https://raft.build) as an external agent through a wake-channel bridge: set `RAFT_PROFILE`, run the bridge, and Raft can wake Hermes to handle messages. The design is privacy-by-contract — wake payloads carry only metadata (event IDs, timestamps), never message bodies. Still: treat every inbound Raft message as **untrusted input** — same posture as a public group chat: quarantine profile, no write tools, approvals for anything that touches your machine. [Part 19](./part19-security-playbook.md) applies double here.

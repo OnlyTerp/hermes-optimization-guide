@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7c3aed" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="620" fill="url(#bg)"/>
+
+  <text x="800" y="56" text-anchor="middle" fill="#f5f3ff" font-size="27" font-weight="800" letter-spacing="5" filter="url(#glow)">THE SEVEN-LAYER SECURITY STACK</text>
+  <text x="800" y="86" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="2">EVERY LAYER MAPS TO A REAL HERMES PRIMITIVE — NO IMAGINARY CONFIG KEYS</text>
+
+  <!-- layers: widest at bottom (defense in depth) -->
+  <g font-size="15" filter="url(#soft)">
+    <!-- L1 -->
+    <rect x="470" y="112" width="660" height="56" rx="12" fill="url(#cardTop)" stroke="#f87171" stroke-opacity="0.8" stroke-width="1.6"/>
+    <!-- L2 -->
+    <rect x="420" y="180" width="760" height="56" rx="12" fill="url(#cardTop)" stroke="#fb923c" stroke-opacity="0.8" stroke-width="1.6"/>
+    <!-- L3 -->
+    <rect x="370" y="248" width="860" height="56" rx="12" fill="url(#cardTop)" stroke="#fbbf24" stroke-opacity="0.8" stroke-width="1.6"/>
+    <!-- L4 -->
+    <rect x="320" y="316" width="960" height="56" rx="12" fill="url(#cardTop)" stroke="#a3e635" stroke-opacity="0.8" stroke-width="1.6"/>
+    <!-- L5 -->
+    <rect x="270" y="384" width="1060" height="56" rx="12" fill="url(#cardTop)" stroke="#34d399" stroke-opacity="0.8" stroke-width="1.6"/>
+    <!-- L6 -->
+    <rect x="220" y="452" width="1160" height="56" rx="12" fill="url(#cardTop)" stroke="#22d3ee" stroke-opacity="0.8" stroke-width="1.6"/>
+    <!-- L7 -->
+    <rect x="170" y="520" width="1260" height="56" rx="12" fill="url(#cardTop)" stroke="#c084fc" stroke-opacity="0.9" stroke-width="1.8"/>
+  </g>
+
+  <g text-anchor="middle">
+    <text x="800" y="140" fill="#fca5a5" font-weight="800" font-size="15">1 · TRUST BOUNDARIES</text>
+    <text x="800" y="159" fill="#c4b5fd" font-size="12.5">default-deny tools · provenance labels · untrusted-input rule</text>
+
+    <text x="800" y="208" fill="#fdba74" font-weight="800" font-size="15">2 · HUMAN APPROVAL GATES</text>
+    <text x="800" y="227" fill="#c4b5fd" font-size="12.5">approvals: at send / publish / deploy / spend / system-of-record writes</text>
+
+    <text x="800" y="276" fill="#fde68a" font-weight="800" font-size="15">3 · CONTAINMENT</text>
+    <text x="800" y="295" fill="#c4b5fd" font-size="12.5">Docker / OpenShell / sandboxes — a real OS boundary, not a profile</text>
+
+    <text x="800" y="344" fill="#d9f99d" font-weight="800" font-size="15">4 · MCP HYGIENE</text>
+    <text x="800" y="363" fill="#c4b5fd" font-size="12.5">pinned packages · stripped env · per-server tokens · tools.include/exclude</text>
+
+    <text x="800" y="412" fill="#6ee7b7" font-weight="800" font-size="15">5 · INJECTION SCANNING</text>
+    <text x="800" y="431" fill="#c4b5fd" font-size="12.5">scan inbound email / webhooks / pages before the agent reasons over them</text>
+
+    <text x="800" y="480" fill="#67e8f9" font-weight="800" font-size="15">6 · NETWORK CONTROLS</text>
+    <text x="800" y="499" fill="#c4b5fd" font-size="12.5">egress allowlists · SSRF guards · no metadata endpoints from tool code</text>
+
+    <text x="800" y="548" fill="#e9d5ff" font-weight="800" font-size="15" filter="url(#glow)">7 · PRE-EXECUTION COMMAND SCANNING</text>
+    <text x="800" y="567" fill="#c4b5fd" font-size="12.5">command_allowlist: · secrets redaction · static scan before anything runs</text>
+  </g>
+
+  <!-- side annotations -->
+  <g font-size="13" fill="#a78bfa">
+    <text x="80" y="145">ATTACKER</text>
+    <text x="80" y="165">STARTS HERE ↓</text>
+    <text x="1445" y="540">YOUR MONEY,</text>
+    <text x="1445" y="560">KEYS &amp; REPOS</text>
+    <text x="1445" y="580">LIVE HERE</text>
+  </g>
+</svg>

@@ -35,6 +35,16 @@ Why this matters:
 
 Workers use the `kanban_*` toolset (`kanban_show`, `kanban_list`, `kanban_complete`, `kanban_block`, `kanban_heartbeat`, `kanban_comment`, `kanban_create`, `kanban_link`, `kanban_unblock`). Humans use `hermes kanban ...`, `/kanban ...`, or the dashboard. Both hit the same `~/.hermes/kanban.db`.
 
+### The two traps everyone hits once
+
+1. **`toolsets: all` does NOT include kanban.** The board toolset is deliberately opt-in so ordinary chats aren't cluttered with board tools. Any profile that *drives* a board (your orchestrator) needs `toolsets: [kanban]` explicitly — workers spawned *by* the board get their tools automatically. If your orchestrator "can't see the board," this is why.
+2. **The default worker workspace is scratch — cleared on completion.** If the task produces files you want to keep, pin an **absolute** directory: `--workspace dir:/absolute/path`. A relative path is accepted at create time and rejected at spawn time.
+
+### Two board shapes worth stealing
+
+- **Overnight autonomy:** stack the board in the evening, let workers grind while you sleep, review results with coffee. The real cost is one-time — tuning board conditions and worker prompts until unattended quality holds. Budget an evening of iteration, then it compounds.
+- **GPU FIFO:** a capacity-1, strictly-ordered board serializes GPU-hungry jobs so multiple agents never OOM the same card. The board *is* the queue — no extra infrastructure.
+
 Good board shapes:
 
 - **Solo dev:** triage → implement → review → PR.

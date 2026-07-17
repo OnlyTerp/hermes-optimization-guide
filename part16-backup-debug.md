@@ -136,6 +136,23 @@ sessions.db
 
 ---
 
+## `hermes sessions export` — Share a Session Without Sharing Your Keys
+
+Backups are for *you*; exports are for *everyone else*. Turn any session into a document:
+
+```bash
+hermes sessions export --format md      # or qmd | html
+hermes sessions export --format md --session-id <id> --redact
+```
+
+- md/qmd exports land in `~/.hermes/session-exports` with a manifest; html renders a shareable transcript.
+- **Always `--redact` before sharing** — it scrubs keys and tokens from the transcript. A raw session log is a credential-disclosure incident waiting to happen ([Part 19](./part19-security-playbook.md)).
+- Great for bug reports, blog write-ups, and "how did the agent do this?" postmortems.
+
+While you're in session-hygiene mode: `hermes sessions prune` clears ended sessions from `state.db` (auto-prune is off by default — see [Part 11](./part11-gateway-recovery.md) for the size thresholds).
+
+---
+
 ## `/debug` and `hermes debug share`
 
 ### The New Diagnostic Flow

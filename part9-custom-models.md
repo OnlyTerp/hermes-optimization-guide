@@ -3,6 +3,8 @@
 *Hermes supports any OpenAI-compatible API, plus first-class native adapters for Nous Portal, Anthropic, OpenAI/Codex, OpenRouter, AWS Bedrock, Azure AI Foundry, Google Gemini, Google Vertex AI, LM Studio, xAI, Xiaomi MiMo, Kimi/Moonshot, z.ai/GLM, MiniMax, Arcee, GMI Cloud, Tencent TokenHub, Hugging Face, Cerebras, Groq, Fireworks, Vercel AI Gateway, Ollama, MoA virtual models, and provider plugins. This is the July 1, 2026 cheat sheet.*
 
 > **What's new since the v0.14 guide refresh** — v0.17 puts Cursor's **Composer** (`grok-composer-2.5-fast`, 200K context) in the xAI OAuth picker; v0.18 adds a first-class **Google Vertex AI** provider (auto-minted, auto-refreshed OAuth2 tokens from a service account — no static key, no mid-session expiry) and makes every **Mixture-of-Agents preset a selectable model** under a `moa` provider ([Part 26](./part26-moa-verification.md)). **Breaking:** the Gemini-CLI OAuth providers (`google-gemini-cli`, `google-antigravity`) were **removed in v0.18** — migrate to a `GEMINI_API_KEY` or Vertex AI.
+>
+> **Mid-July 2026:** **Kimi K3** landed day-one in Hermes (Nous Portal, Kimi Direct, OpenRouter — **update Hermes before using Kimi Direct**), and OpenAI's **GPT Sol / Terra / Luna** family is reachable via Nous Portal, a Codex/ChatGPT subscription, or OpenRouter. See [The Mid-July Model Landscape](#the-mid-july-2026-model-landscape) below.
 
 ---
 
@@ -81,6 +83,35 @@ The exact "best model" moves weekly, so treat this as a routing posture rather t
 | Current-events / X search | xAI Grok 4.3, `x_search`, or tool-backed web search | Grok has native live-X search; Tool Gateway can cover broader web |
 
 > Pricing and context windows change too quickly to hardcode. Hermes now pulls OpenRouter and Nous Portal picker lists from a remote manifest, while provider APIs supply pricing/context metadata where available.
+
+### The Mid-July 2026 Model Landscape
+
+A snapshot of what moved this month — treat as a routing posture, verify against the live picker:
+
+| Lane | Pick | Notes |
+|------|------|-------|
+| Daily driver | **GPT Luna** or a DeepSeek-Flash-class model | Cheap enough for cron and chat |
+| Hard coding / judgment | **GPT-5.6 Sol** or **Kimi K3** | K3 has notably strong parallel tool-calling; watch OpenRouter K3 pricing, it burns wallets fast |
+| Cost-conscious frontier on Hermes | **GPT Terra** | ~3.6 points behind Sol on the July WolfBench at ~44% lower cost *on this harness* ([Part 20](./part20-observability.md#benchmark-the-stack-not-the-model)) |
+| Fast cheap coding | Composer 2.5 Fast (xAI OAuth) | Still available through the Grok subscription path |
+| Local | Qwen3.6 35B-A3B, Bonsai-27B (~36 t/s on 16GB), Gemma4 A4B | [Part 25](./part25-nvidia-local.md) |
+
+Two hard facts to save you an evening:
+
+- **Anthropic subscriptions do NOT work natively in Hermes.** Working subscription auths: OpenAI Codex/ChatGPT, Kimi, Qwen, Z.ai, OpenCode. For Claude models use an API key (direct or OpenRouter) — or orchestrate a Claude Code terminal as a worker lane ([Part 18](./part18-coding-agents.md)) if you only have the subscription.
+- **High-reasoning models overwork.** Sol in particular generates self-assigned busywork on agent harnesses. Cap goals with completion contracts ([Part 26](./part26-moa-verification.md)) and never run the same high-reasoning model as both orchestrator and delegated worker.
+
+### Credential Pools (Multiple Keys per Provider)
+
+Distinct from the fallback chain: you can register **several keys for the same provider**, and Hermes rotates within the pool on rate-limit/quota errors *before* falling over to another provider:
+
+```bash
+hermes auth add openrouter --api-key sk-or-...
+hermes auth add openrouter --api-key sk-or-...   # second key, same provider
+hermes auth list
+```
+
+Pool first, fallback second. Caveat: every rotation is a **prefix-cache miss** — the next turn re-reads the whole session history at full input price ([Part 20](./part20-observability.md#the-gateway-token-tax-cli-for-heavy-work-messaging-for-control)). Nous Portal's single OAuth usually doesn't need a pool.
 
 ---
 
@@ -434,6 +465,13 @@ hermes config set fallback_models '["cerebras/qwen-3-32b", "openrouter/anthropic
 ```
 
 Hermes tries each in order. If Cerebras is down, it falls back to OpenRouter, then local.
+
+Two rules that save 3am debugging:
+
+- **Every fallback entry needs both a provider and a model** — a bare model name in a `fallback_providers`-style entry fails at the moment you need it most.
+- **Put a local model last** (`local/...` via Ollama, or a `custom` provider pointed at llama.cpp/vLLM) as the outage floor. Degraded beats down.
+
+And remember the cache economics of switching: the prompt-cache key includes the model, so **any mid-session model change re-reads the full history at full input price**. Batch your switches, or hand the odd-model step to a subagent with its own context ([Part 8](./part8-subagent-patterns.md)).
 
 ---
 
