@@ -263,6 +263,7 @@ Print this. Tape it somewhere.
 
 ## What's Next
 
+- [Part 28: The Recipe Book](./part28-recipe-book.md) — twelve production builds that put these secrets to work
 - [Part 20: Observability & Cost](./part20-observability.md) — measure the tax before and after you fix it
 - [Part 19: Security Playbook](./part19-security-playbook.md) — the seven layers + spend kernels these secrets reference
 - [Part 26: MoA & Verification](./part26-moa-verification.md) — the verification contracts that tame busywork

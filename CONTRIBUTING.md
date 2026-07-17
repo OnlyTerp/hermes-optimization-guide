@@ -36,7 +36,7 @@ The [README Repo Map](./README.md#repo-map) is the canonical, row-by-row descrip
 ├── README.md (+ README-zh.md, README-ja.md)
 ├── CHANGELOG.md · ROADMAP.md · ECOSYSTEM.md · CODE_OF_CONDUCT.md · LICENSE
 ├── CONTRIBUTING.md                  ← you are here
-├── part1-setup.md … part27-power-secrets.md      # the 28-part guide (README + 27 part files)
+├── part1-setup.md … part28-recipe-book.md        # the 29-part guide (README + 28 part files)
 ├── skills/                          # 13 installable SKILL.md files under dev/, ops/, security/
 ├── templates/
 │   ├── config/{minimum,telegram-bot,production,cost-optimized,security-hardened}.yaml

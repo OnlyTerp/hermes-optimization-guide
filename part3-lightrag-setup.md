@@ -464,6 +464,21 @@ rm -rf ~/.hermes/lightrag/LightRAG/rag_storage/*
 
 ---
 
+## Scaling LightRAG: The July 2026 Playbook
+
+LightRAG moved fast this year. If your graph has outgrown the basic setup above, these are the upgrades that matter (in rough order of payoff):
+
+1. **Role-specific LLMs.** Extraction, entity-merging, and query answering are different jobs — point extraction at a cheap Flash-class model and keep your good model for query time. Same auxiliary-routing philosophy as [Part 20](./part20-observability.md).
+2. **Chunking is the quality dial.** Most "the graph missed it" complaints are chunking, not retrieval. Chunk along document structure (headings/sections) rather than fixed token counts, and re-ingest — it's cheaper than tuning everything downstream.
+3. **Multimodal ingestion.** The 2026 pipeline handles PDFs with figures/tables via a parse-then-describe pass — images become entity-linked descriptions in the graph rather than being dropped silently. Verify your ingest path actually processes them; the default text path skips images.
+4. **Production stores.** Past a few GB of graph, move storage off the default local files to a real backend (e.g. OpenSearch) — the Web UI stays the same, rebuild times stop being scary.
+5. **Evaluate before you tune.** Wire retrieval into your Langfuse traces ([Part 20](./part20-observability.md)) and score answer faithfulness with RAGAS-style checks on a fixed question set. One afternoon of eval setup ends months of vibes-driven tuning.
+6. **Multi-agent retrieval.** For big corpora, a routed-specialist pattern ([Part 8](./part8-subagent-patterns.md)) — one subagent per collection, orchestrator merges — beats one mega-graph.
+
+Where LightRAG sits in the overall memory stack (vs native memory, Mem0, and skills): [Part 7](./part7-memory-system.md).
+
+---
+
 ## What's Next
 
 - **Need mobile access?** → [Part 4: Telegram Setup](./part4-telegram-setup.md)
