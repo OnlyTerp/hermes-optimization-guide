@@ -101,6 +101,14 @@ The desktop app doesn't have to run the agent locally. It can connect to a **rem
 
 The model is "**thin GUI local, heavy agent remote**" — keep a lightweight app on your laptop while the agent, tools, and memory live on a workstation, a DGX Spark, or a VPS. (Pair this with [Part 21: Remote Sandboxes](./part21-remote-sandboxes.md) and [Part 25: NVIDIA & Local Hardware](./part25-nvidia-local.md).)
 
+> **The gotcha nobody warns you about:** with a remote backend, *code runs on the remote server* — file writes, terminal commands, everything. If you asked for a local script and can't find it, it's on the VPS. Want the agent working on your laptop's files? Run the backend locally (or mount/sync deliberately, e.g. via Tailscale + a shared directory).
+
+### 7b. Hermes Cloud — the third connection mode (preview)
+
+Alongside *local* and *remote gateway*, current builds are growing a third mode: **Hermes Cloud** — sign in with Nous Portal and the app auto-discovers cloud-hosted agents, no VPS to babysit. The pitch: one-click deploy, scale-to-zero pricing, natural-language scheduling, multi-channel attach, persistent memory, isolated sandboxes, and parallel subagents — managed.
+
+Treat it as **preview until GA**: features on `main` move fast, and self-hosting (this guide's default posture) remains the way to keep full control of memory, secrets, and egress. When it ships stable, expect it to be the right answer for "I want the [Part 23](./part23-tenacity-stack.md) stack without owning a server."
+
 ---
 
 ## 8. Projects — the v0.18 Coding Cockpit

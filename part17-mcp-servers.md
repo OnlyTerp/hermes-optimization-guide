@@ -130,6 +130,32 @@ For the full catalog, see the [MCP Registry](https://registry.modelcontextprotoc
 
 ---
 
+## MCP Security: July 2026 State of Play
+
+MCP is no longer a theoretical attack surface — the first half of 2026 produced a real CVE trail, all variations on one theme: **MCP configs and manifests are executable trust**.
+
+| CVE | What | Lesson for Hermes users |
+|-----|------|------------------------|
+| CVE-2026-30623 | LiteLLM authenticated RCE via malicious MCP JSON (patched ≥ 1.83.7) | If you proxy Hermes through LiteLLM, patch it — an MCP *config* was the payload |
+| CVE-2026-30615 | Windsurf: writable `mcp.json` → prompt injection → code execution | Anything that can *write* your MCP config owns your agent |
+| CVE-2025-54136 | Cursor "MCPoison": approve once, config silently swapped later (fixed 1.3) | Re-approval must trigger on *change*, not just first add |
+| CVE-2025-49596 | MCP Inspector RCE (browser → localhost, fixed 0.14.1) | Dev tools listening on localhost are reachable from any web page you visit |
+| CVE-2026-22252 | LibreChat MCP `require()` injection via server config | Same class, different host — the pattern is universal |
+
+The checklist that follows from it:
+
+1. **Pin every MCP package to an exact version** — no `latest`, no floating ranges. Re-audit and re-approve when a server's version or hash changes.
+2. **Treat `mcp.json` / MCP blocks in cloned repos as untrusted input.** Never launch Hermes with MCP servers from a repo you haven't reviewed — that's the MCPoison delivery vehicle.
+3. **Watch for npm impersonators.** Fake `mem0-mcp-server`-style packages ship info-stealers under trusted names; install only from the vendor's documented source, and check publish dates + download counts.
+4. **Never expose MCP Inspector (or any MCP dev tool) beyond localhost**, and keep it patched — browser-to-localhost is a real attack path.
+5. **Separate tokens per server, minimal scopes** — an MCP server compromise should burn one narrow credential, not your account.
+6. **Strip environment leakage**: pass only the env vars each stdio server needs, never your full shell environment.
+7. **Add OSV/CVE monitoring** for the MCP packages you run (a weekly cron works — see the security-hygiene cron in [Part 19](./part19-security-playbook.md#periodic-security-hygiene)).
+
+`tools.include` scoping, isolation backends, and the broader trust model live in [Part 19, Layer 5](./part19-security-playbook.md#layer-5-mcp-and-plugin-trust).
+
+---
+
 ## Writing Your Own MCP Server (Fast)
 
 A minimal Node MCP server is ~30 lines. Python is similar. Point Hermes at it like any other stdio server.

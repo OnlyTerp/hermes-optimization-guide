@@ -88,7 +88,23 @@ v0.16 added **NVIDIA as a built-in trusted Skills source**, alongside OpenAI, An
 
 ## 8. A Note on Models (Kept Deliberately Light)
 
-Because Hermes is model-agnostic, the "best local model" changes constantly — don't hard-code this week's winner. As a *current* data point, NVIDIA highlights **Qwen 3.6** (27B/35B) running on RTX / DGX Spark and reports it matching or beating prior-generation 120B–400B models while fitting on far smaller hardware. Use that as a starting point, not gospel: open `hermes model`, fuzzy-search, and pick what's good *right now*. The harness is the durable part.
+Because Hermes is model-agnostic, the "best local model" changes constantly — don't hard-code this week's winner. As a *current* data point, NVIDIA highlights **Qwen 3.6** (27B/35B) running on RTX / DGX Spark and reports it matching or beating prior-generation 120B–400B models while fitting on far smaller hardware. Community mid-July reference points: **Qwen3.6 35B-A3B** as an agentic workhorse, **Bonsai-27B** at ~36 tok/s on a 16GB card, and **Gemma4 A4B** for full local privacy on modest hardware — with LM Studio or Ollama serving, including on Windows 11 via Docker. Use these as starting points, not gospel: open `hermes model`, fuzzy-search, and pick what's good *right now*. The harness is the durable part.
+
+One local-specific cost note: llama.cpp/vLLM keep a **KV/prefix cache** too — the same rules from [Part 20](./part20-observability.md) apply. Stable system prompts and avoiding mid-session model swaps keep local generation fast.
+
+---
+
+## 9. Background Computer Use (macOS)
+
+Current builds add background **computer use** — the agent operates GUI apps while your cursor stays free:
+
+```bash
+hermes computer-use install
+# System Settings → grant Screen Recording + Accessibility to CuaDriver
+hermes -t computer_use chat
+```
+
+The agent clicks, types, and reads windows in the background; destructive actions still wait for approval ([Part 19](./part19-security-playbook.md)). If it can't see or click anything, it's always the permissions — re-check both grants after any macOS update.
 
 ---
 

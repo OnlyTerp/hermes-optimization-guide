@@ -73,6 +73,27 @@ hermes config set compression.target_ratio 0.5
 hermes config set compression.protect_last_n 20
 ```
 
+## What Compression Actually Keeps (and the Levers That Matter)
+
+When automatic compression fires (the 🗜️ icon — community reports put the practical trigger around the half-full mark on default settings), it keeps roughly the **first few turns and the last `protect_last_n` messages**, and summarizes the middle. The middle is where "the agent redid work it already did" comes from. Three levers, all hot-reloaded on a running gateway:
+
+```yaml
+compression:
+  protect_last_n: 30            # keep more recent turns verbatim (default 20)
+auxiliary:
+  compression:
+    provider: openrouter
+    model: google/gemini-3-flash  # summarize on a cheap model, never your primary
+model:
+  context_length: 200000        # a bigger ceiling = compression fires later
+```
+
+And compaction is a **structured brief, not amnesia** — it fills fixed slots (goal / constraints / progress / key decisions / relevant files / next steps / critical context), and the raw turns stay in `state.db` for `session_search`. So *write for the compactor*: state goals and decisions in plain declarative sentences, and put never-drop facts in `MEMORY.md` instead of chat. More context-survival mechanics: [Part 27](./part27-power-secrets.md#1-context-memory--the-prefix-cache).
+
+## The Context You Didn't Order: Third-Party Rule Files
+
+Compression only manages *conversation* growth — a fat project rule file taxes **every prompt before the conversation even starts**. Rule discovery is first-match-wins (`.hermes.md` → `AGENTS.md` → `CLAUDE.md` → `.cursorrules`) with a 20k-char cap, and a stray `.hermes.md` silently shadows your `AGENTS.md`. Worst observed case: Camofox ships an `AGENTS.md` that injects **~22k characters into every prompt** if it's in your cwd. After installing any tool into a workspace, check for rule files it dropped.
+
 ## Best Practices
 
 - **Let it compress.** Don't set the threshold to 0.99 — compression needs headroom to work.
