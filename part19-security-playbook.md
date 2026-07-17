@@ -45,6 +45,10 @@ If your agent ingests content from surfaces you don't control (the open web, inb
 
 ## The Seven-Layer Mental Model
 
+<p align="center">
+  <img src="./assets/security-seven-layers.svg" alt="The seven-layer security stack — trust boundaries, human approval gates, containment, MCP hygiene, injection scanning, network controls, and pre-execution command scanning" width="920">
+</p>
+
 The community teaching frame that stuck in July 2026 maps cleanly onto this part — use it as your audit checklist:
 
 | # | Layer | Where in this part / the guide |

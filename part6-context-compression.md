@@ -75,7 +75,7 @@ hermes config set compression.protect_last_n 20
 
 ## What Compression Actually Keeps (and the Levers That Matter)
 
-When automatic compression fires (the 🗜️ icon — community reports put the practical trigger around the half-full mark on default settings), it keeps roughly the **first few turns and the last `protect_last_n` messages**, and summarizes the middle. The middle is where "the agent redid work it already did" comes from. Three levers, all hot-reloaded on a running gateway:
+When automatic compression fires (the 🗜️ icon — the configured default is the 0.8 threshold above, though community reports often see it fire around the half-full mark once fixed overhead like tool definitions and rule files is counted), it keeps roughly the **first few turns and the last `protect_last_n` messages**, and summarizes the middle. The middle is where "the agent redid work it already did" comes from. Three levers, all hot-reloaded on a running gateway:
 
 ```yaml
 compression:

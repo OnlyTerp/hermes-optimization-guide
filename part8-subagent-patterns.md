@@ -83,6 +83,10 @@ The CLI/TUI status bar tracks running background subagents, and the desktop app 
 
 ## The Seven-Rung Agent Ladder
 
+<p align="center">
+  <img src="./assets/agent-ladder.svg" alt="The seven-rung agent ladder — basic tools, MCP-backed, pipeline, parallel, routed specialists, human-in-the-loop, dynamic spawning" width="920">
+</p>
+
 The community pedagogy that stuck this July: seven agent architectures, each mapping to a concrete Hermes mechanism. Don't build rung 7 on day one — the taught progression is **1+6 first**, then climb as the work demands it.
 
 | # | Type | Hermes mechanism | When |

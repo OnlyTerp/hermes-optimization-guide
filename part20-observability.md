@@ -372,6 +372,10 @@ input length.
 
 ## The Gateway Token Tax: CLI for Heavy Work, Messaging for Control
 
+<p align="center">
+  <img src="./assets/token-tax.svg" alt="The gateway token tax — CLI/TUI ~6–8k vs messaging gateways ~15–20k tokens of tool definitions per turn, and the division of labor that follows" width="920">
+</p>
+
 The single biggest hidden cost in a chat-first Hermes setup, measured repeatedly by the community in July 2026: **the messaging gateways carry ~15–20k tokens of tool definitions per turn**, while the CLI carries **~6–8k** for the same work. That's 2–3× the fixed overhead on *every* turn — before you've said anything. (One user burned 121k tokens just *wiring Telegram to the Desktop app*.)
 
 The fix isn't to abandon your phone — it's a division of labor:

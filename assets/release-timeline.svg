@@ -79,14 +79,14 @@
     <circle cx="1400" cy="198" r="12" fill="#c084fc" filter="url(#glow)"/>
     <circle cx="1400" cy="198" r="18" fill="none" stroke="#c084fc" stroke-opacity="0.4" stroke-width="2"/>
     <text x="1400" y="156" fill="#f5f3ff" font-size="19" font-weight="800" filter="url(#glow)">v0.18</text>
-    <text x="1400" y="240" fill="#e9d5ff" font-size="14" font-weight="700">Judgment — latest</text>
+    <text x="1400" y="240" fill="#e9d5ff" font-size="14" font-weight="700">Judgment — latest (.2)</text>
     <text x="1400" y="262" fill="#a78bfa" font-size="12">MoA as a model · verification</text>
-    <text x="1400" y="280" fill="#a78bfa" font-size="12">/learn · scale-to-zero</text>
+    <text x="1400" y="280" fill="#a78bfa" font-size="12">/learn · scale-to-zero · Baileys fix</text>
   </g>
 
   <!-- current badge -->
   <g filter="url(#soft)">
     <rect x="440" y="322" width="720" height="52" rx="26" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="1.5"/>
   </g>
-  <text x="800" y="355" text-anchor="middle" fill="#e9d5ff" font-size="16" font-weight="700" letter-spacing="1">CURRENT THROUGH v0.18.0 (v2026.7.1) — "THE JUDGMENT RELEASE"</text>
+  <text x="800" y="355" text-anchor="middle" fill="#e9d5ff" font-size="16" font-weight="700" letter-spacing="1">CURRENT THROUGH v0.18.2 (v2026.7.7.2) — THE JUDGMENT LINE · main → v0.19</text>
 </svg>

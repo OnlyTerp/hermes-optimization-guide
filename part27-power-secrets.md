@@ -1,5 +1,9 @@
 # Part 27: Power Secrets — The Field Manual the Docs Don't Give You
 
+<p align="center">
+  <img src="./assets/power-secrets.svg" alt="Power Secrets — 25 non-obvious mechanics across five clusters: context & cache, cost mechanics, profiles & files, Kanban & ops, and the one-page cheat sheet" width="920">
+</p>
+
 *Twenty-five non-obvious mechanics that separate people who fight Hermes from people who fly it. Distilled from the official Wingtips series (#1–#22 by @witcheer), Teknium's July guidance, and the highest-signal community field reports from July 2026 — verified against the real v0.18.x schema before inclusion.*
 
 ---
@@ -27,7 +31,7 @@ Writes to `MEMORY.md` hit disk **immediately**, but the memory block in the *sys
 
 ### Secret #2 — Compression keeps first 3 + last 20 turns; the middle is where work dies
 
-Automatic compression (the 🗜️ icon) kicks in around **50% of the context window**. It keeps roughly the **first 3 turns and the last 20**, and summarizes the middle. If the agent "redoes work," the details it needed were in the summarized middle. Three real levers in `config.yaml` (hot-reloaded on a running gateway):
+Automatic compression (the 🗜️ icon) is configured to trigger at **`compression.threshold` — 0.8 (~80%) by default** — but community reports consistently observe it firing earlier in practice, around the **half-full mark**, once tool definitions and rule files are counted against the window. It keeps roughly the **first 3 turns and the last 20**, and summarizes the middle. If the agent "redoes work," the details it needed were in the summarized middle. Three real levers in `config.yaml` (hot-reloaded on a running gateway):
 
 ```yaml
 compression:
@@ -222,6 +226,10 @@ Official guidance from Teknium: don't demote Hermes to a shell that launches ano
 ---
 
 ## 5. The One-Page Cheat Sheet
+
+<p align="center">
+  <img src="./assets/cheat-sheet.svg" alt="The one-page cheat sheet — all 25 power secrets in a printable 5×5 grid" width="920">
+</p>
 
 Print this. Tape it somewhere.
 
