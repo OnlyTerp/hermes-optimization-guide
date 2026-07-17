@@ -81,6 +81,35 @@ The CLI/TUI status bar tracks running background subagents, and the desktop app 
 - **Background** for research, audits, and monitoring legs you'd otherwise wait on.
 - **Kanban** ([Part 23](./part23-tenacity-stack.md)) when the work must survive restarts or involve humans — background subagents die with the process.
 
+## The Seven-Rung Agent Ladder
+
+<p align="center">
+  <img src="./assets/agent-ladder.svg" alt="The seven-rung agent ladder — basic tools, MCP-backed, pipeline, parallel, routed specialists, human-in-the-loop, dynamic spawning" width="920">
+</p>
+
+The community pedagogy that stuck this July: seven agent architectures, each mapping to a concrete Hermes mechanism. Don't build rung 7 on day one — the taught progression is **1+6 first**, then climb as the work demands it.
+
+| # | Type | Hermes mechanism | When |
+|---|------|------------------|------|
+| 1 | Basic + tools | Enable tools in Desktop/Dashboard | Single tasks |
+| 2 | MCP-backed | MCP → Add Server ([Part 17](./part17-mcp-servers.md)) | Multi-platform work |
+| 3 | Sequential pipeline | Cron + wake gates + file handoffs; one profile per step | Dependent multi-step |
+| 4 | Parallel | `delegate_task` batch (default 3 subagents, clean contexts, summaries only) | Research / analysis |
+| 5 | Routed specialists | Kanban decompose ([Part 23](./part23-tenacity-stack.md)) or a Chief-of-Staff profile | Inbox triage / multi-role |
+| 6 | Human-in-the-loop | `approvals.mode: manual` (default) or `smart`; 60s fail-closed | Send / deploy / spend / post |
+| 7 | Dynamic spawn | Orchestrator + `max_spawn_depth: 2` → up to 9 workers | Complex discovery |
+
+**Progression:** 1+6 → 2 → 4 → 3 → 5 → 7. Most workloads never need past rung 5.
+
+## One Agent vs Many Profiles
+
+Two legitimate architectures — the community is genuinely split, so pick on the shape of your work:
+
+- **One agent + skills + subagents** (subagents only for parallelism): best when your domains overlap and shared memory is the point. For the same brain on many chat platforms, use **one profile with many gateways** — shared SOUL and memory everywhere.
+- **Profiles as rooms** (coder / research / private / cron): each profile is a *whole separate agent* — own memory, sessions, skills, and bot token. Best for long-running multi-domain setups where a coding session polluting your research memory is a real cost. Clone a starting point with `hermes profile create <name> --clone-all`.
+
+**The boundary that surprises people:** profiles isolate Hermes state, **not the filesystem** — every profile is the same OS user. Real isolation needs Docker/SSH/ACLs ([Part 19](./part19-security-playbook.md)). More in [Part 27](./part27-power-secrets.md#3-profiles-files--identity).
+
 ## The CEO/COO/Worker Pattern
 
 ```

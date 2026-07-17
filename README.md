@@ -5,15 +5,15 @@
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Hermes](https://img.shields.io/badge/Hermes-v0.18.0%20%282026.7.1%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.7.1)
-[![Last updated](https://img.shields.io/badge/Last%20updated-2026--07--01-brightgreen)](./CHANGELOG.md)
-[![Parts](https://img.shields.io/badge/parts-27-blue)](#table-of-contents)
+[![Hermes](https://img.shields.io/badge/Hermes-v0.18.2%20%282026.7.7.2%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.7.7.2)
+[![Last updated](https://img.shields.io/badge/Last%20updated-2026--07--17-brightgreen)](./CHANGELOG.md)
+[![Parts](https://img.shields.io/badge/parts-29-blue)](#table-of-contents)
 [![Skills](https://img.shields.io/badge/installable%20skills-13-blue)](./skills/)
 [![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
 [![CI](https://github.com/OnlyTerp/hermes-optimization-guide/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Current through Hermes Agent v0.18.0 (v2026.7.1) — "The Judgment Release"** · **27 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Now covering **Mixture-of-Agents as a first-class model**, evidence-based **verification** + `/goal` completion contracts, **`/learn` + `/journey`** self-improvement, **background subagent fan-out**, the maturing **Desktop app** (Projects, memory graph, multi-terminal), **iMessage via Photon** (no Mac needed), the NVIDIA RTX / DGX Spark local-hardware story, and gateway **scale-to-zero** for teams. **Bring any model** — this guide is about the *harness*, not the weights.
+> **Current through Hermes Agent v0.18.2 (v2026.7.7.2) — the "Judgment" line** · **29 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Now covering **Mixture-of-Agents as a first-class model**, evidence-based **verification** + `/goal` completion contracts, **`/learn` + `/journey`** self-improvement, **background subagent fan-out**, the maturing **Desktop app** (Projects, memory graph, multi-terminal), **iMessage via Photon** (no Mac needed), the NVIDIA RTX / DGX Spark local-hardware story, gateway **scale-to-zero** for teams — and now a full **[Power Secrets field manual](./part27-power-secrets.md)** and a twelve-build **[Recipe Book](./part28-recipe-book.md)** distilled from the official Wingtips series and July's best community research. **Bring any model** — this guide is about the *harness*, not the weights.
 >
 > Other languages: [中文](./README-zh.md) · [日本語](./README-ja.md)
 
@@ -23,10 +23,10 @@ Every part you need to go from fresh install to a production Hermes deployment �
 Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
 
 <p align="center">
-  <img src="./assets/runnable-artifacts.svg" alt="Docs plus runnable artifacts — 27 guide parts, 13 installable skills, 5 config templates, 4 reference architectures, one-command VPS bootstrap, 8-question config wizard" width="920">
+  <img src="./assets/runnable-artifacts.svg" alt="Docs plus runnable artifacts — 29 guide parts, 13 installable skills, 5 config templates, 4 reference architectures, one-command VPS bootstrap, 8-question config wizard" width="920">
 </p>
 
-*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **July 1, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **July 17, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
 
 ---
 
@@ -80,7 +80,7 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 | [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
 | [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
 | [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
-| README + `part1-*.md` … `part26-*.md` | The 27-part guide itself (now incl. MoA + verification, Desktop App, NVIDIA / local hardware). |
+| README + `part1-*.md` … `part28-*.md` | The 29-part guide itself (now incl. MoA + verification, Desktop App, NVIDIA / local hardware, the Power Secrets field manual, and the Recipe Book). |
 
 ---
 
@@ -117,10 +117,10 @@ Full set of diagrams: [`diagrams/architecture.md`](./diagrams/architecture.md).
 ## Pick Your Path
 
 <p align="center">
-  <img src="./assets/pick-your-path.svg" alt="Pick your path — ten curated reading paths through the guide's 27 parts, from a 10-minute setup to production hardening, local GPU, and MoA verification" width="920">
+  <img src="./assets/pick-your-path.svg" alt="Pick your path — curated reading paths through the guide's 29 parts, from a 10-minute setup to production hardening, local GPU, and MoA verification" width="920">
 </p>
 
-This guide grew to 27 parts because *Hermes grew*. Every part lives in its own file (`part1-setup.md` … `part26-moa-verification.md`); this README keeps a short summary of Parts 1–5 (plus the full SOUL.md personality section) and links out. You don't have to read them all — pick the shortest path to what you need:
+This guide grew to 29 parts because *Hermes grew*. Every part lives in its own file (`part1-setup.md` … `part28-recipe-book.md`); this README keeps a short summary of Parts 1–5 (plus the full SOUL.md personality section) and links out. You don't have to read them all — pick the shortest path to what you need:
 
 ### 🎯 "I just want it working in 10 minutes"
 Skip the terminal: install the [desktop app](./part24-desktop-app.md) and let first-run **Quick Setup via Nous Portal** pick a model for you. Prefer the CLI? [Part 1: Setup](./part1-setup.md) → [Part 12: Web Dashboard](./part12-web-dashboard.md) and point-and-click the rest.
@@ -152,6 +152,12 @@ Skip the terminal: install the [desktop app](./part24-desktop-app.md) and let fi
 ### 🧑‍⚖️ "I want an ensemble of frontier models — and proof the work is done"
 [Part 26: MoA, Verification & Self-Improvement](./part26-moa-verification.md) — pick a Mixture-of-Agents council like a model, judge `/goal` completion against evidence, and steer what the agent learns with `/learn` + `/journey`.
 
+### ⚡ "I've been running Hermes for months — give me the stuff I don't know"
+[Part 27: Power Secrets](./part27-power-secrets.md) — 25 non-obvious mechanics: the memory snapshot rule, the gateway token tax, credential-pool cache misses, the Kanban traps, profiles-as-rooms, and a printable one-page cheat sheet.
+
+### 🍳 "Show me what people actually *build* with this"
+[Part 28: The Recipe Book](./part28-recipe-book.md) — twelve production builds from the wild: the morning finance loop, staged Gmail, the content swarm, the overnight Kanban shift, the GPU FIFO board, the secretary office, and more — each mapped to real primitives with the trap that bit its builders first.
+
 ---
 
 ## What's New (July 2026)
@@ -162,7 +168,17 @@ Skip the terminal: install the [desktop app](./part24-desktop-app.md) and let fi
 
 Two huge releases landed since the Surface refresh — **v0.17.0 "Reach" (v2026.6.19)** and **[v0.18.0 "The Judgment Release" (v2026.7.1)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.7.1)**. Combined: ~3,200 commits, ~1,800 merged PRs, 1,200+ issues closed, and — as of v0.18 — **every P0 and P1 issue in the entire Hermes repo resolved** (~700 highest-priority items cleared in twelve days, with a standing commitment to keep the count at zero). None of it is model-specific — bring whatever weights you want.
 
-### v0.18.0 — "Judgment" (latest)
+### Mid-July status — v0.18.1 / v0.18.2 and what's coming
+
+- **v0.18.1 (`v2026.7.7`)** is a big *patch rollup* on the Judgment line — fixes and small features, not a curated feature release.
+- **v0.18.2 (`v2026.7.7.2`)** is the current tagged release. Headline fix: the **WhatsApp personal (Web/QR) adapter** broken by an upstream Baileys change ([Part 15](./part15-new-platforms.md)). If you pin Docker tags, move to `v2026.7.7.2` or newer.
+- **`main` is marching toward v0.19.0** — features you see discussed but not tagged (e.g. the **Hermes Cloud** connection mode, background **computer use**) should be treated as **experimental/preview** until they land in a release. Where this guide covers them ([Part 24](./part24-desktop-app.md#7b-hermes-cloud--the-third-connection-mode-preview), [Part 25](./part25-nvidia-local.md#9-background-computer-use-macos)) they're labelled as such.
+- **Model landscape moved too**: day-one **Kimi K3** support, the GPT **Sol / Terra / Luna** family, and a hard fact worth knowing — Anthropic *subscriptions* don't work natively (API keys do). Current routing posture: [Part 9](./part9-custom-models.md#the-mid-july-2026-model-landscape).
+- **New: [Part 27 — Power Secrets](./part27-power-secrets.md)**, the distilled field manual from the official Wingtips series (#1–#22) and July's community research: context/cache mechanics, cost traps, profile architecture, and operational gotchas — each verified against the real schema.
+- **New: [Part 28 — The Recipe Book](./part28-recipe-book.md)**, twelve end-to-end production builds observed in the wild — money & ops, content & career, life & lab — each mapped onto real Hermes primitives with its approval posture and its known trap.
+- **New artwork throughout** — the seven-layer security stack, the agent ladder, the gateway token tax, the Power Secrets cheat-sheet poster, and the Recipe Book map, all in the guide's house style.
+
+### v0.18.0 — "Judgment"
 
 - **Mixture-of-Agents is a first-class model** — every named MoA preset is a selectable virtual model under a `moa` provider in every picker (CLI/TUI/desktop/gateway). Each reference model's reasoning renders as its own labelled block, and the aggregator's answer streams live. `/moa` is now one-shot sugar. See [Part 26](./part26-moa-verification.md).
 - **The agent proves its work** — verification evidence for coding tasks (run the project's checks, don't assert success), **completion contracts** for `/goal`, `/goal wait <pid>`, and a `pre_verify` hook. See [Part 26](./part26-moa-verification.md#2-verification--done-means-proven-not-claimed).
@@ -239,6 +255,8 @@ Hermes is now optimized for always-on **local** use on **NVIDIA RTX PCs, RTX PRO
 25. [Hermes Desktop App](./part24-desktop-app.md) — Native macOS/Windows/Linux GUI, Quick Setup, Cmd+K palette, Projects, multi-terminal, memory graph, remote gateway, multi-profile, voice, self-update
 26. [NVIDIA & Local Hardware](./part25-nvidia-local.md) — Run Hermes on your own GPU: RTX / DGX Spark, OpenShell isolation, NemoClaw, and a model-agnostic local stack
 27. [MoA, Verification & Self-Improvement](./part26-moa-verification.md) — Mixture-of-Agents presets as models, `/moa`, completion contracts for `/goal`, `/learn`, `/journey`, background fan-out, scale-to-zero
+28. [Power Secrets](./part27-power-secrets.md) — 25 verified non-obvious mechanics: memory snapshots, the gateway token tax, cache economics, credential pools, Kanban traps, profiles-as-rooms, and a printable cheat sheet
+29. [The Recipe Book](./part28-recipe-book.md) — twelve production builds: finance loops, staged Gmail, approval offices, overnight Kanban, GPU FIFO, content swarms, job-hunt pipelines, coaches, correlators, Blender rooms, and the secretary office
 
 ---
 

@@ -43,6 +43,28 @@ If your agent ingests content from surfaces you don't control (the open web, inb
 
 ---
 
+## The Seven-Layer Mental Model
+
+<p align="center">
+  <img src="./assets/security-seven-layers.svg" alt="The seven-layer security stack — trust boundaries, human approval gates, containment, MCP hygiene, injection scanning, network controls, and pre-execution command scanning" width="920">
+</p>
+
+The community teaching frame that stuck in July 2026 maps cleanly onto this part — use it as your audit checklist:
+
+| # | Layer | Where in this part / the guide |
+|---|-------|-------------------------------|
+| 1 | Trust & default-deny | Layer 1 below (allowlists, pairing) |
+| 2 | Human approvals at decision boundaries | Layer 2 below — gate **send / publish / deploy / spend / system-of-record writes**, not every read |
+| 3 | Containment | OS-level isolation above; [Part 21](./part21-remote-sandboxes.md) |
+| 4 | MCP environment hygiene | Layer 5 below + [Part 17's CVE checklist](./part17-mcp-servers.md#mcp-security-july-2026-state-of-play) |
+| 5 | Prompt-injection scanning | Layer 6 below |
+| 6 | Network / SSRF controls | Isolation-backend egress policy (Layer 4) + [Part 16](./part16-backup-debug.md) hardening notes |
+| 7 | Pre-execution command scanning | tirith (Layer 2 options) |
+
+Two rules of thumb that fall out of it: put approvals at **decision boundaries** (the irreversible verbs), not on every action — approval fatigue is itself a vulnerability; and remember **profiles are not a security boundary** — every profile runs as the same OS user, so "my private profile" and "my public bot profile" share a filesystem unless you add Docker/SSH/ACLs.
+
+---
+
 ## Layer 1: User Authorization — Who Can Talk to the Agent
 
 The first gate is *who is even allowed to reach the agent*. On every messaging gateway, Hermes is **default-deny**: if no allowlist is configured and `GATEWAY_ALLOW_ALL_USERS` is unset, all users are rejected.
@@ -269,6 +291,28 @@ If you use any GitHub PR-reviewing skills or MCPs:
 5. **Treat external PR/issue text as data, not instructions** — and review any skill/plugin before install (it executes Python).
 
 Aonan Guan's writeup has the exploit chain in full. Patch, don't just read.
+
+---
+
+## The Action-Ontology Pattern — Brain in One Place, Hands in Another
+
+The strongest community production architecture of the summer, compatible with everything above:
+
+1. **Host = brain.** Hermes runs on the host (or a trusted VM) with credentials — but its *tools* can't touch production directly.
+2. **Container = hands, with no credentials.** Execution happens in a Docker container on an **internal-only network** whose sole reachable endpoint is…
+3. **…an action API you wrote.** Every real-world side effect (send, post, pay, deploy) is a named, typed endpoint with validation, rate limits, and logging — an explicit **ontology of allowed actions**. A compromised agent can only call the actions you defined, at the rates you defined, with the arguments you validate.
+
+This is the same philosophy as Layer 4's isolation backends, pushed to its conclusion: don't enumerate what the agent *can't* do — enumerate what it *can*.
+
+## External Spend Kernels (When the Agent Touches Money)
+
+If your agent can spend, the policy engine must live **outside the agent process** — an in-context "please don't overspend" instruction is a suggestion, not a control. The pattern showing up across HAAB (Hermes-as-a-Business) builds:
+
+- **A payment policy kernel** that enforces per-transaction caps, daily budgets, and merchant allowlists *before* any payment API is reachable (the Custodian pattern; Latch and payguard are community implementations of the same idea).
+- **Owner-approval gates on the transaction boundary** — the agent drafts, a human clicks (the Mom-n-Pop Skills pattern: quotes, invoices, campaigns all staged for approval).
+- **A commerce policy object** for selling agents — price floors, counter-offer rules, spend limits — evaluated by code, not by the model (the CashFromChaos `CommercePolicy` pattern).
+
+Same shape at every scale: the model proposes, a kernel disposes. Combine with Layer 2's `approvals.mode: manual` for anything the kernel can't express.
 
 ---
 

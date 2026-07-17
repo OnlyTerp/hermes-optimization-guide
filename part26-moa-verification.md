@@ -48,7 +48,7 @@ What you get in v0.18:
 | Reviewing another agent's plan or diff | Anything latency-sensitive |
 | "Second opinion" one-shots via `/moa` | Long sessions (you pay N models per turn) |
 
-Cost scales with the number of reference models — an ensemble of three frontier models is roughly 4× the tokens of one. Keep a council preset for judgment calls; don't make it your default driver.
+Cost scales with the number of reference models — an ensemble of three frontier models is roughly 4× the tokens of one *in the worst case*. But a July community measurement complicates the intuition in MoA's favor: a single Opus turn cost ~27.9k tokens / ~$0.14 vs a **full 4-reference + aggregator MoA turn at ~28.6k / ~$0.15** — nearly identical, because the system prompt and tool schemas dominate the bill and reference models run on stripped context. Quality on that user's eval: **0.8202 for Opus+GPT-5.5 MoA vs 0.7607 / 0.7412 for either alone**. It's still 5 API calls per turn (and scales with session length), so the advice stands — council for judgment calls, single model for the grind — but the cost objection is weaker than it looks.
 
 > **Gotcha:** the context window resolves from the **aggregator**, and auxiliary tasks route to the aggregator too. Pick an aggregator with a window at least as large as your references' outputs combined.
 
@@ -95,6 +95,9 @@ Two commands turn the skill/memory system from a black box into something you st
 ```
 
 - `/learn` honors your repo's CONTRIBUTING.md skill standards automatically. Teaching Hermes a workflow is now one command, not a manual `skill_manage` authoring session (see [Part 5](./part5-creating-skills.md) for what a good skill looks like — that still matters).
+- **Give `/learn` output a haircut.** Generated skills routinely ship 123–202-char descriptions — and every skill description loads into context *every session, forever*. Open the new `SKILL.md`, trim the description to **≤60 chars**, and fix the author before sharing.
+- **Check the built-ins first.** Memory, web search, browser control, cron, and sub-agents are native — don't `/learn` or install a skill for a capability the agent already has.
+- For shared or production agents, pair with `/skills approval on` and `/memory approval on` so self-improvement stays supervised ([Part 7](./part7-memory-system.md)).
 - `/journey` works in the CLI and TUI; the desktop app adds a **memory graph** — a playable radial timeline of memories and skills over time ([Part 24](./part24-desktop-app.md)).
 - The post-turn self-improvement fork (the loop that decides whether to save a memory or skill after your turns) now routes to an **auxiliary model**, digests context instead of replaying the whole conversation, and adapts its cadence — it costs a fraction of what it used to. Keep it on.
 
@@ -173,3 +176,5 @@ Then:
 ---
 
 *The theme of mid-2026 Hermes: stop trusting single-model vibes. Ensemble the judgment calls, verify the claims, and audit what your agent thinks it learned.*
+
+**Next:** [Part 27 — Power Secrets](./part27-power-secrets.md), the field manual of non-obvious mechanics that make everything in this guide cheaper and more reliable.

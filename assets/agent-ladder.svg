@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#0e0a1e"/>
+      <stop offset="1" stop-color="#140b28"/>
+    </linearGradient>
+    <linearGradient id="cardTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1234"/>
+      <stop offset="1" stop-color="#130c26"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#4c1d95"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7c3aed" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="560" fill="url(#bg)"/>
+
+  <text x="800" y="54" text-anchor="middle" fill="#f5f3ff" font-size="27" font-weight="800" letter-spacing="5" filter="url(#glow)">THE SEVEN-RUNG AGENT LADDER</text>
+  <text x="800" y="84" text-anchor="middle" fill="#a78bfa" font-size="14" letter-spacing="2">EVERY MULTI-AGENT ARCHITECTURE IS ONE OF THESE — CLIMB IN THIS ORDER: 1+6 → 2 → 4 → 3 → 5 → 7</text>
+
+  <!-- ascending rail -->
+  <path d="M 130 470 L 1470 150" stroke="url(#rail)" stroke-width="4" fill="none" opacity="0.85"/>
+
+  <!-- rung cards along the ascent -->
+  <g filter="url(#soft)">
+    <rect x="70"   y="400" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.7" stroke-width="1.5"/>
+    <rect x="272"  y="352" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.7" stroke-width="1.5"/>
+    <rect x="474"  y="304" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#8b5cf6" stroke-opacity="0.7" stroke-width="1.5"/>
+    <rect x="676"  y="256" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="1.5"/>
+    <rect x="878"  y="208" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="1.5"/>
+    <rect x="1080" y="160" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#c084fc" stroke-opacity="0.8" stroke-width="1.5"/>
+    <rect x="1282" y="112" width="185" height="96" rx="14" fill="url(#cardTop)" stroke="#c084fc" stroke-opacity="1" stroke-width="2"/>
+  </g>
+
+  <g text-anchor="middle">
+    <text x="162" y="432" fill="#e9d5ff" font-size="15" font-weight="800">1 · BASIC + TOOLS</text>
+    <text x="162" y="454" fill="#a78bfa" font-size="12">one agent, built-ins</text>
+    <text x="162" y="472" fill="#a78bfa" font-size="12">start here — always</text>
+
+    <text x="364" y="384" fill="#e9d5ff" font-size="15" font-weight="800">2 · MCP-BACKED</text>
+    <text x="364" y="406" fill="#a78bfa" font-size="12">external systems via</text>
+    <text x="364" y="424" fill="#a78bfa" font-size="12">pinned MCP servers</text>
+
+    <text x="566" y="336" fill="#e9d5ff" font-size="15" font-weight="800">3 · PIPELINE</text>
+    <text x="566" y="358" fill="#a78bfa" font-size="12">A → B → C stages,</text>
+    <text x="566" y="376" fill="#a78bfa" font-size="12">checkable hand-offs</text>
+
+    <text x="768" y="288" fill="#e9d5ff" font-size="15" font-weight="800">4 · PARALLEL</text>
+    <text x="768" y="310" fill="#a78bfa" font-size="12">delegate_task fan-out,</text>
+    <text x="768" y="328" fill="#a78bfa" font-size="12">one consolidated turn</text>
+
+    <text x="970" y="240" fill="#e9d5ff" font-size="15" font-weight="800">5 · ROUTED</text>
+    <text x="970" y="262" fill="#a78bfa" font-size="12">orchestrator picks the</text>
+    <text x="970" y="280" fill="#a78bfa" font-size="12">right specialist per task</text>
+
+    <text x="1172" y="192" fill="#e9d5ff" font-size="15" font-weight="800">6 · HUMAN-IN-LOOP</text>
+    <text x="1172" y="214" fill="#a78bfa" font-size="12">approvals: at decision</text>
+    <text x="1172" y="232" fill="#a78bfa" font-size="12">boundaries — add early!</text>
+
+    <text x="1374" y="144" fill="#f5f3ff" font-size="15" font-weight="800" filter="url(#glow)">7 · DYNAMIC SPAWN</text>
+    <text x="1374" y="166" fill="#a78bfa" font-size="12">agents create agents;</text>
+    <text x="1374" y="184" fill="#a78bfa" font-size="12">budget caps mandatory</text>
+  </g>
+
+  <g filter="url(#soft)">
+    <rect x="360" y="500" width="880" height="46" rx="23" fill="url(#cardTop)" stroke="#a855f7" stroke-opacity="0.7" stroke-width="1.5"/>
+  </g>
+  <text x="800" y="529" text-anchor="middle" fill="#e9d5ff" font-size="14.5" font-weight="700" letter-spacing="1">MOST REAL WORK NEVER NEEDS RUNG 7 — COMPLEXITY IS A COST, NOT A FLEX · PART 8</text>
+</svg>

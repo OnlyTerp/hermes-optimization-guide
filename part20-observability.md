@@ -370,6 +370,54 @@ input length.
 
 ---
 
+## The Gateway Token Tax: CLI for Heavy Work, Messaging for Control
+
+<p align="center">
+  <img src="./assets/token-tax.svg" alt="The gateway token tax — CLI/TUI ~6–8k vs messaging gateways ~15–20k tokens of tool definitions per turn, and the division of labor that follows" width="920">
+</p>
+
+The single biggest hidden cost in a chat-first Hermes setup, measured repeatedly by the community in July 2026: **the messaging gateways carry ~15–20k tokens of tool definitions per turn**, while the CLI carries **~6–8k** for the same work. That's 2–3× the fixed overhead on *every* turn — before you've said anything. (One user burned 121k tokens just *wiring Telegram to the Desktop app*.)
+
+The fix isn't to abandon your phone — it's a division of labor:
+
+| Surface | Use for | Why |
+|---------|---------|-----|
+| **CLI / TUI** | Long coding runs, research, bulk work | Lowest per-turn overhead, best cache behavior |
+| **Kanban** ([Part 23](./part23-tenacity-stack.md)) | Anything that should survive restarts | Board persists; workers run lean |
+| **Telegram / Discord / Slack** | Kickoff, steering, receiving results | High overhead is fine for short control turns |
+
+Use `/usage --by-gateway` to see your own split — if a messaging gateway dominates your token spend on work that didn't need to *originate* there, you've found the money.
+
+Two related cache facts (full detail in [Part 27](./part27-power-secrets.md)):
+
+- **Switching models mid-session resets the prompt cache** — the cache key includes the model, so the next turn re-reads the whole history at full input price. Batch model switches, or delegate the odd-model step to a subagent.
+- **Credential-pool rotation is also a cache miss** — multiple keys per provider (`hermes auth add <provider> --api-key ...`) keep you alive through rate limits, but each rotation re-reads the full history. Budget for it on long sessions.
+
+---
+
+## Benchmark the Stack, Not the Model
+
+July's WolfBench data made this concrete: the **same model** (GPT-5.6 Sol, max reasoning) scored 86.7% on Codex at ~$90/run vs 84.5% on Hermes at ~$173/run — the harness used ~2× the tokens for the same brain. Takeaways for Hermes specifically:
+
+1. **A model's cost ranking changes per harness.** Never assume a benchmark run on another agent transfers.
+2. **On Hermes, the cost-efficient frontier pick beats the absolute-best pick** more often than not (July example: Terra ~3.6 points behind Sol at ~44% lower cost).
+3. **High-reasoning models generate busywork** — self-assigned hashing, redundant test-writing, verification loops of their own verification. Cap `/goal` scope with explicit completion contracts ([Part 26](./part26-moa-verification.md)), and never stack the same high-reasoning model as both orchestrator and worker — the busywork compounds.
+4. **Free tiers die fast under agent traffic.** A free-tier provider that lasts a month of chat lasts a day of agent loops. Treat free lanes as burst capacity, not a plan.
+
+Run your own numbers: pick 3–5 representative tasks, run them through your actual config on two candidate models, and compare `/usage` + Langfuse traces. An hour of benchmarking regularly saves hundreds of dollars a month.
+
+---
+
+## Langfuse v4 / OpenTelemetry-Native Path
+
+Langfuse v4 is OTEL-native: it accepts spans directly at `/api/public/otel`, so you can also run a standard **OTel Collector in front of Langfuse** — auth separation, plus fan-out to a second backend (Grafana/Datadog) from one stream. Three currency notes for July 2026:
+
+- **Local models cost $0 in dashboards unless you define prices.** Add pricing for your local models in Langfuse and emit `gen_ai.usage.*` token counts, or your cost dashboards will lie by omission.
+- **Watch for double-counted agent spans** — a parent `invoke_agent` span plus its child `chat` span can both carry usage. Filter one level or use a current SDK.
+- Langfuse's **root-observations default changed on 2026-07-15** — if you built dashboards on the old default, re-check them after upgrading.
+
+---
+
 ## Eval-Driven Regression Prevention
 
 Hermes does not ship a built-in `hermes evals` subcommand — that's a Langfuse
