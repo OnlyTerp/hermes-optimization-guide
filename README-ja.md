@@ -4,9 +4,9 @@
   <img src="./assets/hero-banner.png" alt="Hermes Optimization Guide" width="880">
 </p>
 
-> [英語版はこちら](./README.md) · このページは入口の要約。本文の章は英語のまま。 · 最終同期：2026-07-03
+> [英語版はこちら](./README.md) · このページは入口の要約。本文の章は英語のまま。 · 最終同期：2026-08-22
 
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（**v0.18.0 “The Judgment Release”（v2026.7.1）** まで反映。Mixture-of-Agents のファーストクラスモデル化、エビデンスに基づくタスク検証、ネイティブデスクトップアプリ、NVIDIA ローカルハードウェアを含む）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。
+[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（**v0.20.4 “Herald”（v2026.8.18）** まで反映。ストリーミング音声・A2A・外部シークレット管理・エグレス/iron-proxy ・デスクトップ Bots・computer use を含む）向けの実戦ガイド + インストール可能な成果物（Skills・設定テンプレ・インフラスクリプト）。
 
 ## ワンコマンドで起動
 
@@ -17,7 +17,17 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 もしくは [docs/quickstart.md](./docs/quickstart.md)（5 分で Telegram Bot）を参照。
 
-## v0.17 / v0.18 の新機能ハイライト
+## v0.19 / v0.20 の新機能ハイライト（要約）
+
+**v0.20 “Herald”**（[part24](./part24-desktop-app.md)・[part15](./part15-new-platforms.md) ほか）：
+
+- **ストリーミング音声** — バージイン、ウェイクワード対応のリアルタイム音声入出力
+- **A2A v1.0** — Linux Foundation の Agent-to-Agent プロトコル（双方向）
+- **外向き Webhook** — ペイロードフィルタによる候補無しHTTP配信
+- **デスクトップ強化** — Bots タブ（Bot Mode）、マルチコネクション、memory graph
+- **computer use** — `hermes computer-use` でデスクトップをバックグラウンド操作
+- **egress / iron-proxy** — サンドボックスはトークンのみ保持、実鍵はホスト側で解決
+- **外部シークレット** — Bitwarden / 1Password / CLI ヴォルトから API キーを供給
 
 **v0.18.0 “Judgment”**（[part26](./part26-moa-verification.md)）：
 
@@ -40,7 +50,7 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 ## 主なコンテンツ
 
-- **27 章の本文**（`part1`〜`part26` + この README） — v0.18 MoA / 検証 / `/learn`、v0.17 iMessage（Photon）、v0.16 デスクトップアプリ、NVIDIA / DGX Spark ローカル実行、マルチエージェント Swarm、`/undo`、あいまい検索モデルピッカー、Grok OAuth、`hermes proxy`、Kanban、`/goal`、Checkpoints v2、Curator、TUI、プラグイン、LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
+- **29 章の本文**（`part1`〜`part28` + この README） — v0.18 MoA / 検証 / `/learn`、v0.17 iMessage（Photon）、v0.16 デスクトップアプリ、NVIDIA / DGX Spark ローカル実行、マルチエージェント Swarm、`/undo`、あいまい検索モデルピッカー、Grok OAuth、`hermes proxy`、Kanban、`/goal`、Checkpoints v2、Curator、TUI、プラグイン、LightRAG、Telegram、MCP、セキュリティ、可観測性、リモートサンドボックス
 - **13 個のインストール可能 Skill**（`skills/`） — 監査、バックアップ、依存スキャン、コストレポート、Telegram トリアージ、PR レビュー、受信トレイ整理、Hermes 週報、スパムフィルタ、会議準備 など
 - **5 つのプロダクション設定テンプレ**（`templates/config/`） — minimum / telegram-bot / production / cost-optimized / security-hardened
 - **インフラ一式**（`templates/compose/`, `templates/caddy/`, `templates/systemd/`, `scripts/`） — Langfuse セルフホスト、Caddy リバースプロキシ、systemd 強化、VPS ブートストラップ

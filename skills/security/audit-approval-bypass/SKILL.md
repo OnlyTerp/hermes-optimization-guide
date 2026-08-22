@@ -8,9 +8,9 @@ when_to_use:
 security:
   trust: trusted
   notes: |
-    Read-only audit of config.yaml and cron.yaml. Never modifies the
+    Read-only audit of config.yaml and ~/.hermes/cron/jobs.json. Never modifies the
     approval posture without explicit confirmation.
-model_hint: google/gemini-3.1-flash
+model_hint: google/gemini-3.7-flash
 toolsets:
   - terminal
   - file
@@ -45,7 +45,10 @@ Hermes' approval layer is the built-in dangerous-command detector plus the top-l
 4. **Check the container caveat:**
    - If `terminal.backend` is `docker` / `singularity` / `modal` / `daytona`, dangerous-command checks are **skipped** — the container is the boundary. Verify that's intentional: flag if `docker_mount_cwd_to_workspace: true` or a broad host mount undermines it.
 
-5. **Cross-check cron.** For each entry in `~/.hermes/cron.yaml`, flag any task that can hit shell writes while `cron_mode: approve` is set, or that reads untrusted content (inbox sweeps, web scrapes) headlessly.
+5. **Cross-check cron.** For each job in `~/.hermes/cron/jobs.json`
+   (inspect with `hermes cron list`), flag any task that can hit shell
+   writes while `approvals.cron_mode: approve` is set, or that reads
+   untrusted content (inbox sweeps, web scrapes) headlessly.
 
 6. **Render a report:**
 
@@ -77,5 +80,8 @@ Hermes' approval layer is the built-in dangerous-command detector plus the top-l
 ## Notes
 
 - The hardline `UNRECOVERABLE_BLOCKLIST` (rm -rf /, fork bomb, mkfs on root, …) cannot be bypassed by any of the above — it's the floor, not the posture. Don't report it as configurable.
-- If `approvals:` is missing entirely, that's fine — defaults are `manual` / `deny`. Flag only explicit weakening.
+- If `approvals:` is missing entirely, that's fine — defaults are
+  `mode: smart`, `timeout: 300`, `cron_mode: deny` and
+  `single_query_mode: deny`. Flag only explicit weakening — especially
+  `mode: off` (permanent `--yolo`) or `cron_mode: approve`.
 - Cross-check with the `audit-mcp` skill's output — an MCP with a broad tool surface plus `approvals.mode: off` is the worst-case combination.

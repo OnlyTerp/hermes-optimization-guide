@@ -16,7 +16,13 @@ WorkingDirectory=/home/hermes
 # /usr/local/bin/hermes is a symlink created by scripts/vps-bootstrap.sh.
 # Manual installs: ln -sf ~hermes/.local/bin/hermes /usr/local/bin/hermes
 # (or point ExecStart directly at /home/hermes/.local/bin/hermes).
-ExecStart=/usr/local/bin/hermes run
+# The messaging gateway (Telegram/Discord/...) is the always-on agent
+# service; `hermes gateway run --replace` reaps any prior instance on
+# start (the --replace flag is made for systemd). The old `hermes run`
+# subcommand was removed upstream — `hermes gateway run` is its successor.
+# Alternative: `hermes gateway install --system --run-as-user hermes`
+# installs Hermes' own unit (see `hermes gateway install --help`).
+ExecStart=/usr/local/bin/hermes gateway run --replace
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5
@@ -24,7 +30,6 @@ RestartSec=5
 # Environment
 EnvironmentFile=-/home/hermes/.hermes/.env
 Environment=HOME=/home/hermes
-Environment=HERMES_CONFIG=/home/hermes/.hermes/config.yaml
 
 # Logging
 StandardOutput=journal

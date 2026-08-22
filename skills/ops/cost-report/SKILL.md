@@ -19,26 +19,36 @@ parameters:
 security:
   trust: trusted
   notes: |
-    Read-only over local usage logs. No untrusted input, no external writes.
-model_hint: google/gemini-3.1-flash
+    Read-only over local usage data. No untrusted input, no external writes.
+model_hint: google/gemini-3.7-flash
 ---
 
 # cost-report — LLM Cost Breakdown
 
-Generate a human-readable (or machine-readable) cost report from Hermes' usage logs.
+Generate a human-readable (or machine-readable) cost report from Hermes' own usage ledgers.
 
 ## Procedure
 
-1. **Export logs.** Run:
+1. **Surface the numbers Hermes already keeps.** There is no `hermes logs
+   export` usage stream (that subcommand never existed) — use the built-in
+   insights and logs views:
+
    ```bash
-   hermes logs export --since ${WINDOW} --format jsonl --output /tmp/hermes-logs.jsonl
+   hermes insights --days ${WINDOW}     # token + cost breakdown from session history
+   hermes logs --since ${WINDOW} --component agent   # raw log lines for detail
    ```
 
-2. **Parse and aggregate.** Using DuckDB (preferred) or `jq` + `awk`:
+2. **Aggregate per-provider / per-skill splits.** `hermes insights` rolls
+   usage up globally. For the per-provider / per-skill / per-gateway
+   tables below, pull from your tracing layer (self-hosted Langfuse via
+   the `observability/langfuse` plugin — Part 20) or from a JSONL usage
+   log you collect with the Part-20 log-tail pipeline. With such a JSONL
+   file, DuckDB inspects it quickly:
+
    ```bash
    duckdb -c "
      CREATE TABLE logs AS SELECT * FROM read_json_auto('/tmp/hermes-logs.jsonl');
-     
+
      -- By provider
      SELECT provider,
             SUM(cost_usd) AS cost,
@@ -58,7 +68,7 @@ Generate a human-readable (or machine-readable) cost report from Hermes' usage l
    Provider     Cost($)  Tokens-in   Tokens-out   Calls
    anthropic    18.44    2.1M        380K         412
    openai       6.20     1.2M        220K         187
-   cerebras     0.45     890K        140K         523
+   gemini       0.45     890K        140K         523
    ```
 
    **B. By gateway**
@@ -95,21 +105,23 @@ Generate a human-readable (or machine-readable) cost report from Hermes' usage l
    > ⚠ Wed spent $9.80, 4.5x typical. Driven by `weekly-dep-audit`.
 
 5. **Recommend savings.** Pattern-match the data:
-   - Any single skill > 30% of weekly cost → suggest a cheaper model for that skill
-   - Input tokens > 10x output tokens on any provider → suggest prompt caching
-   - Repeated Claude skills/SOUL prefixes without cache hits → enable v0.14 1-hour prefix caching
-   - Gemini calls without `google/gemini-3.1-flash` on classification-ish intents → suggest routing
-   - Grok 4.3 / GPT-5.5 / Opus calls in cron or triage lanes → require explicit opt-in routing
+   - Any single skill > 30% of weekly cost → suggest a cheaper model for that skill (`hermes model` → "Configure auxiliary models")
+   - Input tokens > 10x output tokens on any provider → prompt caching is already auto-on for Anthropic/OpenRouter/Portal; check that mid-session `/model` switches aren't resetting the cache prefix (Part 20)
+   - Gemini/Flash calls doing work the primary model could absorb → check `auxiliary.<task>` is not pinned to an expensive model
+   - Opus/GPT-5/Grok calls in cron or triage lanes → require explicit opt-in routing (`model_aliases` + cron job model pins)
 
-6. **Deliver.** Post to private notification channel. Attach the raw JSON if format is json.
+6. **Deliver.** Post to the job's `--deliver` target (a private DM is the
+   classic choice). Attach the raw JSON if format is json.
 
 ## Cron wiring
 
-```yaml
-- name: weekly-cost-report
-  schedule: "0 9 * * 1"
-  task: /cost-report window=7d format=markdown
-  notify: telegram_private
+Jobs live in `~/.hermes/cron/jobs.json`, created via `hermes cron create`
+(the old `cron.yaml` list format was removed):
+
+```bash
+hermes cron create "0 9 * * 1" \
+  "Run the cost-report skill: window=7d format=markdown" \
+  --skill cost-report --name weekly-cost-report --deliver telegram
 ```
 
 ## See also

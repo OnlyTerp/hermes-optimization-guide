@@ -60,7 +60,7 @@ sudo systemctl start hermes hermes-dashboard
 
 ## Why `cost-optimized.yaml` is the right default
 
-See [`templates/config/cost-optimized.yaml`](../../templates/config/cost-optimized.yaml). Defaults to Gemini Flash (cheapest smart model), uses Cerebras Qwen 3 for classification (near-free), and only escalates to Sonnet for high-stakes coding. With prompt caching + Fast Mode disabled by default, typical cost is $0.05–0.30 per active hour.
+See [`templates/config/cost-optimized.yaml`](../../templates/config/cost-optimized.yaml). Defaults to Gemini Flash (cheapest smart model), uses a cheap flash-class model for classification and side-tasks, and only escalates to Sonnet for high-stakes coding. Typical cost is $0.05–0.30 per active hour.
 
 If you need max quality for a specific task, just say "use sonnet" in chat — the router honors explicit user overrides.
 
@@ -78,13 +78,13 @@ Every one of these is installed by the bootstrap script (symlinks into `~/.herme
 | Constraint | Hit at | Fix |
 |---|---|---|
 | CX22 RAM | ~5–10 concurrent tool calls + LightRAG | Upgrade to CX32 ($12/mo) |
-| Gemini Flash free tier | 1500 req/day | Route to Cerebras or add paid quota |
+| Gemini Flash free tier | 1500 req/day | Add paid quota or route side-tasks to another cheap provider |
 | LightRAG on 2 vCPU | Indexing 10MB+ docs | Move indexing to a spot Modal sandbox |
-| Cost budget | $50+/mo | Turn on `prefer_cached: true` + 32K compression trigger |
+| Cost budget | $50+/mo | Compress earlier (`compression.threshold: 0.35`) + OpenRouter response caching (`HERMES_OPENROUTER_CACHE=1`) |
 
 ## Security note
 
-Because this box is public-facing, **always** deploy the denylist + require_approval from `cost-optimized.yaml`, and keep your Telegram bot **private** (restrict `allowed_user_ids` to your own ID). Any "public" bot should use a separate token and run in a **quarantine profile** — see [Part 19](../../part19-security-playbook.md) and the [`security-hardened.yaml`](../../templates/config/security-hardened.yaml) template.
+Because this box is public-facing, **always** use the hardened defaults from `cost-optimized.yaml` / `security-hardened.yaml`, and keep your Telegram bot **private** (restrict `TELEGRAM_ALLOWED_USERS` to your own ID). Any "public" bot should use a separate token and run in a **quarantine profile** — see [Part 19](../../part19-security-playbook.md) and the [`security-hardened.yaml`](../../templates/config/security-hardened.yaml) template.
 
 ## When to graduate
 

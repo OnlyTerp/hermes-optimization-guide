@@ -4,9 +4,9 @@
   <img src="./assets/hero-banner.png" alt="Hermes Optimization Guide" width="880">
 </p>
 
-> [English 完整版](./README.md) · 本页是入口摘要，章节正文仍为英文。 · 最后同步：2026-07-03
+> [English 完整版](./README.md) · 本页是入口摘要，章节正文仍为英文。 · 最后同步：2026-08-22
 
-实用指南 + 可安装制品（Skills、配置模板、基础设施脚本），针对 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（当前覆盖到 **v0.18.0 “The Judgment Release”（v2026.7.1）**，含 Mixture-of-Agents 一等模型、基于证据的任务验证、原生桌面应用与 NVIDIA 本地硬件）。
+实用指南 + 可安装制品（Skills、配置模板、基础设施脚本），针对 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（当前覆盖到 **v0.20.4 “Herald”（v2026.8.18）**，含流式语音、A2A 代理协议、外部密钥管理、egress/iron-proxy、桌面 Bots 与 computer use）。
 
 ## 一键起步
 
@@ -17,9 +17,19 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 或阅读 [docs/quickstart.md](./docs/quickstart.md)（5 分钟 Telegram 机器人）。
 
-## v0.17 / v0.18 新特性速览
+## v0.19 / v0.20 新特性速览（摘要）
 
-**v0.18.0 “Judgment”**（[part26](./part26-moa-verification.md)）：
+**v0.20 “Herald”**（[part24](./part24-desktop-app.md)、[part15](./part15-new-platforms.md) 等）：
+
+- **流式语音** — 支持 barge-in 打断与唤醒词的实时语音输入输出
+- **A2A v1.0** — Linux Foundation 的 Agent-to-Agent 开放协议（双向调用）
+- **出站 Webhook** — 带负载过滤的 HTTP 推送
+- **桌面版增强** — Bots 标签页（Bot Mode）、多连接、memory graph
+- **computer use** — `hermes computer-use` 在后台驱动桌面
+- **egress / iron-proxy** — 沙箱只持代理令牌，真实密钥由宿主机解析
+- **外部密钥** — 从 Bitwarden / 1Password / CLI 保险库供应 API 密钥
+
+**v0.18.0 “Judgment” 及之前的旧特性**（[part26](./part26-moa-verification.md)）：
 
 - **Mixture-of-Agents 成为一等模型** — 每个 MoA 预设都是 `moa` provider 下可直接选择的虚拟模型，各参考模型的推理分块展示，聚合答案实时流式输出；`/moa` 变成一次性快捷方式
 - **代理自证工作完成** — 编码任务附带验证证据（真正跑项目检查，而非口头宣称成功）、`/goal` 完成契约、`/goal wait <pid>`、`pre_verify` 钩子
@@ -40,7 +50,7 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 
 ## 内容一览
 
-- **27 章正文**（`part1` 到 `part26` + 本 README） — v0.18 MoA / 验证 / `/learn`、v0.17 iMessage（Photon）、v0.16 桌面应用、NVIDIA / DGX Spark 本地运行、多智能体 Swarm、`/undo`、模糊模型选择器、Grok OAuth、`hermes proxy`、Kanban、`/goal`、Checkpoints v2、Curator、TUI、插件、LightRAG、Telegram、MCP、安全、可观测性、远程沙箱
+- **29 章正文**（`part1` 到 `part28` + 本 README） — v0.18 MoA / 验证 / `/learn`、v0.17 iMessage（Photon）、v0.16 桌面应用、NVIDIA / DGX Spark 本地运行、多智能体 Swarm、`/undo`、模糊模型选择器、Grok OAuth、`hermes proxy`、Kanban、`/goal`、Checkpoints v2、Curator、TUI、插件、LightRAG、Telegram、MCP、安全、可观测性、远程沙箱
 - **13 个可安装 Skill**（`skills/`） — 审计、备份、依赖扫描、成本报告、Telegram 分类、PR 审查、收件箱分类、Hermes 周报、垃圾过滤、会议准备 等
 - **5 套生产配置模板**（`templates/config/`） — minimum / telegram-bot / production / cost-optimized / security-hardened
 - **基础设施**（`templates/compose/`, `templates/caddy/`, `templates/systemd/`, `scripts/`） — Langfuse 自托管、Caddy 反代、systemd 硬化、VPS 引导脚本

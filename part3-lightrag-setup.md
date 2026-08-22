@@ -48,7 +48,7 @@ LightRAG does vector DB + knowledge graph **in parallel** during ingestion. One 
 ### Prerequisites
 
 - Python 3.11+
-- An LLM API key for entity extraction during ingestion — **Kimi K2.6** (quality), **Cerebras GPT OSS 120B** (speed), or any OpenAI-compatible provider
+- An LLM API key for entity extraction during ingestion — any capable OpenAI-compatible provider (OpenRouter, Moonshot/Kimi, Cerebras, z.ai, or a local model). Model names move fast; see the "Entity Extraction Model" section below for guidance instead of pinning to one model.
 - An embedding API key — **Fireworks + Qwen3-Embedding-8B** for high-quality 4096-dim embeddings, or local **Ollama + nomic-embed-text** for free
 
 ### Install LightRAG
@@ -70,12 +70,12 @@ pip install -e ".[api]"
 
 Create `~/.hermes/lightrag/.env`:
 
-**Option A — Kimi K2.6 + Fireworks (quality default):**
+**Option A — Kimi K3 + Fireworks (quality default):**
 
 ```bash
 # LLM for entity extraction (during ingestion)
 LLM_BINDING=openai
-LLM_MODEL=kimi-k2.6
+LLM_MODEL=kimi-k3
 LLM_BINDING_HOST=https://api.moonshot.ai/v1
 LLM_BINDING_API_KEY=<your-moonshot-api-key>
 
@@ -88,7 +88,7 @@ EMBEDDING_DIM=4096
 EMBEDDING_BINDING_API_KEY=<your-fireworks-api-key>
 ```
 
-**Option B — Cerebras GPT OSS 120B + Fireworks (speed default):**
+**Option B — Cerebras GPT-OSS class + Fireworks (speed default):**
 
 ```bash
 # LLM for entity extraction (during ingestion)
@@ -129,11 +129,13 @@ This is the LLM that reads your documents and pulls out entities and relationshi
 
 | Model | Speed | Quality | Cost | Recommendation |
 |-------|-------|---------|------|----------------|
-| **Kimi K2.6** | Fast | Excellent | Cheap | Best quality/cost default for entity extraction via Moonshot's OpenAI-compatible API |
-| **Cerebras GPT OSS 120B** | Blazing fast | Very good | Very cheap | Fastest current Cerebras production default; use when bulk ingestion speed matters most |
-| Gemini 3.1 Flash | Fast | Good | Cheap | Solid fallback with huge context |
+| **Kimi K3** | Fast | Excellent | Cheap | Current quality/cost default for entity extraction via Moonshot's OpenAI-compatible API |
+| **Cerebras GPT-OSS class (e.g. 120B)** | Blazing fast | Very good | Very cheap | Fastest production option; use when bulk ingestion speed matters most |
+| Gemini 3.7 Flash | Fast | Good | Cheap | Solid fallback with huge context |
 | Claude Sonnet 5 | Medium | Excellent | Mid/high | Overkill for ingestion but useful for very messy documents |
 | **Ollama local** | Depends on GPU | Unpredictable | Free | Viable for private/local ingestion; validate graph quality before trusting it |
+
+> **Model IDs rotate fast — treat this table as guidance, not a contract.** Whatever current model your provider exposes in the same class works fine. Check your provider's live model list (e.g. `hermes model` / the OpenRouter catalog) before pinning one in `.env`.
 
 > **Embedding quality matters.** If you have a GPU with 8GB+ VRAM, run `nomic-embed-text` locally via Ollama for free. If you want the best quality, use Fireworks' Qwen3-Embedding-8B (4096 dimensions) — the search accuracy difference is dramatic.
 
@@ -442,7 +444,7 @@ cd ~/.hermes/lightrag/LightRAG && lightrag-server --port 9623
 ### Slow ingestion
 
 Entity extraction is LLM-bound. Speed it up:
-- Use a faster model for ingestion (Cerebras GPT OSS 120B for speed, Kimi K2.6 for quality, Gemini 3.1 Flash as a cheap fallback)
+- Use a faster model for ingestion (Cerebras-class models for speed, Kimi K3 for quality, a current Gemini Flash as a cheap fallback)
 - Process documents in parallel batches
 - Use a local model if you have GPU capacity
 
@@ -464,7 +466,7 @@ rm -rf ~/.hermes/lightrag/LightRAG/rag_storage/*
 
 ---
 
-## Scaling LightRAG: The July 2026 Playbook
+## Scaling LightRAG: The 2026 Playbook
 
 LightRAG moved fast this year. If your graph has outgrown the basic setup above, these are the upgrades that matter (in rough order of payoff):
 

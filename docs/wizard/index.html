@@ -57,7 +57,7 @@
   <p class="lede">
     Answer 8 questions → get a production-ready <code>config.yaml</code> you can drop at <code>~/.hermes/config.yaml</code>.
     Runs entirely in your browser; nothing is uploaded.
-    Based on the <a href="../../README.md">Hermes Optimization Guide</a>; schema verified against Part 19 (v0.18).
+    Based on the <a href="../../README.md">Hermes Optimization Guide</a>; schema verified against v0.20.4.
   </p>
 
   <form id="wizard" class="card" onsubmit="return false;">
@@ -75,15 +75,16 @@
       <legend>2. Primary model</legend>
       <p class="hint">Drives the tool-calling loop. Switch at runtime with <code>/model</code>.</p>
       <select name="default_model">
-        <option value="anthropic/claude-sonnet-5">Anthropic Claude Sonnet 5 (balanced default)</option>
-        <option value="anthropic/claude-opus-4.7">Anthropic Claude Opus 4.7 (max capability)</option>
-        <option value="google/gemini-3.1-flash">Google Gemini 3.1 Flash (cheap + fast + huge context)</option>
-        <option value="google/gemini-3.1-pro">Google Gemini 3.1 Pro (1M context + reasoning/media)</option>
-        <option value="openai/gpt-5.5">OpenAI GPT-5.5 (deep reasoning)</option>
-        <option value="xai/grok-4.3">xAI Grok 4.3 (1M context + live X search)</option>
-        <option value="moonshot/kimi-k2.6">Moonshot Kimi K2.6 (cheap + strong coding)</option>
-        <option value="zai/glm-5">z.ai GLM-5 (very cheap)</option>
-      </select>
+              <option value="anthropic/claude-sonnet-5">Anthropic Claude Sonnet 5 (balanced default)</option>
+              <option value="anthropic/claude-opus-4.8">Anthropic Claude Opus 4.8 (max capability)</option>
+              <option value="google/gemini-3.7-flash">Google Gemini 3.7 Flash (cheap + fast + huge context)</option>
+              <option value="google/gemini-3.1-pro-preview">Google Gemini 3.1 Pro (1M context + reasoning/media, preview)</option>
+              <option value="openai/gpt-5.5">OpenAI GPT-5.5 (deep reasoning, via OpenRouter)</option>
+              <option value="x-ai/grok-4.6">xAI Grok 4.6 (1M context + live X search)</option>
+              <option value="moonshotai/kimi-k3">Moonshot Kimi K3 (cheap + strong coding)</option>
+              <option value="z-ai/glm-5.2">z.ai GLM-5.2 (very cheap)</option>
+              <option value="deepseek/deepseek-v4-flash">DeepSeek V4 Flash (cheap workhorse)</option>
+            </select>
     </fieldset>
 
     <fieldset class="grid2">
@@ -133,7 +134,7 @@
         <label><input type="radio" name="obs" value="helicone"> Helicone (proxy base_url)</label>
       </div>
       <div>
-        <legend>8. Cron (written as a cron.yaml stub)</legend>
+        <legend>8. Cron (emit as hermes cron create commands)</legend>
         <label><input type="checkbox" name="cron_backup" checked> Nightly backup</label>
         <label><input type="checkbox" name="cron_deps" checked> Weekly dep audit</label>
         <label><input type="checkbox" name="cron_cost" checked> Weekly cost report</label>
@@ -170,7 +171,7 @@
 /* Simple config generator — emits valid YAML from the form state.
    No frameworks, no build step. Designed to be serve-able from GitHub Pages
    (or directly from `file://`). Output shape matches templates/config/*.yaml,
-   which are verified against the real Hermes schema (Part 19, v0.18). */
+   which are verified against the real Hermes schema (v0.20.4). */
 
 function val(name) {
   const el = document.querySelector(`[name="${name}"]:checked`);
@@ -217,7 +218,7 @@ const PERSONA_PRESETS = {
     crons:    { backup: true, deps: true, cost: true, mcp: true },
   },
   'cost-optimized': {
-    default_model: 'google/gemini-3.1-flash',
+      default_model: 'google/gemini-3.7-flash',
     memory: 'native',
     gateways: { cli: true, telegram: true, discord: false, slack: false, email: false },
     mcps:     { github: true, postgres: false, cloudflare: false, linear: false, filesystem: true, mem0: false },
@@ -263,22 +264,29 @@ function applyPersona(persona) {
   setStatus(`Loaded "${persona}" preset — tweak any field, then Generate.`);
 }
 
-const PROVIDER_KEYS = {
-  anthropic: 'ANTHROPIC_API_KEY',
-  google:    'GOOGLE_API_KEY',
-  openai:    'OPENAI_API_KEY',
-  moonshot:  'MOONSHOT_API_KEY',
-  zai:       'ZAI_API_KEY',
-  cerebras:  'CEREBRAS_API_KEY',
-  xai:       'XAI_API_KEY',
+/* Model metadata: display id (OpenRouter-style) -> { provider, model, env }
+   as written into config.yaml (model.provider / model.default) and its
+   ~/.hermes/.env key. Model ids verified against the v0.20.4 catalog. */
+const MODEL_META = {
+  'anthropic/claude-sonnet-5':       { provider: 'anthropic',  model: 'claude-sonnet-5',       env: 'ANTHROPIC_API_KEY' },
+  'anthropic/claude-opus-4.8':       { provider: 'anthropic',  model: 'claude-opus-4.8',       env: 'ANTHROPIC_API_KEY' },
+  'google/gemini-3.7-flash':         { provider: 'gemini',     model: 'gemini-3.7-flash',      env: 'GOOGLE_API_KEY' },
+  'google/gemini-3.1-pro-preview':   { provider: 'gemini',     model: 'gemini-3.1-pro-preview', env: 'GOOGLE_API_KEY' },
+  'openai/gpt-5.5':                  { provider: 'openrouter', model: 'openai/gpt-5.5',        env: 'OPENROUTER_API_KEY' },
+  'x-ai/grok-4.6':                   { provider: 'xai',        model: 'grok-4.6',              env: 'XAI_API_KEY' },
+  'moonshotai/kimi-k3':              { provider: 'kimi-coding', model: 'kimi-k3',             env: 'KIMI_API_KEY' },
+  'z-ai/glm-5.2':                    { provider: 'zai',        model: 'glm-5.2',               env: 'GLM_API_KEY' },
+  'deepseek/deepseek-v4-flash':      { provider: 'deepseek',   model: 'deepseek-v4-flash',     env: 'DEEPSEEK_API_KEY' },
 };
 
 function generate() {
   const persona = val('persona');
   const modelFull = select('default_model');
-  const [provider, ...modelParts] = modelFull.split('/');
-  const model = modelParts.join('/');
-  const memory = val('memory');
+  const meta = MODEL_META[modelFull] || { provider: 'anthropic', model: modelFull, env: 'ANTHROPIC_API_KEY' };
+    const provider = meta.provider;
+    const model = meta.model;
+    const envKey = meta.env;
+    const memory = val('memory');
   const approval = val('approval');
   const obs = val('obs');
 
@@ -308,62 +316,44 @@ function generate() {
   const lines = [];
   lines.push(`# Generated ${new Date().toISOString()} by the Hermes Config Wizard`);
   lines.push(`# https://onlyterp.github.io/hermes-optimization-guide/docs/wizard/`);
-  lines.push(`# Persona: ${persona} — schema verified against Part 19 (v0.18)`);
+  lines.push(`# Persona: ${persona} — schema verified against v0.20.4`);
   lines.push(`# Pair with ~/.hermes/.env — env vars referenced as $\{VAR\}.`);
   lines.push(``);
 
-  // ----- profiles (security-hardened) — mirrors templates/config/security-hardened.yaml
-  if (hardened) {
-    lines.push(`# Default profile: quarantine. Untrusted-facing surfaces get the`);
-    lines.push(`# locked-down posture; the trusted profile is opt-in (admin bot / CLI).`);
-    lines.push(`profile: quarantine`);
-    lines.push(``);
-    lines.push(`profiles:`);
-    lines.push(`  quarantine:`);
-    lines.push(`    # Untrusted-input-facing: cheap model, no MCP servers, approval on everything.`);
-    lines.push(`    model: gemini-3.1-flash`);
-    lines.push(`    provider: google`);
-    lines.push(`    mcp_servers: []`);
-    lines.push(`    approvals:`);
-    lines.push(`      mode: manual`);
-    lines.push(`      timeout: 60`);
-    lines.push(`      cron_mode: deny`);
-    lines.push(`  trusted:`);
-    lines.push(`    model: ${model}`);
-    lines.push(`    provider: ${provider}`);
-    lines.push(``);
-  }
-
-  // ----- primary model
-  lines.push(`# Primary model — drives the tool-calling loop.`);
-  lines.push(`model: ${model}`);
-  lines.push(`provider: ${provider}`);
-  lines.push(``);
-
-  // ----- providers
-  const providersToEmit = new Set([provider]);
-  if (hardened) providersToEmit.add('google');           // quarantine profile model
-  if (persona === 'cost-optimized') { providersToEmit.add('cerebras'); providersToEmit.add('google'); }
-  lines.push(`providers:`);
-  [...providersToEmit].forEach(p => {
-    const envVar = PROVIDER_KEYS[p] || 'API_KEY';
-    lines.push(`  ${p}:`);
-    lines.push(`    api_key: "$\{${envVar}\}"`);
-    if (p === 'cerebras') lines.push(`    base_url: https://api.cerebras.ai/v1`);
-    if (obs === 'helicone' && p === 'anthropic') {
-      lines.push(`    base_url: https://anthropic.helicone.ai`);
-      lines.push(`    headers:`);
-      lines.push(`      Helicone-Auth: Bearer $\{HELICONE_API_KEY\}`);
+  // ----- hardened split (security-hardened) — the PROFILE approach
+    if (hardened) {
+      lines.push(`# Quarantine vs. trusted is done with PROFILES (separate Hermes`);
+      lines.push(`# home dirs), not a profiles:/telegram.bots config block — those were`);
+      lines.push(`# removed upstream. One bot token per profile, one gateway per profile:`);
+      lines.push(`#   hermes profile create quarantine`);
+      lines.push(`#   hermes -p quarantine config edit     # paste this config`);
+      lines.push(`#   hermes -p quarantine gateway run     # its own TELEGRAM_BOT_TOKEN in its .env`);
+      lines.push(`# Run untrusted-facing bots in the quarantine profile (no MCP,`);
+      lines.push(`# approvals manual); drive privileged work from the trusted profile.`);
+      lines.push(``);
     }
-    if (obs === 'helicone' && p === 'openai') {
-      lines.push(`    base_url: https://oai.helicone.ai/v1`);
-      lines.push(`    headers:`);
-      lines.push(`      Helicone-Auth: Bearer $\{HELICONE_API_KEY\}`);
-    }
-  });
-  lines.push(``);
 
-  if (providersToEmit.has('anthropic')) {
+    // ----- primary model — v0.20 mapping (model.provider + model.default)
+    lines.push(`# Primary model — drives the tool-calling loop.`);
+    lines.push(`model:`);
+    lines.push(`  provider: ${provider}`);
+    lines.push(`  default: ${model}`);
+    lines.push(``);
+
+    // ----- keys — built-in provider keys live in ~/.hermes/.env; the
+    //      providers: dict is ONLY for custom OpenAI-compatible endpoints.
+    lines.push(`# Keys live in ~/.hermes/.env: ${envKey}=...`);
+    if (persona === 'cost-optimized') {
+      lines.push(`#   plus KIMI_API_KEY / GLM_API_KEY for the coder/glm aliases.`);
+    }
+    lines.push(`# Generic custom endpoint example (uncomment + adapt):`);
+    lines.push(`# providers:`);
+    lines.push(`#   my-proxy:`);
+    lines.push(`#     base_url: https://llm.internal.example.com/v1`);
+    lines.push(`#     key_env: MY_PROXY_API_KEY`);
+    lines.push(``);
+
+  if (provider === 'anthropic') {
     lines.push(`# Anthropic prompt caching — stable prefixes are auto-marked cacheable.`);
     lines.push(`prompt_caching:`);
     lines.push(`  cache_ttl: "5m"          # "5m" or "1h" — the only two Anthropic tiers`);
@@ -371,18 +361,18 @@ function generate() {
   }
 
   if (persona === 'cost-optimized') {
-    lines.push(`# Side-tasks off the primary — where silent cost bloat lives (Part 20, Rule 1).`);
-    lines.push(`auxiliary_models:`);
-    lines.push(`  compression:`);
-    lines.push(`    provider: cerebras`);
-    lines.push(`    model: qwen-3-32b`);
-    lines.push(`  web_extract:`);
-    lines.push(`    provider: cerebras`);
-    lines.push(`    model: qwen-3-32b`);
-    lines.push(`  vision:`);
-    lines.push(`    provider: google`);
-    lines.push(`    model: gemini-3.1-flash`);
-    lines.push(``);
+      lines.push(`# Side-tasks off the primary — where silent cost bloat lives (Part 20, Rule 1).`);
+      lines.push(`auxiliary:`);
+      lines.push(`  compression:`);
+      lines.push(`    provider: gemini`);
+      lines.push(`    model: gemini-3.7-flash`);
+      lines.push(`  web_extract:`);
+      lines.push(`    provider: gemini`);
+      lines.push(`    model: gemini-3.7-flash`);
+      lines.push(`  vision:`);
+      lines.push(`    provider: gemini`);
+      lines.push(`    model: gemini-3.7-flash`);
+      lines.push(``);
     lines.push(`compression:`);
     lines.push(`  enabled: true`);
     lines.push(`  threshold: 0.35          # compress earlier than the 0.50 default`);
@@ -419,19 +409,14 @@ function generate() {
   }
 
   if (hardened && gateways.telegram) {
-    lines.push(`# Per-bot profile routing — the public bot lands in quarantine;`);
-    lines.push(`# only the owner-allowlisted admin bot reaches trusted.`);
-    lines.push(`telegram:`);
-    lines.push(`  bots:`);
-    lines.push(`    admin:`);
-    lines.push(`      token: $\{TELEGRAM_ADMIN_BOT_TOKEN\}`);
-    lines.push(`      profile: trusted`);
-    lines.push(`    public:`);
-    lines.push(`      token: $\{TELEGRAM_PUBLIC_BOT_TOKEN\}`);
-    lines.push(`      profile: quarantine`);
-    lines.push(`      default_skill: telegram-triage`);
-    lines.push(``);
-  }
+      lines.push(`# Public bot vs admin bot: SEPARATE profiles (own .env + bot token`);
+      lines.push(`# each) — the old telegram.bots routing map was removed upstream.`);
+      lines.push(`#   hermes profile create quarantine`);
+      lines.push(`#   hermes -p quarantine gateway run`);
+      lines.push(`# Public-bot token: TELEGRAM_BOT_TOKEN in the QUARANTINE profile's .env;`);
+      lines.push(`# admin-bot token: the trusted/default profile's .env.`);
+      lines.push(``);
+    }
   if (gateways.discord) {
     lines.push(`discord:`);
     lines.push(`  require_mention: true    # only respond when @mentioned in channels`);
@@ -508,13 +493,10 @@ function generate() {
       lines.push(`    enabled: true`);
     }
     if (wantMem0) {
-      lines.push(`  mem0:`);
-      lines.push(`    command: npx`);
-      lines.push(`    args: [-y, "@mem0ai/mcp-server-mem0"]`);
-      lines.push(`    env:`);
-      lines.push(`      MEM0_API_KEY: "$\{MEM0_API_KEY\}"`);
-      lines.push(`    enabled: true`);
-    }
+          lines.push(`  # mem0: TODO(v0.20) — the old npx package name is gone from npm;`);
+          lines.push(`  # install the current mem0 MCP server (see mem0 docs) or use a`);
+          lines.push(`  # curated catalog server via: hermes mcp install <name>`);
+        }
     lines.push(``);
   }
 
@@ -561,24 +543,27 @@ function generate() {
     lines.push(`#   HERMES_LANGFUSE_BASE_URL=https://cloud.langfuse.com`);
     lines.push(``);
   } else if (obs === 'helicone') {
-    lines.push(`# Observability: Helicone rides on the provider base_url + headers`);
-    lines.push(`# emitted above. Set HELICONE_API_KEY in ~/.hermes/.env.`);
-    lines.push(``);
-  }
+      lines.push(`# Observability: Helicone rides on a custom provider entry —`);
+      lines.push(`# providers: <name>: { base_url, extra_headers } pointing at your`);
+      lines.push(`# Helicone endpoint (see user-guide/configuring-models.md), with`);
+      lines.push(`# HELICONE_API_KEY in ~/.hermes/.env.`);
+      lines.push(``);
+    }
 
-  // ----- cron — separate file
-  const cronList = [];
-  if (crons.backup) cronList.push(`#   - name: nightly-backup\n#     schedule: "0 3 * * *"\n#     task: /nightly-backup local 30`);
-  if (crons.deps)   cronList.push(`#   - name: weekly-dep-audit\n#     schedule: "0 9 * * 1"\n#     task: /weekly-dep-audit severity_floor=high`);
-  if (crons.cost)   cronList.push(`#   - name: weekly-cost-report\n#     schedule: "0 9 * * 1"\n#     task: /cost-report window=7d format=markdown`);
-  if (crons.mcp)    cronList.push(`#   - name: weekly-mcp-audit\n#     schedule: "0 10 * * 1"\n#     task: /audit-mcp`);
-  if (cronList.length) {
-    lines.push(`# Scheduled skills go in ~/.hermes/cron.yaml (separate file):`);
-    cronList.forEach(l => l.split('\n').forEach(x => lines.push(x)));
-    lines.push(`# approvals.cron_mode: deny blocks any cron task that trips a dangerous`);
-    lines.push(`# command — keep cron skills read-only (Part 19).`);
-    lines.push(``);
-  }
+  // ----- cron — jobs live in ~/.hermes/cron/jobs.json (hermes cron create)
+    const cronList = [];
+    if (crons.backup) cronList.push(`hermes cron create "0 3 * * *" "Run the nightly-backup skill" --skill nightly-backup --name nightly-backup`);
+    if (crons.deps)   cronList.push(`hermes cron create "0 9 * * 1" "Run the weekly dependency audit" --skill weekly-dep-audit --name weekly-dep-audit`);
+    if (crons.cost)   cronList.push(`hermes cron create "0 9 * * 1" "Run the cost-report skill (window 7d)" --skill cost-report --name weekly-cost-report`);
+    if (crons.mcp)    cronList.push(`hermes cron create "0 10 * * 1" "Audit the MCP servers" --skill audit-mcp --name weekly-mcp-audit`);
+    if (cronList.length) {
+      lines.push(`# Scheduled skills live in ~/.hermes/cron/jobs.json — create them with:`);
+      cronList.forEach(l => lines.push(`#   ${l}`));
+      lines.push(`# Add '--deliver telegram' (or another target) to each command.`);
+      lines.push(`# approvals.cron_mode: deny blocks any cron task that trips a dangerous`);
+      lines.push(`# command — keep cron skills read-only (Part 19).`);
+      lines.push(``);
+    }
 
   const out = lines.join('\n');
   document.getElementById('out').textContent = out;

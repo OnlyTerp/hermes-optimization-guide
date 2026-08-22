@@ -13,13 +13,14 @@ Hermes is the successor to OpenClaw. If you've spent weeks or months building up
 | What | OpenClaw Location | Hermes Destination |
 |------|------------------|-------------------|
 | Personality | `workspace/SOUL.md` | `~/.hermes/SOUL.md` |
-| Instructions | `workspace/AGENTS.md` | Your specified workspace target |
-| Memory | `workspace/MEMORY.md` + `workspace/memory/*.md` | `~/.hermes/memories/MEMORY.md` (merged, deduped) |
+| Instructions | `workspace/AGENTS.md` | Your `--workspace-target` directory (requires the flag) |
+| Memory | `workspace/MEMORY.md` + `workspace/memory/*.md` | `~/.hermes/memories/MEMORY.md` (parsed into entries, merged, deduped) |
 | User profile | `workspace/USER.md` | `~/.hermes/memories/USER.md` |
-| Skills | `workspace/skills/`, `~/.openclaw/skills/` | `~/.hermes/skills/openclaw-imports/` |
+| Skills | `workspace/skills/`, `~/.openclaw/skills/`, `~/.agents/skills/`, `workspace/.agents/skills/` | `~/.hermes/skills/openclaw-imports/` |
 | Model config | `agents.defaults.model` | `config.yaml` |
-| Provider keys | `models.providers.*.apiKey` | `~/.hermes/.env` (migrated by default; excluded with `--preset user-data`) |
-| Custom providers | `models.providers.*` | `config.yaml → custom_providers` |
+| Provider keys | `models.providers.*.apiKey` | `~/.hermes/.env` (only with `--migrate-secrets`) |
+| Custom providers | `models.providers.*` | `config.yaml → custom_providers` (auto-migrates to the canonical `providers:` dict on the next config migration) |
+| MCP servers | `mcp.servers.*` | `config.yaml → mcp_servers` (stdio and HTTP/SSE transports) |
 | Max turns | `agents.defaults.timeoutSeconds` | `agent.max_turns` (timeoutSeconds / 10) |
 
 > **Note:** Session transcripts, cron job definitions, and plugin-specific data do not transfer. Those are OpenClaw-specific and have different formats in Hermes.
@@ -32,14 +33,17 @@ Hermes is the successor to OpenClaw. If you've spent weeks or months building up
 # Preview what would happen (no files changed)
 hermes claw migrate --dry-run
 
-# Run the full migration (API keys migrate by default)
-hermes claw migrate
+# Full migration of all compatible settings (API keys NOT included by default)
+hermes claw migrate --preset full
 
-# Exclude API keys (safer for shared machines)
+# Same, but also bring over allowlisted API keys
+hermes claw migrate --preset full --migrate-secrets
+
+# User data only (excludes infrastructure config; still no secrets)
 hermes claw migrate --preset user-data
 ```
 
-The migration reads from `~/.openclaw/` by default. If you have legacy `~/.clawdbot/` or `~/.moldbot/` directories, those are detected automatically.
+The migration reads from `~/.openclaw/` by default. Legacy `~/.clawdbot/` / `~/.moltbot/` directories — and legacy config filenames (`clawdbot.json`, `moltbot.json`) — are detected automatically.
 
 ---
 
@@ -48,11 +52,13 @@ The migration reads from `~/.openclaw/` by default. If you have legacy `~/.clawd
 | Option | What It Does | Default |
 |--------|-------------|---------|
 | `--dry-run` | Preview without writing anything | off |
-| `--preset full` | Everything, including API keys and secrets | yes (default preset) |
-| `--preset user-data` | Everything except API keys | off |
-| `--overwrite` | Overwrite existing Hermes files on conflicts | skip |
+| `--preset full` | All compatible settings — **no secrets** | yes (default preset) |
+| `--preset user-data` | Excludes infrastructure config — still no secrets | off |
+| `--migrate-secrets` | Copy allowlisted API keys. **Required even under `--preset full`** — no preset imports secrets silently | off |
+| `--overwrite` | Overwrite existing Hermes files on conflicts | refuse to apply when the plan has conflicts |
+| `--no-backup` | Skip the pre-migration zip snapshot of `~/.hermes/` (a restore point is written to `~/.hermes/backups/pre-migration-*.zip` by default, restorable with `hermes import`) | off |
 | `--source <path>` | Custom OpenClaw directory | `~/.openclaw/` |
-| `--workspace-target <path>` | Where to place `AGENTS.md` | current directory |
+| `--workspace-target <path>` | Where to place `AGENTS.md` | none — pass the flag to migrate workspace instructions |
 | `--skill-conflict <mode>` | `skip`, `overwrite`, or `rename` | `skip` |
 | `--yes` | Skip confirmation prompt | off |
 
@@ -81,7 +87,7 @@ The tool will:
 2. Map config keys to Hermes equivalents
 3. Merge memory files (deduplicating entries)
 4. Copy skills to `~/.hermes/skills/openclaw-imports/`
-5. Migrate API keys (default; skipped with `--preset user-data`)
+5. Migrate allowlisted API keys **only if you passed `--migrate-secrets`** — no preset imports secrets by default
 6. Report what was done
 
 ### 3. Handle Conflicts
@@ -111,7 +117,12 @@ ls ~/.hermes/skills/openclaw-imports/
 
 # Test the agent
 hermes chat -q "What do you remember about me?"
+
+# Verify provider auth / overall health
+hermes status
 ```
+
+> Imported skills and memory take effect in **new sessions**, not the one you're in — open a fresh chat to see them. Once everything checks out, run `hermes claw cleanup` to rename the leftover OpenClaw directories to `.pre-migration/` so they aren't re-detected next time.
 
 ---
 
@@ -120,9 +131,11 @@ hermes chat -q "What do you remember about me?"
 | Item | Why | What to Do |
 |------|-----|-----------|
 | Session transcripts | Different format | Archive manually if needed |
-| Cron job definitions | Different scheduler | Recreate with `hermes cron` |
-| Plugin configs | Plugin system changed | Reconfigure in Hermes |
-| OpenClaw-specific features | May not exist yet | Check Hermes docs for equivalents |
+| Cron job definitions | Not imported — archived for review | Recreate with `hermes cron create` |
+| Plugins, hooks, webhooks | Not imported — archived for review | Use the plugins guide / `hermes webhook` |
+| OpenClaw-specific files (`IDENTITY.md`, `TOOLS.md`, `HEARTBEAT.md`, `BOOTSTRAP.md`, memory backend, …) | No direct Hermes equivalent | Archived under `~/.hermes/migration/openclaw/<timestamp>/archive/`; merge into `SOUL.md` / context files / skills manually |
+
+Everything is archived to `~/.hermes/migration/openclaw/<timestamp>/archive/` for manual review — nothing is silently dropped.
 
 ---
 
@@ -135,8 +148,9 @@ For reference, here's how OpenClaw config maps to Hermes:
 | `agents.defaults.model` | `model` | String or `{primary, fallbacks}` |
 | `agents.defaults.timeoutSeconds` | `agent.max_turns` | Divided by 10, capped at 200 |
 | `agents.defaults.verboseDefault` | `agent.verbose` | off / on / full |
-| `agents.defaults.thinkingDefault` | `reasoning.mode` | off / low / high |
-| `models.providers.*.baseUrl` | `custom_providers.*.base_url` | Direct mapping |
+| `agents.defaults.thinkingDefault` | `agent.reasoning_effort` | always/high/xhigh → high, auto/medium/adaptive → medium, off/low/none/minimal → low |
+| `agents.defaults.compaction.mode` | `compression.enabled` | "off" → false, anything else → true |
+| `models.providers.*.baseUrl` | `custom_providers.*.base_url` | Direct mapping (auto-migrates to the canonical `providers:` dict on next config migration) |
 | `models.providers.*.apiType` | `custom_providers.*.api_type` | openai → chat_completions, anthropic → anthropic_messages |
 
 ---

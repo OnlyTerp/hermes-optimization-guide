@@ -2,6 +2,20 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-08-22 — Herald refresh (v0.20.4)
+
+### Added
+- **v0.19 + v0.20 "Herald" wave coverage**: streaming voice (barge-in, wake words), A2A v1.0 agent-to-agent (both directions, Linux Foundation protocol), outbound webhooks with payload filters, grounded citations, computer use (background desktop control, `hermes computer-use`), egress / iron-proxy sandbox credentials, external secret managers (Bitwarden / 1Password / command helper), Bot Mode (desktop "Bots" tab, profiles-as-bots, routines), keyless five-vendor web tier and OpenCode Free provider. Additions across Parts 13, 14, 15, 19, 21, 24, 25, 26 and the README.
+- **Windows native promoted to first-class**: PowerShell one-liner install, `%LOCALAPPDATA%\hermes`, removal of "beta" framing in Part 1 and README prerequisites.
+- **Platform count updated**: from 22+/25+ to **35+ messaging adapters** — A2A, BlueBubbles, Buzz (Nostr), DingTalk, Discord, Email, Feishu, Google Chat, iMessage (Photon), IRC, LINE, Matrix, Mattermost, ntfy, Open-WebUI, QQBot, Raft, Relay, Signal, SimpleX, Slack, SMS, Teams, Telegram, Webhooks, WeCom, Weixin, WhatsApp, WhatsApp Business Cloud, Yuanbao, and more.
+
+### Changed
+- Every part re-verified against the **installed v0.20.4 (2026.8.18) docs tree**: CLI commands, config keys, platform surface, and model-landscape recommendations aligned to the live model catalog.
+- README badges re-based: v0.18.2 → **v0.20.4 (v2026.8.18)**, last updated **2026-08-22**, and a full v0.20 "Herald" What's New section (v0.19 also now covered as landed, not "main-line preview").
+- Mid-July "what's coming" framing rewritten — Hermes Cloud, computer use, scale-to-zero, and managed scope are no longer experimental.
+- Artifact pass: config templates, skills, and the bootstrap script checked against current schema; TODO comments mark anything not verifiable.
+- Note: `README-zh.md` / `README-ja.md` stay entry-level summaries; a translation sync remains queued.
+
 ## 2026-07-17 — The Power Secrets modernization (v0.18.2 era)
 
 ### Added

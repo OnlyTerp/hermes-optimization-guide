@@ -25,7 +25,6 @@ Hermes is the orchestrator. It decides what to do, then delegates execution to s
 delegate_task(
     goal="Debug why the API returns 403 on POST requests",
     context="File: src/api/client.py. Error started after adding auth headers. Token is valid.",
-    toolsets=["terminal", "file"]
 )
 
 # Parallel batch
@@ -33,16 +32,13 @@ delegate_task(
     tasks=[
         {
             "goal": "Research LightRAG alternatives for graph RAG",
-            "toolsets": ["web"]
         },
         {
             "goal": "Benchmark current LightRAG search latency",
             "context": "Path: ~/.hermes/skills/research/lightrag/",
-            "toolsets": ["terminal"]
         },
         {
             "goal": "Check if our embedding model has a newer version",
-            "toolsets": ["web"]
         }
     ]
 )
@@ -52,17 +48,18 @@ delegate_task(
 - Subagents have NO memory of your conversation. Pass everything via `context`.
 - Results come back as a summary. Intermediate tool calls never enter your context.
 - Each subagent gets its own terminal session.
+- **No per-call `toolsets` parameter** — children inherit the parent's enabled toolsets (the model cannot grant a child capabilities the parent lacks); configure the parent's toolsets if delegated work needs more.
 - Default max iterations: 50. Lower it for simple tasks (`max_iterations=10`).
 
-## Background Delegation (v0.17) and Fan-Out (v0.18)
+## Background Delegation and Fan-Out
 
-By default `delegate_task` blocks your session until the subagent returns. Add `background=True` and it returns a **handle immediately** — you keep chatting, and the result re-enters the conversation as a new turn when it's done:
+Top-level `delegate_task` calls (single *and* batch) **run in the background automatically** — since v0.19 there is no opt-in: the old `background=True` parameter is deprecated and ignored. Hermes returns a handle immediately, your chat keeps moving, and the result re-enters the conversation as a new turn when the child (or the whole batch) finishes:
 
 ```python
-delegate_task(goal="Deep-dive the competitor's pricing page", background=True)
+delegate_task(goal="Deep-dive the competitor's pricing page")   # background by default
 ```
 
-v0.18 extends this to batches — **background fan-out**. Dispatch parallel subagents and get **one consolidated turn when all of them finish**:
+Batches dispatch in parallel — 3 concurrent by default (`delegation.max_concurrent_children`) — and return **one consolidated turn when all of them finish**:
 
 ```python
 delegate_task(
@@ -71,15 +68,55 @@ delegate_task(
         {"goal": "Audit src/billing for the same pattern"},
         {"goal": "Check upstream issues for known reports"},
     ],
-    background=True,
 )
 ```
 
-The CLI/TUI status bar tracks running background subagents, and the desktop app can open a live **watch-window** on any of them ([Part 24](./part24-desktop-app.md)). Rules of thumb:
+**Live transcripts (v0.19+).** Every dispatch pre-creates an append-only, human-readable log per task under `~/.hermes/cache/delegation/live/<delegation_id>/task-<n>.log`. `tail -f` on it shows the child's turns and tool calls in real time — no need to wait for the summary. The dispatch response hands you the paths (`live_transcripts`), the CLI/TUI status bar tracks running background subagents, the TUI's `/agents` overlay (alias `/tasks`) shows the whole fan-out as a live tree with per-branch cost and kill/pause controls, and the desktop app can open a live watch-window ([Part 24](./part24-desktop-app.md)).
 
-- **Foreground** when the next step depends on the result.
-- **Background** for research, audits, and monitoring legs you'd otherwise wait on.
-- **Kanban** ([Part 23](./part23-tenacity-stack.md)) when the work must survive restarts or involve humans — background subagents die with the process.
+**Steering a running child:** rather than interrupting (which throws away in-flight work), you can redirect — the parent agent calls `delegate_task(action="list")`, then `action="steer"` with `subagent_id` + `message`, or `action="stop"`; from the CLI/TUI `/steer <prompt>` injects a mid-run note that arrives after the next tool call.
+
+Rules of thumb:
+
+- **Wait for the result** when the next step depends on it — the result arrives as a new turn either way, so the session is never blocked.
+- **Fan out** research, audits, and monitoring legs you'd otherwise wait on.
+- **Kanban** ([Part 23](./part23-tenacity-stack.md)) when the work must survive restarts or involve humans — subagents die with their process (a restart marks a running child `unknown`, since Hermes can't prove what side effects it did or didn't have).
+
+## Leaf vs Orchestrator Subagents
+
+Delegation is **flat by default**: a parent (depth 0) spawns children (depth 1), and children cannot delegate further — no runaway recursion. For multi-stage pipelines (research → synthesis), spawn **orchestrator** children that can delegate their own workers:
+
+```python
+delegate_task(
+    goal="Survey three code review approaches and recommend one",
+    role="orchestrator",       # allows this child to spawn its own workers
+    context="...",
+)
+```
+
+- `role="leaf"` (default) — child cannot delegate; `delegate_task` is blocked for it.
+- `role="orchestrator"` — child keeps the delegation toolset, gated by `delegation.max_spawn_depth` (default **1 = flat**, so orchestrator children are a no-op until you raise it). Raise to 2 to allow them to spawn leaf grandchildren; 3+ for deeper trees — no ceiling, cost is the limit.
+- `delegation.orchestrator_enabled: false` — global kill switch forcing every child to `leaf`.
+
+**Cost warning:** `max_spawn_depth: 3` with 3 concurrent children per level can reach 3×3×3 = **27 concurrent leaves** — every level multiplies spend. Raise depth intentionally.
+
+Leaf subagents cannot call `delegate_task`, `clarify`, `memory` (no writes to shared persistent memory), `send_message`, or `cronjob`. Both roles keep `execute_code`, so children can batch mechanical steps programmatically.
+
+## Delegation Tuning (config.yaml)
+
+```yaml
+delegation:
+  max_concurrent_children: 3      # parallel children per batch (default 3, no hard ceiling)
+  max_iterations: 50              # per-child tool-call turns cap (default 50)
+  max_spawn_depth: 1              # tree depth (default 1 = flat); 2+ enables orchestrator trees
+  orchestrator_enabled: true      # false = force every child to leaf
+  child_timeout_seconds: 0        # 0 (default) = no wall-clock cap; a progress-based
+                                  # stall monitor catches wedged children instead
+  worktree_isolation: false       # true = each child gets its own git worktree + branch
+  model: ""                       # optional cheaper model for all children
+  provider: "openrouter"          # optional separate provider for subagents
+```
+
+Notes: batches larger than `max_concurrent_children` return a tool error rather than being truncated. There is **no default wall-clock timeout** — children fail only from API/tool/iteration errors; if you opt into `child_timeout_seconds`, a fired cap returns structured timeout metadata. With `worktree_isolation: true`, each child starts in `<repo>/.worktrees/subagent-<id>` on its own branch and its result reports commits/dirty state, which you merge or review per branch. **Cost strategy:** children are where most tokens go, so keep the parent on a frontier model and pin `delegation.model` to an inexpensive worker model — the pin is global (per-task model overrides go via Kanban, [Part 23](./part23-tenacity-stack.md)).
 
 ## The Seven-Rung Agent Ladder
 
@@ -130,24 +167,11 @@ CEO (you + Hermes main agent)
 
 ## ACP Subagents (Claude Code, Codex)
 
-For coding tasks, delegate to dedicated coding agents via ACP:
+For coding tasks, delegate to dedicated agent CLIs over ACP (Agent Client Protocol). In current versions the model no longer passes `acp_command` / `acp_args` per call — those fields are hidden from the tool schema. ACP transport is configured instead:
 
-```python
-# Claude Code
-delegate_task(
-    goal="Implement the user settings page with React",
-    context="Repo at ~/projects/my-app. Use existing component library in src/components/",
-    acp_command="claude",
-    acp_args=["--acp", "--stdio", "--model", "claude-sonnet-5"]
-)
-
-# Codex
-delegate_task(
-    goal="Refactor database layer to use connection pooling",
-    context="File: src/db/connection.py. Currently opens new connection per query.",
-    acp_command="codex"
-)
-```
+- **Inherited:** when the parent agent itself runs over ACP (e.g. Copilot-mode sessions), children automatically inherit the parent's ACP command and args.
+- **Pinned:** set the transport in the delegation config (`delegation.command` / `delegation.args` in `config.yaml`) to route children through a specific external CLI — the command is validated to exist on PATH before the spawn.
+- **`hermes acp`** runs Hermes itself as an ACP server for editor integration — the other direction.
 
 **When to use ACP vs regular delegate_task:**
 - ACP agents (Claude Code, Codex) are better at coding — tool calling, file editing, running tests
@@ -162,7 +186,7 @@ Anything with a CLI or ACP endpoint can be a worker — see [Part 18: Delegating
 
 | Scenario | Approach |
 |----------|----------|
-| 3 independent research tasks | Batch `delegate_task` with `tasks` array (`background=True` if you want to keep working) |
+| 3 independent research tasks | Batch `delegate_task` with a `tasks` array (background by default — keep working) |
 | 1 complex coding task | ACP subagent (Claude Code or Codex) |
 | Single API call | Just call the tool, don't delegate |
 | Task needs user input | Do it yourself, can't delegate interactive work |
@@ -175,6 +199,7 @@ Anything with a CLI or ACP endpoint can be a worker — see [Part 18: Delegating
 | Not passing enough context to subagent | Subagents know nothing — pass file paths, error messages, constraints |
 | Delegating sequential tasks in parallel | If task B depends on task A's output, run them sequentially |
 | Setting max_iterations too high | Simple tasks don't need 50 iterations — use 10-15 |
+| Passing `background=True` | Deprecated/ignored — top-level delegations run in the background automatically |
 | Forgetting subagents can't use clarify | If a task might need clarification, do it yourself |
 
 ---

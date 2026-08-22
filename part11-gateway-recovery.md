@@ -6,25 +6,39 @@
 
 ## What the Gateway Does
 
-The gateway (`hermes gateway`) is the always-on process that:
-- Receives messages from Telegram, Discord, Slack, CLI
+The gateway (`hermes gateway run` in the foreground, or `hermes gateway start` for the installed service) is the always-on process that:
+- Receives messages from **35+ messaging platforms** — Telegram, Discord, Slack, WhatsApp (personal + Business Cloud), Signal, SMS, email, Matrix, Mattermost, DingTalk, Feishu/Lark, WeCom, QQ, BlueBubbles/Photon (iMessage), LINE, ntfy, IRC, SimpleX, webhooks, and more (see [Part 15](./part15-new-platforms.md))
 - Routes them to the agent
 - Manages sessions and context
 - Runs cron jobs
+
+One gateway process serves every platform you configure. With multiple profiles, each profile runs its own gateway process — `hermes gateway list` shows every profile's gateway at once, and `hermes gateway status --system` inspects a boot-time system service explicitly.
+
+Managed hosting is no longer experimental: hosted gateways can run **scale-to-zero** (an idle gateway sleeps and a managed cron provider arms one-shot jobs at real fire times), and an administrator can pin immutable config/secrets per machine via **managed scope** (`/etc/hermes`) that users cannot override. Both are normal, documented deployments now.
 
 If the gateway dies, your agent is unreachable.
 
 ## Detecting a Crash
 
 ```bash
-# Check if gateway is running
-hermes status
+# Service status (systemd user unit / launchd agent)
+hermes gateway status
+
+# Boot-time system service (Linux only)
+hermes gateway status --system
+
+# One overview of every profile's gateway (multi-profile setups)
+hermes gateway list
 
 # Or directly
 pgrep -af "[h]ermes gateway"
 
+# Full health summary — platform states, memory, disk, update status
+hermes status --all
+
 # Check logs
 tail -50 ~/.hermes/logs/gateway.log
+journalctl --user -u hermes-gateway -f    # systemd user service
 ```
 
 ## Common Crash Causes
@@ -54,7 +68,7 @@ free -h
 # Move Ollama to a separate machine or reduce model size
 
 # Limit gateway memory (templates/systemd/hermes.service already sets MemoryMax=4G)
-sudo systemctl edit hermes
+sudo systemctl edit hermes-gateway
 # Add under [Service]: MemoryMax=4G
 ```
 
@@ -117,7 +131,9 @@ mv ~/.hermes/sessions ~/.hermes/sessions.bak
 mkdir ~/.hermes/sessions
 
 # Restart
-hermes gateway
+hermes gateway run              # foreground (bare `hermes gateway` also works)
+# or, if installed as a service:
+hermes gateway restart
 
 # If it works, the issue was a corrupt session
 # Move sessions back one by one to find the bad one
@@ -128,18 +144,37 @@ hermes gateway
 Don't hand-roll a unit file. This repo ships a hardened one — [`templates/systemd/hermes.service`](./templates/systemd/hermes.service) — with a dedicated `hermes` user, `ProtectSystem=strict`, syscall filtering, and `MemoryMax=4G` already set:
 
 ```bash
-sudo cp templates/systemd/hermes.service /etc/systemd/system/
+# This repo's template installs as the current standard unit name:
+sudo cp templates/systemd/hermes.service /etc/systemd/system/hermes-gateway.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now hermes
+sudo systemctl enable --now hermes-gateway
 
 # Check status
-sudo systemctl status hermes
+sudo systemctl status hermes-gateway
 
-# View logs
-journalctl -u hermes -f
+# View logs (user service)
+journalctl --user -u hermes-gateway -f
+# or for a boot-time system service:
+sudo journalctl -u hermes-gateway -f
 ```
 
-Or let Hermes do it for you — `hermes gateway install` (see [Part 4](./part4-telegram-setup.md)) generates and enables a user-level unit without any manual file copying.
+Or let Hermes do it for you — `hermes gateway install` (see [Part 4](./part4-telegram-setup.md)) generates and enables a user-level unit without any manual file copying. `hermes gateway setup` walks every messaging platform interactively, and `hermes gateway start/stop/restart/status` drive the installed service.
+
+### Event-loop watchdog (catches "running but frozen")
+
+`Restart=on-failure` handles crashes, but not the uglier failure: the process alive while Python's asyncio event loop silently stops scheduling. Opt a systemd-managed gateway into a hardware-style watchdog:
+
+```yaml
+# ~/.hermes/config.yaml
+gateway:
+  systemd_watchdog_seconds: 120
+```
+
+Then regenerate the unit (`hermes gateway install --force`). The generated service uses `Type=notify` + `WatchdogSec`; Hermes heartbeats systemd only while its event loop is making timely progress, and systemd restarts the process the moment heartbeats stop. Ordinary platform network disconnects do **not** count as event-loop failures. Linux/systemd only.
+
+> **Don't "help" the unit restart faster.** A custom drop-in like `ExecStopPost=/bin/kill -9 $MAINPID` fires on *every* stop — including clean restarts — SIGKILLs the freshly spawned instance, and `Restart=always` respawns it: instant restart loop. If you added one, remove it (`systemctl --user edit hermes-gateway`, or `sudo systemctl edit hermes-gateway` for a system unit) and `daemon-reload`.
+
+Multi-profile hosts: `hermes gateway start --all` / `restart --all` / `stop --all` act on every profile's gateway at once (handy after `hermes update`), and legacy units left over from pre-rename installs are removed with `hermes gateway migrate-legacy --dry-run` first.
 
 > **Headless VPS gotcha — the gateway that never survives a reboot.** A *user-level* systemd unit is killed when your login session ends, and on a headless box there may never be a login session after reboot. Enable lingering (or install system-wide):
 >
@@ -152,6 +187,16 @@ Or let Hermes do it for you — `hermes gateway install` (see [Part 4](./part4-t
 > If your gateway is mysteriously down every time you SSH in after a reboot, this is why.
 
 Either way, `Restart=on-failure` + `RestartSec=5` means a crashed gateway is back within seconds.
+
+## Built-In Crash Recovery (v0.19/v0.20)
+
+Recent Hermes versions already handle most 3am crashes without you:
+
+- **Delivery ledger** — final responses are recorded in a durable ledger (`state.db`) around each platform send. If the gateway dies between producing a response and the platform confirming receipt, the next boot **redelivers** it instead of losing it or re-running the whole turn. Semantics are honest at-least-once: a never-started send is redelivered as-is; a mid-send reply comes back with a visible "♻️ Recovered reply — … may be a duplicate" prefix. Redelivery is bounded (3 attempts, 24-hour freshness) and delivered rows are pruned after 7 days. Disable only if you prefer the old drop-in-flight behavior: `gateway.delivery_ledger: false`.
+- **Auto-resume of interrupted sessions** — if the gateway shuts down mid-generation or mid-tool-call, affected sessions are flagged `restart_interrupted` and auto-resumed on next boot; you get a one-line heads-up in the chat and the session picks up from the last committed turn.
+- **Per-platform circuit breakers** — every adapter is wrapped in a breaker. Repeated retryable failures (network blips, rate-limit replies, 5xx, websocket drops) auto-pause the adapter and notify your home channel on another live platform. Check `~/.hermes/logs/gateway.log` for the trip reason and `/platform list` for state; once upstream is healthy, resume with `/platform resume <name>`. Break this block intentionally: `Restart=on-failure` restarts the *process*; the breaker pauses just *one platform* so the rest keep working.
+
+`hermes doctor` and `hermes status --all` are the first stops when something still feels off: they check config, platform connections, memory/disk pressure, and update state in one pass.
 
 ## Auto-Recovery (Cron Fallback)
 

@@ -1,57 +1,73 @@
 # ------------------------------------------------------------
-# Hermes cron wiring — production defaults
+# Hermes cron wiring — production defaults (v0.20.4 reference)
 # ------------------------------------------------------------
-# Paste into ~/.hermes/cron.yaml (or include via `cron_files:` in config.yaml).
-# All tasks below assume the matching skill is installed from skills/.
+# Since v0.19/v0.20, scheduled jobs are stored in ~/.hermes/cron/jobs.json
+# and managed ONLY through `hermes cron create/edit/pause/resume/remove`,
+# the `cronjob` agent tool, or `/cron` in chat. The old YAML-list format
+# (name/schedule/task/notify in ~/.hermes/cron.yaml) was removed — this
+# file is a commented reference of the equivalent `hermes cron create`
+# commands for every skill shipped in skills/. Nothing here is loaded by
+# Hermes; copy the commands you want and run them as your user.
+#
+# All skills referenced below are in skills/ — install them into the
+# profile first (see skills/README.md).
+#
+# Delivery targets (--deliver): telegram, discord, slack, whatsapp,
+# signal, matrix, email, ... or "telegram:chat_id" / "local" / "origin".
+# No-agent jobs: `--no-agent --script <name.sh>` runs a script under
+# ~/.hermes/scripts/ on schedule and delivers its stdout verbatim.
 # ------------------------------------------------------------
 
-- name: nightly-backup
-  schedule: "0 3 * * *"            # Every day 3am local
-  task: /nightly-backup s3://backups/hermes/ 30   # same bucket as templates/config/production.yaml
-  notify: telegram_private
+# Nightly backup (s3 target, 30-day retention inside the skill):
+#   hermes cron create "0 3 * * *" \
+#     "Run the nightly-backup skill: remote=s3://backups/hermes/ retain_days=30" \
+#     --skill nightly-backup --name nightly-backup --deliver telegram
 
-- name: weekly-mcp-audit
-  schedule: "0 9 * * 1"            # Mondays 9am
-  task: /audit-mcp
-  notify: telegram_private
+# Weekly MCP audit:
+#   hermes cron create "0 9 * * 1" \
+#     "Audit every configured MCP server (tool filtering, credential scope)" \
+#     --skill audit-mcp --name weekly-mcp-audit --deliver telegram
 
-- name: weekly-bypass-audit
-  schedule: "0 10 * * 1"
-  task: /audit-approval-bypass
-  notify: telegram_private
+# Weekly approval-bypass audit:
+#   hermes cron create "0 10 * * 1" \
+#     "Audit every approval-bypass surface (approvals mode, allowlist, cron)" \
+#     --skill audit-approval-bypass --name weekly-bypass-audit --deliver telegram
 
-- name: weekly-cost-report
-  schedule: "0 11 * * 1"
-  task: /cost-report window=7d format=markdown
-  notify: telegram_private
+# Weekly cost report:
+#   hermes cron create "0 11 * * 1" \
+#     "Run the cost-report skill (window 7d, markdown)" \
+#     --skill cost-report --name weekly-cost-report --deliver telegram
 
-- name: weekly-dep-audit
-  schedule: "0 12 * * 1"
-  task: /weekly-dep-audit severity_floor=high
-  notify: telegram_private
+# Weekly dependency audit:
+#   hermes cron create "0 12 * * 1" \
+#     "Audit dependencies across configured repos, severity floor high" \
+#     --skill weekly-dep-audit --name weekly-dep-audit --deliver telegram
 
-- name: monthly-secret-rotation
-  schedule: "0 4 1 * *"            # 1st of month, 4am
-  task: /rotate-secrets webhook_hmac_*
-  notify: telegram_private
+# Monthly secret rotation — HMAC/webhook kinds only (see the skill's
+# headless note; "all" must run interactively from an admin DM/CLI):
+#   hermes cron create "0 4 1 * *" \
+#     "Rotate the matching webhook HMAC secrets (webhook_hmac_*)" \
+#     --skill rotate-secrets --name monthly-secret-rotation --deliver telegram
 
-# Injection sweep — commented out: there is no /audit-injection-attempts skill
-# in skills/ (yet). If you write one, wire it here; until then the weekly
-# /audit-mcp + /audit-approval-bypass runs above are your injection coverage.
-# - name: daily-injection-sweep
-#   schedule: "0 2 * * *"
-#   task: /audit-injection-attempts since=24h
-#   notify: telegram_private
+# Disk watchdog — no-agent script job, zero LLM cost, stdout delivered.
+# Put this in ~/.hermes/scripts/disk-watchdog.sh first (chmod +x):
+#   #!/bin/sh
+#   df -h / | awk 'NR==2 && $5+0 > 85 {print "Disk usage high: "$5}'
+# Then:
+#   hermes cron create "*/15 * * * *" --no-agent \
+#     --script disk-watchdog.sh --name disk-watchdog --deliver telegram
 
-- name: disk-watchdog
-  schedule: "*/15 * * * *"
-  mode: no_agent                    # v0.13: script-only, no LLM session
-  command: >-
-    df -h / | awk 'NR==2 && $5+0 > 85 {print "Disk usage high: "$5}'
-  notify: telegram_private
+# Morning digest (only if you have a newsroom / status page / etc.):
+#   hermes cron create "0 7 * * *" \
+#     "Summarize the latest Hermes/MCP/LLM-security news" \
+#     --name morning-digest --deliver telegram
 
-# Optional — only if you have a newsroom / status page / etc.
-# - name: morning-digest
-#   schedule: "0 7 * * *"
-#   task: /news-digest topics=[hermes,mcp,llm-security]
-#   notify: telegram_private
+# Inspect / manage:
+#   hermes cron list          # what's scheduled + last status
+#   hermes cron run <job-id>  # trigger on next scheduler tick
+#   hermes cron pause <job-id> / resume <job-id>
+#   hermes cron edit <job-id> --skill ... --deliver ... [--model ...]
+#
+# Security note: keep these skills read-only — with approvals.cron_mode:
+# deny (see templates/config/*.yaml) a cron job that trips a dangerous
+# command is blocked headlessly, and the run records a failed status.

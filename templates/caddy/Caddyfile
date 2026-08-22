@@ -4,7 +4,7 @@
 # Terminates TLS (auto Let's Encrypt), reverse-proxies:
 #   - hermes.yourdomain.com       -> Hermes dashboard (127.0.0.1:9119)
 #   - langfuse.yourdomain.com     -> Langfuse web (127.0.0.1:3000)
-#   - hooks.yourdomain.com        -> Hermes webhook listener (127.0.0.1:8766)
+#   - hooks.yourdomain.com        -> Hermes webhook listener (127.0.0.1:8644)
 #
 # Replace *.yourdomain.com with your actual domain. Caddy will
 # fetch certificates on first request. Make sure DNS A/AAAA records
@@ -60,6 +60,7 @@ langfuse.yourdomain.com {
 # Webhooks — no basic_auth (signature-validated in Hermes). Body size is
 # capped below; add upstream rate limiting (e.g. fail2ban or a rate-limit
 # plugin) if the endpoint gets abused — stock Caddy has no rate-limit directive.
+# Hermes listens on WEBHOOK_PORT (default 8644, set in ~/.hermes/.env).
 hooks.yourdomain.com {
 	encode zstd gzip
 
@@ -68,7 +69,7 @@ hooks.yourdomain.com {
 		max_size 1MB
 	}
 
-	reverse_proxy 127.0.0.1:8766 {
+	reverse_proxy 127.0.0.1:8644 {
 		header_up X-Real-IP {remote_host}
 		header_up X-Forwarded-For {remote_host}
 	}

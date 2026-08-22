@@ -1,61 +1,66 @@
 # benchmarks/matrix.yaml — the provider x task matrix run.sh cranks through.
-# Prices are a dated 2026-05-25 snapshot from provider docs/aggregators;
-# refresh them here before publishing rendered numbers (render.py costs
-# come straight from these fields).
+# Model IDs were refreshed 2026-08-22 against the v0.20.4-era model catalog
+# (the in-repo snapshot of https://hermes-agent.nousresearch.com/docs/api/model-catalog.json).
+#
+# TODO(v0.20): PRICES and CONTEXT WINDOWS below are estimates carried from the
+# May-2026 snapshot where the family survived — they are NOT verified for the
+# v0.20.4 era. Refresh them from provider docs/aggregators (or live /v1/models)
+# before publishing rendered numbers; render.py costs come straight from these
+# fields.
 
 models:
-  - id: google/gemini-3.1-flash
-    price_per_mtok_in: 0.50
-    price_per_mtok_out: 3.00
+  - id: google/gemini-3.7-flash
+    price_per_mtok_in: 0.50          # TODO(v0.20): verify
+    price_per_mtok_out: 3.00         # TODO(v0.20): verify
     context_tokens: 1048576
-  - id: google/gemini-3.1-pro
-    price_per_mtok_in: 1.50
-    price_per_mtok_out: 12.00
+  - id: google/gemini-3.1-pro-preview
+    price_per_mtok_in: 1.50          # TODO(v0.20): verify
+    price_per_mtok_out: 12.00        # TODO(v0.20): verify
     context_tokens: 1048576
   - id: anthropic/claude-sonnet-5
     price_per_mtok_in: 3.00
     price_per_mtok_out: 15.00
     context_tokens: 200000
-  - id: anthropic/claude-opus-4.7
-    price_per_mtok_in: 15.00
-    price_per_mtok_out: 75.00
+  - id: anthropic/claude-opus-5
+    price_per_mtok_in: 15.00         # TODO(v0.20): verify
+    price_per_mtok_out: 75.00        # TODO(v0.20): verify
     context_tokens: 200000
-  - id: anthropic/claude-haiku-4
-    price_per_mtok_in: 0.25
-    price_per_mtok_out: 1.25
+  - id: anthropic/claude-haiku-4.5
+    price_per_mtok_in: 0.80          # TODO(v0.20): verify
+    price_per_mtok_out: 4.00         # TODO(v0.20): verify
     context_tokens: 200000
+  - id: openai/gpt-5.6-terra
+    price_per_mtok_in: 5.00          # TODO(v0.20): verify
+    price_per_mtok_out: 20.00        # TODO(v0.20): verify
+    context_tokens: 400000           # TODO(v0.20): verify
   - id: openai/gpt-5.5
     price_per_mtok_in: 5.00
     price_per_mtok_out: 20.00
     context_tokens: 400000
-  - id: openai/gpt-5.5-mini
-    price_per_mtok_in: 0.60
-    price_per_mtok_out: 4.80
-    context_tokens: 400000
-  - id: moonshot/kimi-k2.6
-    price_per_mtok_in: 0.15
-    price_per_mtok_out: 2.50
-    context_tokens: 256000
-  - id: zai/glm-5
-    price_per_mtok_in: 0.20
-    price_per_mtok_out: 2.00
-    context_tokens: 200000
+  - id: moonshotai/kimi-k3
+    price_per_mtok_in: 0.15          # TODO(v0.20): verify
+    price_per_mtok_out: 0.60         # TODO(v0.20): verify
+    context_tokens: 262144           # TODO(v0.20): verify
+  - id: z-ai/glm-5.2
+    price_per_mtok_in: 0.20          # TODO(v0.20): verify
+    price_per_mtok_out: 2.00         # TODO(v0.20): verify
+    context_tokens: 131072           # TODO(v0.20): verify
   - id: deepseek/deepseek-v4-pro
     price_per_mtok_in: 0.30
     price_per_mtok_out: 1.20
-    context_tokens: 256000
-  - id: qwen/qwen3.6-max-preview
-    price_per_mtok_in: 0.40
-    price_per_mtok_out: 1.60
-    context_tokens: 256000
-  - id: cerebras/qwen-3-32b
-    price_per_mtok_in: 0.60
-    price_per_mtok_out: 0.60
-    context_tokens: 128000
-  - id: xai/grok-4.3
-    price_per_mtok_in: 3.00
-    price_per_mtok_out: 15.00
-    context_tokens: 1048576
+    context_tokens: 262144           # TODO(v0.20): verify
+  - id: deepseek/deepseek-v4-flash
+    price_per_mtok_in: 0.15          # TODO(v0.20): verify
+    price_per_mtok_out: 0.60         # TODO(v0.20): verify
+    context_tokens: 262144           # TODO(v0.20): verify
+  - id: qwen/qwen3.8-max
+    price_per_mtok_in: 0.40          # TODO(v0.20): verify
+    price_per_mtok_out: 1.60         # TODO(v0.20): verify
+    context_tokens: 262144           # TODO(v0.20): verify
+  - id: x-ai/grok-4.6
+    price_per_mtok_in: 3.00          # TODO(v0.20): verify
+    price_per_mtok_out: 15.00        # TODO(v0.20): verify
+    context_tokens: 1048576          # TODO(v0.20): verify
 
 tasks:
   - id: T1_triage

@@ -2,7 +2,7 @@
 
 Real, reproducible cost + latency benchmarks across flagship models, run on standardized tasks. This folder contains the **methodology**, the **task set**, and the **raw results**.
 
-> ⚠ Benchmark numbers drift as providers re-price and models update. The committed results are a dated April 2026 snapshot; `matrix.yaml` has been refreshed with May 2026 frontier IDs (now 13 models). Re-run with [`./run.sh`](./run.sh) before quoting numbers externally.
+> ⚠ Benchmark numbers drift as providers re-price and models update. The committed results are a dated **2026-04-17** snapshot. On **2026-08-22** `matrix.yaml` model IDs were refreshed to the **v0.20.4-era frontier** (13 models: GPT-5.6 Terra / GPT-5.5, Claude Opus 5 / Sonnet 5 / Haiku 4.5, Gemini 3.7 Flash / 3.1 Pro preview, Kimi K3, GLM-5.2, DeepSeek V4 Pro/Flash, Qwen 3.8 Max, Grok 4.6) — but **prices/context windows are still unverified estimates** (flagged `TODO(v0.20)` in the file) and **no v0.20.4 results exist yet**. Refresh prices in `matrix.yaml`, then re-run with [`./run.sh`](./run.sh) before quoting numbers externally.
 
 ---
 
@@ -53,7 +53,7 @@ Retail list prices; some providers may offer committed-use discounts.
 | openai/gpt-5.5 | $0.90 | 26s | 45s | ✅ | Refresh against GPT-5.5 |
 | xai/grok-4.3 | re-run | re-run | re-run | re-run | New v0.14 1M-context lane; do not quote until refreshed |
 
-> **Note for re-runs:** `matrix.yaml` sets `skip_if_context_lt: 300000` on T2 — `run.sh` now skips every model with a smaller window (Sonnet 5, Opus 4.7, Haiku 4, Kimi K2.6, GLM-5, DeepSeek V4-Pro, Qwen3.6, Qwen 3 32B). The Sonnet 5 row above is from the 2026-04-17 snapshot, which predates that rule and squeezed the doc into its 200K window; a fresh run won't reproduce it.
+> **Note for re-runs:** `matrix.yaml` sets `skip_if_context_lt: 300000` on T2 — `run.sh` skips models with a smaller window (Sonnet 5, Opus 5, Haiku 4.5, GLM-5.2 and, if its verified window is under 300K, Kimi K3). The Sonnet 5 row above is from the 2026-04-17 snapshot, which predates that rule and squeezed the doc into its 200K window; a fresh run won't reproduce it.
 
 **Recommendation:** Flash by default, Pro when you need precision, Grok 4.3 when live X context matters.
 
@@ -94,6 +94,7 @@ Retail list prices; some providers may offer committed-use discounts.
 
 ## Delta from last snapshot
 
+- 2026-08-22: **era alignment — IDs refreshed, numbers still dated.** `matrix.yaml` now carries the v0.20.4-era model list (GPT-5.6 Terra / GPT-5.5, Gemini 3.7 Flash / 3.1 Pro preview, Claude Opus 5 / Sonnet 5 / Haiku 4.5, Kimi K3, GLM-5.2, DeepSeek V4 Pro/Flash, Qwen 3.8 Max, Grok 4.6). Prices/context windows are still unverified (`TODO(v0.20)` comments in the file), and the tables above remain the dated 2026-04-17 run until `./run.sh` is re-executed.
 - 2026-05-25: `benchmarks/matrix.yaml` updated for the v0.14 refresh with Grok 4.3 1M context plus current frontier IDs (GPT-5.5, Claude Sonnet 5 / Opus 4.7, Gemini 3.1, Kimi K2.6, DeepSeek V4-Pro, Qwen3.6) — 13 models total. Results above remain the dated 2026-04-17 run until `./run.sh` is executed again.
 
 ---
@@ -106,7 +107,7 @@ Retail list prices; some providers may offer committed-use discounts.
 # it serves every model in the matrix behind one key.
 export HERMES_BENCH_API_KEY=sk-or-...
 ./benchmarks/run.sh                            # full 13-model x 5-task grid
-./benchmarks/run.sh --model zai/glm-5          # one model
+./benchmarks/run.sh --model z-ai/glm-5.2       # one model
 ./benchmarks/run.sh --task T1_triage           # one task
 
 # Render the tables (cost from matrix.yaml prices + the usage field):

@@ -118,34 +118,35 @@ Hermes patches the skill with new information using `skill_manage(action='patch'
 
 The old skill failure mode was predictable: after a month of "save that as a skill," `~/.hermes/skills/` filled with duplicates, stale commands, and one-off notes that should have been memory. Hermes v0.12 adds **Curator** to clean that up.
 
-Run it manually:
+Curator is **on by default** — it is not a cron daemon. On CLI session start and on a recurring tick inside the gateway, Hermes checks whether enough time has passed (`curator.interval_hours`, default 168 = weekly) and the agent has been idle long enough (`curator.min_idle_hours`, default 2); if both, it runs a background pass that never touches your active conversation.
+
+Run (or preview) it manually — `--dry-run` shows the full report with zero mutations:
 
 ```bash
-hermes curator run --dry-run
-hermes curator run
-```
-
-Or enable the default weekly schedule:
-
-```bash
-hermes curator enable
-hermes curator status
+hermes curator status            # last run, counts, pinned list, next stale candidates
+hermes curator run --dry-run     # preview only — report without mutations
+hermes curator run               # trigger a pass now (prune-only unless consolidation is on)
+hermes curator run --consolidate # force the LLM consolidation pass for this one run
+hermes curator pause             # stop runs until resumed
+hermes curator resume
 ```
 
 What Curator does:
 
-- **Scores skills** for freshness, usage, clarity, overlap, and safety.
-- **Merges duplicates** instead of letting near-identical workflows compete.
-- **Archives dead skills** without deleting them; restore if it was too aggressive.
-- **Pins important skills** so core workflows survive pruning.
-- **Focuses on agent-created skills** first, not bundled/vendor skills.
+- **Lifecycle: `active → stale → archived`.** Skills unused for `curator.stale_after_days` (30) are marked stale; unused for `archive_after_days` (90) move to `~/.hermes/skills/.archive/`. It **never auto-deletes** — the worst outcome is archival, which is fully recoverable.
+- **Pins.** `hermes curator pin <skill>` protects a skill from both the curator's auto-transitions and the agent's `skill_manage(delete)`. Skills referenced by any cron job (even paused) are protected from auto-transitions too.
+- **LLM consolidation is opt-in.** `curator.consolidate: true` (or `--consolidate`) enables the opinionated pass that merges near-duplicates and builds umbrella skills, and it costs aux-model tokens. The default deterministic pruning is free — zero API calls.
+- **Prunes bundled (built-in) skills by default** after `archive_after_days` of non-use (`curator.prune_builtins: true`); hub-installed skills are always off-limits. Set `curator.prune_builtins: false` to go back to agent-created-only.
+- **Backups before every pass.** A `tar.gz` snapshot lands under `~/.hermes/skills/.curator_backups/`, so a whole pass is undoable with `hermes curator rollback` (`--list`, `--id <ts>`). A per-mutation audit ledger adds single-edit rollback: `hermes curator ledger` / `hermes curator rollback <entry-id>`.
+- **Only agent-created skills are managed.** The background self-improvement loop marks its own skills as agent-created; hand-written skills and skills you asked for are left alone unless you hand them over with `hermes curator adopt <skill>` (see `hermes curator list-unmanaged`).
 
 Good operating pattern:
 
-1. Pin your production runbooks and irreplaceable workflows.
-2. Run `hermes curator run --dry-run` after major upgrades.
+1. **Pin** your production runbooks and irreplaceable workflows (`hermes curator pin <skill>`).
+2. Run `hermes curator run --dry-run` after major upgrades to see what's aging.
 3. Let it archive one-off skills, not memory facts or project instructions.
 4. Ask Hermes to update a skill immediately after a failed run; don't wait for Curator to infer the fix later.
+5. Review `hermes curator status` monthly — it lists the five least-recently-used skills, i.e. what's likely to go stale next.
 
 Curator is a librarian, not a teammate. It keeps the shelves useful; you still decide what knowledge is important.
 
@@ -174,17 +175,25 @@ Every skill is a directory with a `SKILL.md` file:
         └── SKILL.md
 ```
 
+`~/.hermes/skills/` is the single source of truth; bundled, hub-installed, and agent-created skills all land here (each profile keeps its own under its `HERMES_HOME`). Two sidecar areas matter for maintenance: `~/.hermes/skills/.hub/` holds Skills Hub state (lock + audit log), and the Curator moves long-unused skills to `~/.hermes/skills/.archive/` and snapshots the tree to `.curator_backups/`. You can also point Hermes at **external skill directories** (`skills.external_dirs` in `config.yaml`) and repos can ship **project-local skills** under `<repo>/.hermes/skills/` — those load only after you trust the repo with `hermes skills trust`.
+
+**Required frontmatter:** every `SKILL.md` needs `name` and a short `description` (the description rides in the prompt index every session — keep it ≤60 characters and self-contained, because skills_list truncates at 57). `version` and `metadata.hermes.*` are optional but encouraged.
+
 ### SKILL.md Format
 
 ```markdown
 ---
-name: my-skill
-description: Brief description of what this skill does
+name: my-skill                 # Required
+description: Brief description of what this skill does   # Required — keep ≤60 chars
 version: 1.0.0
+platforms: [macos, linux]      # Optional — restricts the skill to specific OSes
 metadata:
   hermes:
     tags: [deployment, docker, devops]
     category: my-category
+    # Optional — conditional activation (fallback skills):
+    # fallback_for_toolsets: [web]   show only when a toolset is unavailable
+    # requires_toolsets: [terminal]  show only when a toolset is available
 ---
 
 # My Skill
@@ -246,35 +255,35 @@ Hermes scans available skills at session start. When your request matches a skil
 hermes skills list
 ```
 
-### Search for a Skill
+### Search and Discover
 
 ```bash
-/skills search docker
-/skills search deployment
+hermes skills search docker                # search all hub sources
+hermes skills search react --source skills-sh
+hermes skills browse --source official    # browse official optional skills
+hermes skills inspect openai/skills/k8s    # preview before installing
 ```
 
-### View a Skill's Content
+### Configure Skills (`hermes skills config`)
 
 ```bash
-/skills view my-skill
+hermes skills config
 ```
 
-### Enable/Disable Per Platform
+Opens an interactive picker to enable/disable individual skills (the slash-command surface and `skills_list` index follow your choices).
+
+### Install from the Skills Hub
+
+Every install runs a **security scan** (data exfiltration, prompt injection, destructive commands, supply-chain signals). Trust levels: `builtin`/`official` (always trusted), `trusted` (OpenAI/Anthropic/HF/NVIDIA repos), `community` (everything else — non-dangerous findings can be overridden with `--force`, `dangerous` verdicts never can):
 
 ```bash
-hermes skills
+hermes skills install official/security/1password   # official optional skill
+hermes skills install openai/skills/k8s             # direct from a GitHub repo
+hermes skills install skills-sh/vercel-labs/json-render/json-render-react
+hermes skills install https://example.com/SKILL.md  # direct URL (+ referenced files)
 ```
 
-This opens an interactive TUI where you can enable or disable skills per platform (CLI, Telegram, Discord, etc.). Useful when you want certain skills only available in specific contexts.
-
-### Install from the Hub
-
-Official optional skills (heavier or niche):
-
-```bash
-/skills install official/research/arxiv
-/skills install official/creative/songwriting-and-ai-music
-```
+`GITHUB_TOKEN` in `.env` raises the GitHub API rate limit from 60 to 5,000 req/hour if hub searches start erroring.
 
 ### Update a Skill
 
@@ -285,7 +294,33 @@ Update the docker-deploy skill — we learned that the health check
 needs a 30-second timeout, not 10.
 ```
 
-Hermes patches the skill with `skill_manage(action='patch')`.
+Hermes patches the skill with `skill_manage(action='patch')`. For hub-installed skills, track upstream drift and refresh:
+
+```bash
+hermes skills check              # which installed hub skills changed upstream
+hermes skills update            # re-install only those (skips your local edits)
+hermes skills reset my-skill    # un-stick a bundled skill marked "user-modified"
+```
+
+### Skill Bundles: One Command, Many Skills
+
+Skill bundles are tiny YAML files that group several skills under a single slash command — `/<bundle-name>` loads them all at once. Great for recurring task profiles ("every backend change: review + TDD + PR").
+
+```bash
+hermes bundles create backend-dev \
+  --skill github-code-review \
+  --skill test-driven-development \
+  --skill github-pr-workflow \
+  -d "Backend feature work — review, test, PR workflow"
+```
+
+Then in any surface:
+
+```
+/backend-dev refactor the auth middleware
+```
+
+Bundles live in `~/.hermes/skill-bundles/<slug>.yaml` (`name`, `description`, `skills:` list, optional `instruction:`), are managed with `hermes bundles list|show|create|delete|reload`, listed in chat via `/bundles`, and resolve every listed skill on invocation — missing skills are skipped, not fatal. If a bundle slug collides with a skill name, the bundle wins.
 
 ---
 
@@ -350,7 +385,7 @@ Hermes creates a skill with:
 
 **Give every skill a ≤60-character description.** The description of *every* skill rides along in the prompt so the agent can pick between them — long descriptions tax every turn. This especially applies to `/learn`-generated skills ([Part 26](./part26-moa-verification.md)), whose auto-written descriptions tend to be paragraphs: trim them after creation. And before writing a skill at all, check whether a built-in tool already does the job.
 
-**Gate self-written skills in production.** `/skills approval on` makes the agent propose skill creations/updates for your sign-off instead of applying them silently — pair it with `/memory approval on` on any shared or long-running agent ([Part 7](./part7-memory-system.md)).
+**Gate self-written skills in production.** `/skills approval on` (config: `skills.write_approval`) makes the agent propose skill creations/updates instead of applying them silently — writes are staged and reviewed with `/skills pending`, `/skills diff <id>`, `/skills approve <id>`, `/skills reject <id>`. Pair it with `/memory approval on` on any shared or long-running agent ([Part 7](./part7-memory-system.md)).
 
 ---
 

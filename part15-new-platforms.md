@@ -1,41 +1,47 @@
-# Part 15: Messaging Platforms (iMessage via Photon, WhatsApp Cloud, Teams, LINE, SimpleX, Google Chat, WeChat, Android)
+# Part 15: Messaging Platforms — 35+ Adapters (iMessage via Photon, WhatsApp Cloud, Teams, LINE, SimpleX, Google Chat, A2A, Buzz, IRC, WeChat, Android)
 
-*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wired Teams end-to-end and added LINE + SimpleX Chat; v0.15 added ntfy; and v0.17 "Reach" added the three biggest asks at once — **iMessage with no Mac required (Photon)**, an **official WhatsApp Business Cloud API** adapter, and the **Raft** agent-to-agent network.*
+*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wired Teams end-to-end and added LINE + SimpleX Chat; v0.15 added ntfy; and v0.17 "Reach" added the three biggest asks at once — **iMessage with no Mac required (Photon)**, an **official WhatsApp Business Cloud API** adapter, and the **Raft** agent-to-agent network. The v0.18–v0.20 wave kept widening the roster: **IRC** (stdlib-only, no deps), **Buzz** (Block's Nostr-based human+agent community platform), **A2A** (the Linux Foundation's Agent2Agent protocol v1.0 — agents calling agents), a **Microsoft Graph webhook** connector powering the Teams Meeting Pipeline, and the experimental **Hermes Relay** connector system that fronts platforms without holding their credentials. As of **v0.20.4 (2026.8.18)**, the official docs catalog **35+ adapter pages** — this part is the curated tour.*
 
 ---
 
-## The 25+ Platform Lineup
+<a id="the-25-platform-lineup"></a>
+## The 35+ Platform Lineup
 
-As of v0.17, the gateway ships built-in adapters plus plugin-shipped platforms:
+As of v0.20.4, the gateway ships **35+ adapter pages** in the official docs — built-in adapters plus plugin-shipped platforms. The full capability matrix (voice, images, files, threads, reactions, typing, streaming per platform) lives in the [official Messaging Gateway docs](https://nousresearch.github.io/hermes-agent/docs/user-guide/messaging/) and changes with every release; the roster below is the current shape:
 
 | Platform | Mode | Notes |
 |----------|------|-------|
 | Telegram | Polling + Webhook | Flagship adapter — see [Part 4](./part4-telegram-setup.md) |
 | Discord | WebSocket (bot) | Slash commands, voice/media, DMs + servers |
 | Slack | Socket / Events API | Threads, file uploads, blocks |
-| **Google Chat** | App / webhook | **New in v0.13**, Workspace-native chat surface |
-| **LINE** | Messaging API | **New in v0.14**, Japan/Korea/Taiwan mobile-first surface |
-| **SimpleX Chat** | Decentralized chat | **New in v0.14**, privacy-first chat with no user IDs |
-| WhatsApp (personal) | Web API | QR-code login, requires always-on node |
-| **iMessage (Photon)** | Photon Spectrum relay | **New in v0.17** — no Mac required |
+| **Google Chat** | App / webhook | Workspace-native chat surface |
+| **LINE** | Messaging API | Japan/Korea/Taiwan mobile-first; has a built-in "slow LLM" postback trick |
+| **SimpleX Chat** | Queue-based DMs | Privacy-first chat with no user IDs |
+| WhatsApp (personal) | Web API (Baileys bridge) | QR-code login, requires always-on node |
+| **iMessage (Photon)** | Photon Spectrum relay | **No Mac required** — managed line pool |
 | **iMessage (BlueBubbles)** | Webhook | Self-hosted alternative (needs an always-on Mac) |
-| **WhatsApp Business Cloud API** | Official Meta webhook | **New in v0.17** — no QR node needed |
-| **Raft** | Agent network | **New in v0.17** — talk to other agents, not humans |
-| **Weixin (WeChat personal)** | Long-poll | **New in v0.9** |
-| **WeCom (Enterprise WeChat)** | Webhook | **New in v0.9** |
-| **QQBot** | WebSocket/Webhook | Added after the original v0.9 platform sweep |
-| **Tencent Yuanbao** | Native gateway | **New in v0.12**, text + media delivery |
-| **Microsoft Teams** | Graph + webhook + runtime + delivery | End-to-end in v0.14 |
+| **WhatsApp Business Cloud API** | Official Meta webhook | Production-grade — no QR node, no ban risk |
+| **Weixin (WeChat personal)** | Long-poll (iLink) | QR login, media, encrypted CDN |
+| **WeCom (Enterprise WeChat)** | Webhook (+ callback variant) | Corporate WeChat, signature-validated callbacks |
+| **QQBot** | WebSocket/Webhook | Tencent QQ via Official API v2 |
+| **Tencent Yuanbao** | Native gateway | Text + media delivery, China/APAC |
+| **Raft** | Agent network | Talk to other agents, not humans |
+| **A2A** | Agent protocol (HTTP) | **v0.20** — Linux Foundation A2A v1.0, both directions |
+| **Buzz** | Nostr WebSocket + CLI | Block's open human+agent community platform |
+| IRC | Raw IRC over asyncio | Zero dependencies; plain text only |
 | Signal | REST via signal-cli | Self-hosted bridge |
 | DingTalk | Webhook | Corporate IM, China/APAC |
-| Feishu / Lark | Webhook | Corporate IM, ByteDance |
+| Feishu / Lark | Webhook | Corporate IM, ByteDance roster |
 | SMS (Twilio) | Webhook | Plain SMS |
 | Mattermost | WebSocket | Self-hosted Slack alternative |
 | Matrix | Client-server | Federated chat |
 | Email (IMAP+SMTP) | Polling | Plain email |
-| **ntfy** | HTTP pub/sub | **New in v0.15**, push notifications to any device |
+| **ntfy** | HTTP pub/sub | Push notifications to any device |
 | Home Assistant | WebSocket | Voice + automation triggers |
 | Webhook (generic) | HTTP POST | Wire up anything |
+| Teams Meeting Pipeline | Microsoft Graph webhook | Transcripts → meeting summaries |
+| open-webui | Chat UI | Serve Hermes through an Open WebUI frontend |
+| Hermes Relay | Connector (experimental) | Front any platform without holding its credentials |
 
 All of them respect:
 - Allowlist / allow-all / pairing access controls
@@ -45,7 +51,7 @@ All of them respect:
 - The shared session database (Part 7)
 - Pre-dispatch plugin hooks
 
-This part covers the v0.9 adapters, the newer v0.12–v0.17 surfaces, and **Android / Termux** — running the agent itself on a phone.
+This part covers the v0.9 adapters, the newer v0.12–v0.20 surfaces (A2A, Buzz, IRC, Raft, Photon, WhatsApp Cloud, Teams, LINE, SimpleX, Google Chat, QQBot, Yuanbao), the WeChat family, and **Android / Termux** — running the agent itself on a phone.
 
 > **Telegram got richer in v0.17:** the Telegram adapter upgraded to Bot API 10.1 rich messages — formatted output with media, on by default. If your bot's replies suddenly look nicer, that's why; if a client chokes on them, they can be disabled per-gateway.
 
@@ -56,10 +62,11 @@ This part covers the v0.9 adapters, the newer v0.12–v0.17 surfaces, and **Andr
 The #1 ask since v0.9 — iMessage without dedicating a Mac — shipped in v0.17 as a platform plugin built on **Photon Spectrum's** managed line pool:
 
 ```bash
-hermes photon login    # device-code OAuth — authenticate and you're live
+hermes photon setup --phone +15551234567   # device-code OAuth, one command: login + project + sidecar deps
+hermes photon status                        # verify token, sidecar, and connected line
 ```
 
-Sign in, and Hermes lives in the blue bubbles: DMs, markdown rendering, emoji reactions, outbound media — over a gRPC-native channel (no webhook), with no macOS server, no Full Disk Access, and no always-on hardware. Free to start, nothing to self-host. Access controls (pairing, allowlists, `/fast`, cron delivery) work like every other gateway.
+The free tier draws from Photon's **shared line pool** — different recipients may see different sending numbers, but each conversation stays stable. The paid Business tier gives you a dedicated number. Either way, no macOS server, no Full Disk Access, and no always-on hardware. Restrict senders with `PHOTON_ALLOWED_USERS` or DM pairing (`hermes pairing approve photon <CODE>`), and everything else — allowlists, `/fast`, cron delivery — works like every other gateway.
 
 Operationally:
 
@@ -68,13 +75,48 @@ Operationally:
 
 ### WhatsApp Business Cloud API — the official path
 
-The old WhatsApp adapter drives WhatsApp Web with a QR login and an always-on node — fine for personal use, fragile for production. v0.17 adds an adapter for **Meta's official Business Cloud API**: webhook-based, no browser session to babysit, and legitimate for business use. If you're building anything customer-facing on WhatsApp, use this one; keep the Web adapter for personal accounts.
+The old WhatsApp adapter drives WhatsApp Web with a QR login and an always-on Node.js bridge — fine for personal use, fragile for production (the July 2026 Baileys breakage above is exhibit A). v0.17 added an adapter for **Meta's official Business Cloud API**: webhook-based, no browser session or Node bridge to babysit, no account-ban risk, and legitimate for business use. It runs on a **dedicated business phone number** — not your personal number. If you're building anything customer-facing on WhatsApp, use this one; keep the Web adapter for personal accounts. `hermes gateway setup` walks you through the credentials and catches the #1 setup trap (pasting your phone number into the Phone Number ID field).
 
 > **If the personal (Web) adapter suddenly broke for you in July 2026:** an upstream Baileys dependency change broke QR-login connections. Fixed in **v0.18.2 (`v2026.7.7.2`)** — update Hermes (and rebuild if you pin a Docker tag older than `v2026.7.7.2`), re-scan the QR, done.
 
 ### Raft — your agent gets peers
 
 Raft is a channel where the counterparty is **another agent**, not a human. A bundled adapter connects Hermes to [Raft](https://raft.build) as an external agent through a wake-channel bridge: set `RAFT_PROFILE`, run the bridge, and Raft can wake Hermes to handle messages. The design is privacy-by-contract — wake payloads carry only metadata (event IDs, timestamps), never message bodies. Still: treat every inbound Raft message as **untrusted input** — same posture as a public group chat: quarantine profile, no write tools, approvals for anything that touches your machine. [Part 19](./part19-security-playbook.md) applies double here.
+
+## 2026 Update (v0.20): A2A, Buzz, IRC, and the Relay Connector
+
+The v0.18–v0.20 wave wasn't just desktop polish — it added four new gateway surfaces worth knowing about.
+
+### A2A — agents calling agents (protocol v1.0)
+
+[A2A](https://a2a-protocol.org) is the Linux Foundation's Agent2Agent protocol v1.0, and the Hermes plugin works **both directions**: your agent can call other A2A agents as tools, and other agents can send tasks to your Hermes over HTTP. Interop is with anything on the `a2a-sdk` — another Hermes, LangChain, CrewAI, Google ADK. This is the protocol-level sibling of Raft: Raft is a wake-channel to one external service; A2A is a general agent network.
+
+```yaml
+gateway:
+  platforms:
+    a2a:
+      enabled: true
+      extra:
+        port: 9900
+```
+
+The outbound client tools ship as an `a2a` toolset, **off by default** — enable per platform with `hermes tools enable a2a --platform cli` (or `--platform telegram`, etc.). Same trust posture as Raft: A2A peers are untrusted input; quarantine profile + approvals until identity is proven.
+
+### Buzz — Block's Nostr-based team chat
+
+The [Buzz](https://github.com/block/buzz) adapter connects Hermes to a Buzz community — Block's open-source human+agent collaboration platform built on the **Nostr protocol**. Inbound rides a persistent NIP-42-authenticated WebSocket subscription (CLI polling as fallback); outbound shells to the `buzz` CLI. Needs the `buzz` binary on PATH and a Nostr key that's already a community member. Buzz renders markdown, delivers images (local files or URLs), and can thread replies onto existing messages. Run `hermes gateway setup`, pick **Buzz**, and set `BUZZ_TRANSPORT=auto|websocket|poll` in `.env`.
+
+### IRC — the zero-dependency classic
+
+The IRC adapter is pure Python stdlib `asyncio` — no SDK, no daemon, no extra packages. It speaks the IRC protocol directly, so it works on public networks (Libera.Chat) or any self-hosted ircd. Plain text means **no voice/images/files/threads/reactions** — replies are `PRIVMSG` lines, long messages split to fit the line limit. Configure with `gateway.platforms.irc.extra` (`server`, `port`, `nickname`, `channels`, optional NickServ password). Ideal for tireless on-call bots in a channel everyone already lives in.
+
+### Hermes Relay — front platforms without holding their credentials (experimental)
+
+Relay is not a platform itself — it's a **connector system**. A separate service (the *connector*) owns the platform bot tokens and sockets; your gateway dials **out** to it over one authenticated WebSocket and gets a capability descriptor at handshake. Because the gateway never opens an inbound port and never touches platform secrets, relay works behind NAT and is the answer when a platform's credentials must not live on the agent host. Marked experimental — the wire contract may change without a deprecation cycle.
+
+### Teams Meeting Pipeline
+
+Separate from the Teams bot, the [Microsoft Graph webhook](https://nousresearch.github.io/hermes-agent/docs/user-guide/messaging/msgraph-webhook) surface delivers meeting transcripts → AI summaries into your chosen Teams target, using the same `teams` platform entry for outbound delivery. With the meeting-pipeline plugin enabled, one Teams integration gives you both the bot and the meeting-summary writer.
 
 ## 2026 Update: Teams, LINE, SimpleX, Google Chat, QQBot, and Yuanbao
 
@@ -83,44 +125,42 @@ Raft is a channel where the counterparty is **another agent**, not a human. A bu
 Teams is no longer just a proof of the v0.12 plugin architecture. In v0.14 the Graph auth, webhook listener, pipeline runtime, and outbound delivery are wired together, so Teams can be a real enterprise chat surface.
 
 ```yaml
-gateways:
-  teams:
-    enabled: true
-    tenant_id: ${MICROSOFT_TENANT_ID}
-    client_id: ${MICROSOFT_TEAMS_CLIENT_ID}
-    client_secret: ${MICROSOFT_TEAMS_CLIENT_SECRET}
-    allowed_teams:
-      - ${MICROSOFT_TEAMS_ADMIN_TEAM}
-    trust_label: medium
+gateway:
+  platforms:
+    teams:
+      enabled: true
+      extra:
+        tenant_id: ${MICROSOFT_TENANT_ID}
+        client_id: ${MICROSOFT_TEAMS_CLIENT_ID}
+        client_secret: ${MICROSOFT_TEAMS_CLIENT_SECRET}
+        port: 3978
 ```
 
-Keep approvals in a private admin channel, not in the same team/channel where untrusted requests arrive.
+Keep approvals in a private admin channel, not in the same team/channel where untrusted requests arrive. Who can reach the bot at all is controlled by `TEAMS_ALLOWED_USERS` (AAD object IDs). One Teams nicety: approvals render as interactive **Adaptive Cards** — Allow Once / Allow Session / Always Allow / Deny — instead of text-only prompts.
 
 ### LINE
 
 Use LINE when your users are in Japan, Korea, Taiwan, or a consumer/mobile-first workflow. Treat it like Telegram operationally: one admin bot/channel for approvals, strict allowed user IDs, and no write tools in public rooms.
 
-```yaml
-gateways:
-  line:
-    enabled: true
-    channel_access_token: ${LINE_CHANNEL_ACCESS_TOKEN}
-    channel_secret: ${LINE_CHANNEL_SECRET}
-    allowed_user_ids:
-      - ${LINE_ADMIN_USER_ID}
+```bash
+# ~/.hermes/.env — LINE configures via env vars
+LINE_CHANNEL_ACCESS_TOKEN=...      # long-lived channel token (required)
+LINE_CHANNEL_SECRET=...            # HMAC-SHA256 webhook verification (required)
+LINE_ALLOWED_USERS=U1234567890...  # comma-separated U-prefixed user IDs
+LINE_ALLOWED_GROUPS=C1234567890... # optional group IDs
+LINE_HOME_CHANNEL=U1234567890...   # default cron / notification target
+LINE_SLOW_RESPONSE_THRESHOLD=45    # optional: sticky "Get answer" postback for slow LLMs
 ```
 
 ### SimpleX Chat
 
 SimpleX is the privacy-first choice: no global user IDs, no central identity graph. That is good for privacy and harder for ops. Require pairing, persist local contact labels, and do not use it as the only approval channel until restore/backup is tested.
 
-```yaml
-gateways:
-  simplex:
-    enabled: true
-    profile: simplex-admin
-    require_pairing: true
-    trust_label: medium
+```bash
+# No `require_pairing` config key — SimpleX pairs by DM:
+#   send any message to the bot -> it replies with a pairing code
+hermes pairing approve simplex <CODE>
+SIMPLEX_ALLOWED_USERS=...   # optional explicit allowlist; DM pairing covers the rest
 ```
 
 ### Google Chat
@@ -129,15 +169,13 @@ Google Chat is the cleanest Workspace choice for Google Workspace teams that do 
 
 Typical posture:
 
-```yaml
-gateways:
-  google_chat:
-    enabled: true
-    project_id: ${GOOGLE_CLOUD_PROJECT}
-    credentials_json: ${GOOGLE_CHAT_CREDENTIALS_JSON}
-    allowed_spaces:
-      - ${GOOGLE_CHAT_ADMIN_SPACE}
-    trust_label: medium
+```bash
+# ~/.hermes/.env — Google Chat bridges via Pub/Sub with a service account
+GOOGLE_CHAT_PROJECT_ID=my-chat-bot-123
+GOOGLE_CHAT_SUBSCRIPTION_NAME=projects/my-chat-bot-123/subscriptions/hermes-chat-events-sub
+GOOGLE_CHAT_SERVICE_ACCOUNT_JSON=/home/you/.hermes/google-chat-sa.json
+GOOGLE_CHAT_ALLOWED_USERS=you@yourdomain.com,coworker@yourdomain.com
+GOOGLE_CHAT_HOME_CHANNEL=spaces/AAAA...   # default cron delivery target
 ```
 
 Keep public/customer-facing spaces in quarantine profile until identity mapping and approval routing are proven.
@@ -155,7 +193,7 @@ Yuanbao is now a native gateway adapter with text and media delivery. It belongs
 
 ### Why You'd Still Do This
 
-> **Most people should use Photon now** (`hermes photon login`, above) — it needs no Mac at all. BlueBubbles remains the right choice when you want message flow that never leaves hardware you own.
+> **Most people should use Photon now** — `hermes photon setup --phone <your-number>`, above — it needs no Mac at all. BlueBubbles remains the right choice when you want message flow that never leaves hardware you own.
 
 [BlueBubbles](https://bluebubbles.app/) is a free open-source macOS server that exposes a REST API + webhook feed on top of the native Messages.app database. If you have a Mac that stays on, you get a fully self-hosted iMessage bot with full media, reactions, typing indicators, and read receipts.
 
@@ -365,8 +403,6 @@ In `config.yaml` under `platforms.weixin.extra`:
 | `base_url` | `https://ilinkai.weixin.qq.com` | iLink API base URL |
 | `cdn_base_url` | `https://novac2c.cdn.weixin.qq.com/c2c` | CDN base for media |
 | `dm_policy` | `open` | `open`, `allowlist`, `disabled`, or `pairing` |
-
-> **Windows users:** native Windows is not supported for the WeChat adapter. Use WSL2.
 
 ### Common Issues
 

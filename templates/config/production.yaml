@@ -7,7 +7,10 @@
 #   - MCP: GitHub, Postgres, Cloudflare, filesystem — tool-filtered
 #   - Manual approval posture + tight allowlists (Part 19)
 #   - Compression tuned for long sessions
-# Schema verified against Part 19 (v0.18).
+# Schema verified against the v0.20.4 docs (user-guide/configuration.md,
+# user-guide/configuring-models.md, reference/mcp-config-reference.md).
+# Model/alias IDs are taken from the live model catalog (`hermes model`) —
+# the values below were current at v0.20.4.
 #
 # Platform wiring (tokens + user allowlists) lives in ~/.hermes/.env:
 #   TELEGRAM_BOT_TOKEN=...      TELEGRAM_ALLOWED_USERS=123456789
@@ -18,77 +21,82 @@
 #
 # Observability: enable the bundled Langfuse plugin
 # (`hermes plugins enable observability/langfuse`) and set the
-# HERMES_LANGFUSE_* env vars — there is no telemetry: block in config.yaml.
+# HERMES_LANGFUSE_* env vars — there is no telemetry block in config.yaml.
 # Cost/token alerts belong in Langfuse/Helicone, not here (Part 20, Rule 5).
 #
 # Dashboard: `hermes dashboard` serves on 127.0.0.1:9119 by default
 # (Part 12). Keep it loopback-only; expose via Caddy + auth if you must.
 # ------------------------------------------------------------
 
-# Primary model — the one that drives the tool-calling loop.
-model: claude-sonnet-5
-provider: anthropic
+# Primary model — drives the tool-calling loop. This is the mapping shape
+# `hermes model` / the dashboard write (model.provider + model.default).
+model:
+  provider: anthropic
+  default: claude-sonnet-5
 
-providers:
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-  openai:
-    api_key: ${OPENAI_API_KEY}
-  google:
-    api_key: ${GOOGLE_API_KEY}
-  moonshot:
-    api_key: ${MOONSHOT_API_KEY}
-  cerebras:
-    api_key: ${CEREBRAS_API_KEY}
-    base_url: https://api.cerebras.ai/v1
-  xai:
-    api_key: ${XAI_API_KEY}
-    oauth_enabled: true              # SuperGrok OAuth when available
-    live_search: true
+# API keys live in ~/.hermes/.env (ANTHROPIC_API_KEY, GOOGLE_API_KEY,
+# GEMINI_API_KEY, KIMI_API_KEY, XAI_API_KEY, ...). The `providers:` dict
+# below is ONLY for custom OpenAI-compatible endpoints — built-in
+# providers are referenced by name in model.provider / auxiliary.*.provider.
+# Example custom provider (uncomment to use):
+# providers:
+#   my-gateway:
+#     base_url: https://llm.internal.example.com/v1
+#     key_env: MY_PROXY_API_KEY      # or api_key: "sk-..."
+#     # extra_headers: { CF-Access-Client-Id: "..." }
 
-# Anthropic prompt caching — stable prefixes auto-marked; ~90% off cached reads.
+# Anthropic prompt caching — Hermes attaches cache_control breakpoints
+# automatically on the native Anthropic API, OpenRouter, and Nous Portal
+# (always-on, no enable knob). cache_ttl is the only explicit knob:
 prompt_caching:
-  cache_ttl: "5m"
+  cache_ttl: "5m"                    # "5m" or "1h" — the only two tiers; others ignored
 
 # Side-tasks off the expensive primary (Part 20, Rule 1). This is where
-# most silent cost bloat lives.
-auxiliary_models:
+# most silent cost bloat lives. `auto` = use the main model; override per
+# task with provider/model. All 11 task slots (vision, web_extract,
+# compression, approval, title_generation, ...) take provider/model/
+# base_url/api_key/timeout; `hermes model` → "Configure auxiliary models"
+# walks them interactively.
+auxiliary:
   compression:
-    provider: google
-    model: gemini-3.1-flash
+    provider: gemini               # Gemini flash-class via direct Google AI Studio key
+    model: gemini-3.7-flash
   web_extract:
-    provider: google
-    model: gemini-3.1-flash
+    provider: gemini
+    model: gemini-3.7-flash
   vision:
-    provider: google
-    model: gemini-3.1-flash
-  session_search: auto
-  approval: auto
+    provider: gemini
+    model: gemini-3.7-flash        # needs a multimodal model
+  # approval:
+  #   provider: auto               # smart-approval risk assessor (default)
+  # title_generation:
+  #   provider: auto
 
-# Quick model switching in chat: /model fast, /model smart (Part 9)
+# Quick model switching in chat: /model fast, /model smart (Part 9).
+# Canonical form is the top-level model_aliases: dict (model + provider).
 model_aliases:
   fast:
-    model: qwen-3-32b
-    provider: cerebras
+    model: gemini-3.7-flash
+    provider: gemini
   cheap-coder:
-    model: kimi-k2.6
-    provider: moonshot
+    model: kimi-k3
+    provider: kimi-coding
   smart:
-    model: claude-opus-4.7
+    model: claude-sonnet-5
     provider: anthropic
   research:
-    model: grok-4.3
+    model: grok-4.6
     provider: xai
 
-# Failover is managed with `hermes fallback` / `hermes config set
-# fallback_models '[...]'` — it lives in a separate state file, not here.
+# Failover is managed with `hermes fallback` — it lives in a separate
+# state file, not here (legacy `fallback_model:` was removed upstream).
 
 # Context compression (Part 20, Rule 4) — percentage-of-context keyed.
 compression:
   enabled: true
-  threshold: 0.50
-  target_ratio: 0.20
-  protect_last_n: 20
+  threshold: 0.50                   # compress at 50% of the model's context
+  target_ratio: 0.20                # keep ~20% of the threshold as the recent tail
+  protect_last_n: 20                # min recent messages kept uncompressed
 
 group_sessions_per_user: true
 
@@ -96,15 +104,16 @@ discord:
   require_mention: true              # Only respond when @mentioned in channels
 
 # MCP servers — documented schema: command/args/env/enabled/timeout +
-# tools.include/exclude. There are no trust:/allow_sampling: knobs; trust
-# is enforced by review, credential filtering, and tool filtering (Part 19, L5).
+# tools.include/exclude (reference/mcp-config-reference.md). There are no
+# trust:/allow_sampling: knobs; trust is enforced by review, credential
+# filtering, and tool filtering (Part 19, L5). Package names verified on
+# npm for v0.20.4; `hermes mcp catalog` lists curated one-command servers.
 mcp_servers:
   github:
     command: npx
     args: [-y, "@modelcontextprotocol/server-github"]
     env:
       GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PAT}   # scoped, read-mostly PAT
-    enabled: true
     timeout: 120
     tools:
       include:
@@ -118,7 +127,6 @@ mcp_servers:
   postgres:
     command: npx
     args: [-y, "@modelcontextprotocol/server-postgres", "${POSTGRES_URL}"]
-    enabled: true
     tools:
       include: [query]               # read-only surface
       exclude: []
@@ -127,7 +135,6 @@ mcp_servers:
     args: [-y, "@cloudflare/mcp-server-cloudflare"]
     env:
       CLOUDFLARE_API_TOKEN: "${CLOUDFLARE_API_TOKEN}"
-    enabled: true
     tools:
       include: []                    # empty = all; audit before widening env scope
       exclude: []
@@ -136,16 +143,18 @@ mcp_servers:
     args:
       - -y
       - "@modelcontextprotocol/server-filesystem"
-      - ${HOME}/Documents
-      - ${HOME}/Projects
-    enabled: true
+      - ${WRITE_SAFE_ROOT:-/home/hermes/projects}   # your write-safe dir
+    tools:
+      include: []                    # all filesystem tools; scope down if you prefer
+      exclude: []
 
 # Dangerous-command approval (Part 19, Layer 2). Patterns are built into
-# Hermes (tools/approval.py) — this only sets the policy.
+# Hermes — this only sets the policy. Keys per user-guide/security.md.
 approvals:
-  mode: manual                       # manual | smart | off
-  timeout: 60
+  mode: manual                       # manual | smart (default) | off
+  timeout: 60                        # fail-closed deny on timeout (default 300)
   cron_mode: deny                    # cron jobs hitting a dangerous command are blocked
+  single_query_mode: deny            # same for one-shot `hermes chat -q` runs
   mcp_reload_confirm: true
   destructive_slash_confirm: true
 
@@ -161,17 +170,18 @@ security:
   # tirith_timeout: 5
   # tirith_fail_open: true
 
-# Scheduled skills live in ~/.hermes/cron.yaml (separate file), e.g.:
-#   - name: nightly-backup
-#     schedule: "0 3 * * *"
-#     task: /nightly-backup s3://backups/hermes/ 30
-#   - name: weekly-dep-audit
-#     schedule: "0 9 * * 1"
-#     task: /weekly-dep-audit severity_floor=high
-#   - name: weekly-cost-report
-#     schedule: "0 9 * * 1"
-#     task: /cost-report window=7d format=markdown
-#   - name: weekly-mcp-audit
-#     schedule: "0 10 * * 1"
-#     task: /audit-mcp
+# Scheduled skills live in ~/.hermes/cron/jobs.json, managed via
+# `hermes cron create` / the `cronjob` tool / `/cron` (NOT hand-edited
+# YAML — the old cron.yaml list format is gone). Examples:
+#
+#   hermes cron create "0 3 * * *" "Run the nightly backup skill" \
+#     --skill nightly-backup --name nightly-backup --deliver telegram
+#   hermes cron create "0 9 * * 1" "Run the dependency audit" \
+#     --skill weekly-dep-audit --name weekly-dep-audit --deliver telegram
+#   hermes cron create "0 11 * * 1" "Post the weekly cost report" \
+#     --skill cost-report --deliver telegram
+#   hermes cron create "*/15 * * * *" --no-agent \
+#     --script disk-watchdog.sh --name disk-watchdog --deliver telegram
+#
 # Remember approvals.cron_mode: deny — keep cron skills read-only (Part 19).
+# Full reference: templates/cron/production-crons.yaml

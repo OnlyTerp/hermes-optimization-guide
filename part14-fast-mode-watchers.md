@@ -25,21 +25,21 @@ Don't use it for:
 
 ### How to Toggle
 
-Fast Mode is a **runtime toggle**, not a YAML key — there is no `agent.service_tier:` (or `fast_mode:`) block in `config.yaml` (see [Part 20](./part20-observability.md)). In any interactive session (CLI or messaging platform):
+Fast Mode is a **runtime toggle**, not a YAML key — there is no `agent.service_tier:` (or `fast_mode:`) block in `config.yaml` (see [Part 20](./part20-observability.md)). In any interactive session (CLI or messaging platform — `/fast` works on both):
 
 ```text
-/fast on        # opt the current session into Priority Processing / Fast Mode
-/fast off       # back to normal
+/fast fast      # opt the current session into Priority Processing / Fast Mode
+/fast normal    # back to normal pricing
 /fast status    # show the current state
 ```
 
-It persists for the session until you turn it off. For non-interactive entry points (cron, webhooks), simply never run `/fast on` from them and they stay on normal pricing.
+It persists for the session until you turn it off. For non-interactive entry points (cron, webhooks), simply never run `/fast fast` from them and they stay on normal pricing.
 
 ### Where It Works
 
 - ✅ Interactive CLI (`hermes`)
-- ✅ Every gateway platform — the full 25+ lineup ([Part 15](./part15-new-platforms.md)): Telegram, Discord, Slack, Google Chat, LINE, SimpleX, Microsoft Teams, WhatsApp (personal + Business Cloud API), Signal, iMessage (Photon or BlueBubbles), Weixin/WeChat, WeCom, QQBot, Tencent Yuanbao, Matrix, Email, SMS, DingTalk, Feishu, Mattermost, Home Assistant, ntfy, Raft, Webhooks
-- ✅ Cron jobs started from a session where `/fast on` is active
+- ✅ Every gateway platform — the full 35+ adapter lineup ([Part 15](./part15-new-platforms.md)): Telegram, Discord, Slack, Google Chat, WhatsApp (personal + Business Cloud API), Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Feishu/Lark, WeCom, WeCom Callback, Weixin/WeChat, BlueBubbles and Photon (iMessage), QQBot, Tencent Yuanbao, Microsoft Teams, LINE, ntfy, IRC, Buzz, SimpleX, Raft, webhooks, the API server (Open WebUI), A2A, and Hermes Relay frontends
+- ✅ Cron jobs started from a session where `/fast fast` is active
 - ✅ Subagents (`delegate_task` inherits the parent's tier)
 - ❌ Local/Ollama models (no priority tier exists)
 - ❌ Free OpenRouter variants (the `:free` suffix forces default tier)
@@ -133,6 +133,8 @@ Each matched line gets delivered to the agent as an **event**, not a polled log 
 | `severity` | no | `info` (default), `warning`, or `error` — affects how the agent reacts |
 | `max_matches` | no | Stop watching after N matches. Default: unlimited |
 | `stop_process_on_match` | no | Kill the process when the pattern matches |
+
+Want the *end* of the run instead of a matched line? Most long-running work can be declared with a simple completion signal: start the process with `notify_on_complete: true` (alongside any `watch_patterns`) and the agent receives one event when the process exits, carrying the full output. The goal loop [above](#goal--persistent-target-locking) understands both signals when it decides whether to park.
 
 ### Useful Recipes
 
@@ -270,19 +272,32 @@ You → /compress project migration to Fly.io
   Kept 6 messages verbatim, summarized 41 into 2 bullet blocks.
 ```
 
-Without a topic, it runs with its default heuristics. With one, the summarizer preserves detail relevant to that topic and aggressively compresses the rest. Useful when you're 3 hours into a session and want to keep all the migration detail but jettison the 200 tool calls you ran to generate fixtures.
+Without a topic, it runs with its default heuristics. With one, the summarizer preserves detail relevant to that topic and aggressively compresses the rest. Useful when you're 3 hours into a session and want to keep all the migration detail but jettison the 200 tool calls you ran to generate fixtures. `/compress` works in the CLI, the dashboard Chat tab, and the messaging gateway alike; modern sessions also compress automatically at their configured threshold (see [Part 6](./part6-context-compression.md)) before you ever have to do it by hand.
 
 ---
 
 ## `/goal` — Persistent Target Locking
 
-v0.13 added `/goal` for the long-loop version of this problem: not "compress this context," but "keep working until this observable objective is done." v0.14 pairs it with live `/handoff`, which transfers a running goal to a different model or profile mid-flight.
+v0.13 added `/goal` for the long-loop version of this problem: not "compress this context," but "keep working until this observable objective is done" — Hermes' take on the **Ralph loop** from Codex CLI, with an independent implementation. As of v0.19/v0.20 the command family is much richer:
 
 ```text
 /goal Migrate the gateway to Google Chat, run checks, and leave a PR link.
 ```
 
-Use it when the agent should continue across tool calls and intermediate updates until the exit condition is satisfied. As of v0.18, `/goal` enforces a **completion contract**: the agent won't declare a goal done until the stated exit condition is observably met. For multi-agent work, pair it with [Part 23's Kanban board](./part23-tenacity-stack.md); for one focused session, `/goal` is enough.
+After every turn an auxiliary **judge model** checks whether the goal is satisfied; if not, Hermes feeds a continuation prompt back into the same session automatically — until it's achieved, you pause/clear it, or the turn budget runs out (default **20 turns**, `goals.max_turns`; `/goal resume` resets the counter).
+
+Today's command surface:
+
+- `/goal <text>` (set), `/goal status` (or bare `/goal`), `/goal pause`, `/goal resume`, `/goal clear`
+- `/goal draft <text>` — expand a plain-language objective into a structured **completion contract** (`outcome`, `verification`, `constraints`, `boundaries`, `stop_when`) so the judge only declares done with concrete evidence — or write the fields inline (`verify:`, `constraints:`, …)
+- `/goal show` — review the active contract; contracts survive `/resume`
+- `/subgoal <text>` — append acceptance criteria mid-loop; the goal isn't done until the original aim **and** every subgoal pass
+- `/goal gate add <command>` — a deterministic **quality gate**: a shell command that must exit 0 before the judge may even run (3 retries / 5-min timeout per gate, then auto-pause)
+- `/goal wait <pid> [reason]` / `/goal unwait` — park the loop on a background process (the judge also parks automatically when progress depends on a running `terminal(background=true)` watcher)
+
+The judge is deliberately conservative (false "done" is rarer than false "continue"), user messages always preempt the loop, goal state persists in `SessionDB.state_meta` so `/resume` picks it up, and the continuation prompt is a plain user-role message — running a 20-turn goal costs the same cache-wise as 20 turns of chat. Wire the judge to a cheap fast model if you want: `auxiliary.goal_judge` in `config.yaml`.
+
+Use `/goal` when the agent should continue across tool calls until an exit condition is satisfied. For multi-agent work, pair it with [Part 23's Kanban board](./part23-tenacity-stack.md); for one focused session, `/goal` is enough.
 
 ---
 

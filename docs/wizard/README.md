@@ -1,6 +1,6 @@
 # Hermes Config Wizard
 
-Static single-page wizard that emits a ready-to-drop `config.yaml` from 8 answers. **Runs entirely in the browser** — nothing is uploaded. Output shape mirrors [`templates/config/`](../../templates/config/) and is verified against the real Hermes schema (Part 19, v0.18).
+Static single-page wizard that emits a ready-to-drop `config.yaml` from 8 answers. **Runs entirely in the browser** — nothing is uploaded. Output shape mirrors [`templates/config/`](../../templates/config/) and is verified against the real Hermes schema (v0.20.4 — model/provider mapping, `auxiliary:`, `approvals:`, `mcp_servers:`).
 
 ## Local use
 

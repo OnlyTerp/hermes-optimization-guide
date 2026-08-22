@@ -10,6 +10,13 @@
 #   docker compose -f templates/compose/langfuse-stack.yml --env-file .env.langfuse up -d
 #
 # Recommended sizing: 4GB RAM, 2 vCPU minimum. Hetzner CX22 works.
+#
+# TODO(v0.20): Langfuse upstream is now on v4 (docs label "Version: v4") —
+# the official compose lives at
+# https://github.com/langfuse/langfuse/blob/main/docker-compose.yml .
+# The v3 images/env below still work with the bundled HERMES_LANGFUSE_*
+# plugin vars, but re-verify secrets/env against the upstream compose
+# before deploying fresh.
 # ------------------------------------------------------------
 
 services:

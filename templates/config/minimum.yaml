@@ -2,23 +2,27 @@
 # Hermes — MINIMUM config
 # ------------------------------------------------------------
 # The smallest possible working setup:
-#   - 1 provider (Anthropic)
+#   - 1 provider (Anthropic, API key in ~/.hermes/.env)
 #   - CLI only (messaging platforms are wired via ~/.hermes/.env later)
 #   - Native local memory (SQLite — zero config, see Part 7)
 #   - No MCP servers
 # For when you just want to see Hermes work before committing to more.
-# Schema verified against Part 19 (v0.18).
+# Schema verified against the v0.20.4 docs (user-guide/configuration.md,
+# user-guide/configuring-models.md). Model/alias IDs are taken from the
+# live model catalog (`hermes model`) — the values below were current at v0.20.4.
 # ------------------------------------------------------------
 
-# Primary model — the one that drives the tool-calling loop.
-model: claude-sonnet-5
-provider: anthropic
+# Primary model — the mapping written by `hermes model` / the dashboard.
+# `default` is the model id for the provider; `provider` picks auth+routing.
+model:
+  provider: anthropic
+  default: claude-sonnet-5
 
-# API keys stay in ~/.hermes/.env (chmod 600); config only references them.
-providers:
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
+# API keys live in ~/.hermes/.env (chmod 600): ANTHROPIC_API_KEY=...
+# The `providers:` dict is only for CUSTOM OpenAI-compatible endpoints;
+# built-in providers are referenced by name in model.provider.
 
 # That's genuinely it. Memory, session search, and skills work with zero
-# extra config. Run `hermes dashboard` later to layer on platforms, MCP
-# servers, plugins, etc.
+# extra config. Run `hermes gateway run` / `hermes dashboard` later to
+# layer on platforms, servers, plugins, etc. (`hermes setup` walks the
+# whole thing interactively if you prefer.)

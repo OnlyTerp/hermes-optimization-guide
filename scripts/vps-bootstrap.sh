@@ -109,7 +109,15 @@ fi
 # 7. Skill symlinks + config scaffolding
 # ------------------------------------------------------------
 log "Linking skills from the guide into ~hermes/.hermes/skills/..."
-sudo -u hermes mkdir -p /home/hermes/.hermes/skills /home/hermes/.hermes/logs /home/hermes/.hermes/lightrag
+# Current ~/.hermes layout (per the v0.20 docs): config.yaml, .env, SOUL.md,
+# memories/, skills/, sessions/, cron/, logs/, checkpoints/, cache/.
+sudo -u hermes mkdir -p \
+  /home/hermes/.hermes/skills \
+  /home/hermes/.hermes/logs \
+  /home/hermes/.hermes/memories \
+  /home/hermes/.hermes/sessions \
+  /home/hermes/.hermes/cron \
+  /home/hermes/.hermes/checkpoints
 
 shopt -s nullglob
 for skill_dir in "$GUIDE_DIR"/skills/*/*/; do
@@ -132,17 +140,18 @@ fi
 # Stub .env
 if [ ! -f /home/hermes/.hermes/.env ]; then
   cat > /home/hermes/.hermes/.env <<'EOF'
-# Fill these in — Hermes won't start without at least ANTHROPIC_API_KEY or GOOGLE_API_KEY.
+# Fill these in — Hermes won't start without at least one provider key
+# (ANTHROPIC_API_KEY or GOOGLE_API_KEY / GEMINI_API_KEY are the common picks).
 ANTHROPIC_API_KEY=
 GOOGLE_API_KEY=
-TELEGRAM_ADMIN_BOT_TOKEN=
-TELEGRAM_OWNER_ID=
-# Optional providers referenced by the seeded cost-optimized.yaml —
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_ALLOWED_USERS=
+# Optional providers referenced by the seeded cost-optimized.yaml aliases —
 # uncomment and fill in the ones you route to.
-#OPENAI_API_KEY=        # required for LightRAG embeddings
-#MOONSHOT_API_KEY=
-#CEREBRAS_API_KEY=
-#ZAI_API_KEY=
+#KIMI_API_KEY=            # kimi-coding provider (Moonshot/Kimi K3)
+#GLM_API_KEY=             # zai provider (GLM-5.x)
+#XAI_API_KEY=             # xai provider (Grok)
+#DEEPSEEK_API_KEY=        # deepseek provider (V4 class)
 EOF
   chmod 600 /home/hermes/.hermes/.env
   chown hermes:hermes /home/hermes/.hermes/.env

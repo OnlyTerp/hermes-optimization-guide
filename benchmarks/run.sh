@@ -7,7 +7,7 @@
 #
 # Usage:
 #   HERMES_BENCH_API_KEY=sk-... ./run.sh                     # all models x all tasks
-#   HERMES_BENCH_API_KEY=sk-... ./run.sh --model zai/glm-5   # one model
+#   HERMES_BENCH_API_KEY=sk-... ./run.sh --model z-ai/glm-5.2   # one model
 #   HERMES_BENCH_API_KEY=sk-... ./run.sh --task T1_triage    # one task
 #
 # Env:

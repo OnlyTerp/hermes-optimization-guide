@@ -20,7 +20,7 @@ security:
     Touches ~/.hermes/.env. Never logs or echoes plaintext secret values;
     logs SHA-256 fingerprints only. Interactive kinds (API keys, PATs)
     require an operator in the loop — see the headless/cron note below.
-model_hint: google/gemini-3.1-flash
+model_hint: google/gemini-3.7-flash
 ---
 
 # rotate-secrets — Atomic Secret Rotation
@@ -63,12 +63,11 @@ Rotate secrets in `~/.hermes/.env`, propagate the new values to every service th
    - **Discord:** user-guided — rotate public key in Developer Portal
    - **Generic webhook:** ask the user where the producer-side config lives
 
-4. **Restart only affected gateways.**
-   - `TELEGRAM_BOT_TOKEN` → `hermes gateway restart telegram`
-   - `DISCORD_*` → `hermes gateway restart discord`
-   - Slack signing → `hermes gateway restart slack`
-   - GitHub webhook secret → no restart needed (validated per-request)
-   - SMS / Twilio → `hermes gateway restart twilio`
+4. **Restart the gateway.** Platform-scoped restarts aren't a thing — one
+   gateway process serves every platform, so any token rotation is
+   followed by a single restart of the whole service:
+   - `hermes gateway restart`            # systemd/launchd service (or run `hermes gateway run` again if foreground)
+   - For the SMS/Twilio or any other adapter: same command — no per-platform flag exists.
 
 5. **Verify.** Run `hermes doctor` and fail loud if any gateway is unhealthy post-rotation. If unhealthy, restore from the `.env.bak.*` backup and report.
 

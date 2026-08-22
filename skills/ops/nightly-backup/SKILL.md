@@ -22,7 +22,7 @@ security:
     No untrusted input. Handles the backup archive and encryption key
     material — never logs key contents; the age identity/passphrase must
     live outside this host's .env (see Security notes below).
-model_hint: google/gemini-3.1-flash
+model_hint: google/gemini-3.7-flash
 ---
 
 # nightly-backup — Hermes Backup Automation
@@ -34,9 +34,11 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 1. **Snapshot.** Run:
    ```bash
    STAMP=$(date +%Y%m%d-%H%M%S)
-   hermes backup --output /tmp/hermes-backup-$STAMP.tar
+   hermes backup -o /tmp/hermes-backup-$STAMP.zip
    ```
-   This bundles config, sessions, skills, memory, and cron entries per [Part 16](../../../part16-backup-debug.md).
+   `hermes backup` writes a **zip** of the Hermes home (config, skills,
+   sessions, memory, cron jobs, logs) per [Part 16](../../../part16-backup-debug.md).
+   `-q/--quick` takes a fast snapshot of the critical state files instead.
 
 2. **Encrypt.** Non-interactively — this runs from cron, so nothing may prompt.
 
@@ -55,15 +57,18 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 
    **Route B — gpg symmetric with a passphrase:**
    ```bash
-   BACKUP_PASSPHRASE=$(hermes secrets get BACKUP_PASSPHRASE)
+   BACKUP_PASSPHRASE="${BACKUP_PASSPHRASE:-}"   # exported from ~/.hermes/.env via the cron/systemd EnvironmentFile
    gpg --batch --yes --symmetric --cipher-algo AES256 \
        --passphrase "$BACKUP_PASSPHRASE" \
-       /tmp/hermes-backup-$STAMP.tar
+       /tmp/hermes-backup-$STAMP.zip
    ```
+   (There is no `hermes secrets get` for plain env vars — `hermes secrets`
+   only manages Bitwarden/1Password vault sources. Read the passphrase from
+   the environment instead, or pull it from a vault at runtime.)
 
    Then either way:
    ```bash
-   shred -u /tmp/hermes-backup-$STAMP.tar
+   shred -u /tmp/hermes-backup-$STAMP.zip
    ```
 
 3. **Upload.** Based on `remote:` parameter:
@@ -81,10 +86,10 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 5. **Verify.** Download a random recent backup and test-decrypt:
    ```bash
    # Route A (age keyfile):
-   age -d -i ~/.age-backup-key backup.tar.age > /tmp/verify.tar
+   age -d -i ~/.age-backup-key backup.zip.age > /tmp/verify.zip
    # Route B (gpg passphrase):
-   # gpg --batch --passphrase "$BACKUP_PASSPHRASE" -d backup.tar.gpg > /tmp/verify.tar
-   tar tf /tmp/verify.tar | head -5 && shred -u /tmp/verify.tar
+   # gpg --batch --passphrase "$BACKUP_PASSPHRASE" -d backup.zip.gpg > /tmp/verify.zip
+   unzip -t /tmp/verify.zip | tail -3 && shred -u /tmp/verify.zip
    ```
    Fail loud if the verification fails — a backup you can't restore is not a backup.
 
@@ -96,16 +101,20 @@ Thin wrapper around `hermes backup` + encryption + optional remote upload + rete
 
 ## Cron wiring
 
-```yaml
-# ~/.hermes/cron.yaml
-- name: nightly-backup
-  schedule: "0 3 * * *"
-  task: /nightly-backup s3://my-backups/hermes/ 30
-  notify: telegram_private
+Jobs live in `~/.hermes/cron/jobs.json` and are managed via `hermes cron
+create` — the old `cron.yaml` list format was removed upstream:
+
+```bash
+hermes cron create "0 3 * * *" \
+  "Run the nightly-backup skill with remote=s3://my-backups/hermes/ retain_days=30" \
+  --skill nightly-backup --name nightly-backup --deliver telegram
 ```
 
 ## Security notes
 
-- **Never** back up `.env` plaintext — `hermes backup` already excludes it. If you're using a fork, verify with `tar tf backup.tar | grep .env` and bail if it appears.
+- `hermes backup` archives the Hermes home — as of v0.20 the `--quick`
+  snapshot explicitly includes `.env` and `auth.json`. Do **not** assume the
+  archive excludes secrets: inspect what ships (`unzip -l backup.zip`),
+  and treat the encryption step above as the real protection at rest.
 - The decryption secret must live outside this host's `.env` — Route A: keep an offline copy of `~/.age-backup-key` (that file is the only way back into your archives); Route B: keep `BACKUP_PASSPHRASE` in a separate secret store. Otherwise a stolen Hermes host gets both the backups and the key to them.
 - Rotate the backup key/passphrase yearly with `skills/security/rotate-secrets`, then re-encrypt (or at least re-verify) the archives you still need.

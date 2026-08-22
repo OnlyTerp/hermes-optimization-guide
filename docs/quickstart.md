@@ -6,9 +6,10 @@ From zero to working Telegram bot.
 
 - A Linux, macOS, or WSL machine (anything with bash)
 - A Telegram account
-- An Anthropic API key for the default model
-- A Google API key — [aistudio.google.com](https://aistudio.google.com/apikey) for Gemini Flash classification + LightRAG LLM in the Telegram template
-- An OpenAI API key — [platform.openai.com/api-keys](https://platform.openai.com/api-keys) for LightRAG embeddings in the Telegram template
+- One provider API key (Anthropic `ANTHROPIC_API_KEY` or Google
+  `GOOGLE_API_KEY` / `GEMINI_API_KEY` — the template defaults to Claude
+  Sonnet with Gemini Flash for the cheap side-tasks; any provider key gets
+  you started)
 
 ## Step 1 — Install Hermes
 
@@ -45,10 +46,9 @@ chmod 600 ~/.hermes/.env
 
 cat > ~/.hermes/.env <<'EOF'
 ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...                 # required by telegram-bot.yaml for LightRAG embeddings
-GOOGLE_API_KEY=AIza...                # required by telegram-bot.yaml for Gemini Flash classification + LightRAG LLM
-TELEGRAM_ADMIN_BOT_TOKEN=1234567890:ABC...
-TELEGRAM_OWNER_ID=1234567            # your numeric ID from @userinfobot
+GOOGLE_API_KEY=AIza...                 # for the Gemini Flash auxiliary tasks
+TELEGRAM_BOT_TOKEN=1234567890:ABC...   # from @BotFather
+TELEGRAM_ALLOWED_USERS=1234567         # your numeric ID from @userinfobot
 EOF
 ```
 
@@ -76,14 +76,14 @@ done
 
 Then, in a Hermes session (CLI or DM your bot):
 
-```
-/reload
+```bash
+hermes skills list         # confirm the symlinked skills are visible (they load at session start)
 ```
 
 Now try:
 
 - `/audit-mcp` — no servers yet, so you'll get "nothing to audit" (expected)
-- `/cost-report` — shows this session's token usage
+- `/cost-report` — pulls the built-in cost/usage ledger (`hermes insights`)
 - Ask it anything in freeform — chat just works
 
 ## Step 7 — Level up
@@ -105,5 +105,5 @@ Now try:
 |---|---|
 | Bot doesn't respond | Installed as a service? `journalctl --user -u hermes` (or `hermes gateway status`). Running in the foreground? The error is right there in the terminal. 99% of the time it's a missing env var |
 | 401 from Anthropic | Check `ANTHROPIC_API_KEY` has no trailing newline: `cat -A ~/.hermes/.env` |
-| "skill not found: /cost-report" | Run `/reload` in-session after symlinking skills |
+| "skill not found: /cost-report" | Symlinked skills load at the *start* of a session — start a new session (`hermes chat` / `/new`) or restart the gateway, then `hermes skills list` to confirm |
 | Replies are slow | You're rate-limited on a low Anthropic usage tier. Raise your tier or route to Gemini Flash via the `cost-optimized` template |

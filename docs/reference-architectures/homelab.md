@@ -73,30 +73,32 @@ ollama pull qwen2.5-coder:32b
 Start from [`templates/config/production.yaml`](../../templates/config/production.yaml), then:
 
 ```yaml
-# Schema verified against Part 19 (v0.18).
-# Primary model: local via the Ollama OpenAI-compatible endpoint.
-model: llama3.1:70b-instruct-q4_K_M
-provider: ollama
+# Schema: v0.20.4 mapping (model.provider + model.default).
+# Local models via a custom OpenAI-compatible endpoint (Ollama).
+model:
+  provider: custom
+  default: llama3.1:70b-instruct-q4_K_M
+  base_url: http://gpu-box.tailnet-xxx.ts.net:11434/v1
 
-providers:
-  ollama:
-    base_url: http://gpu-box.tailnet-xxx.ts.net:11434/v1
-    api_key: ollama                            # any non-empty string
-  anthropic:
-    api_key: "${ANTHROPIC_API_KEY}"            # for the hard stuff
-
-# There is no intent-routing DSL (Part 20) — you switch models explicitly.
-# Give the escalation a name and use `/model smart` when local isn't enough:
+# Keys in ~/.hermes/.env — ANTHROPIC_API_KEY for the hard stuff,
+# escalated by hand with /model smart:
 model_aliases:
   smart:
     model: claude-sonnet-5
     provider: anthropic
 
-# Keep auxiliary side-tasks local too:
-auxiliary_models:
+# Keep auxiliary side-tasks local too (base_url overrides the provider;
+# a local Ollama accepts any non-empty api_key / OPENAI_API_KEY):
+auxiliary:
   compression:
-    provider: ollama
+    base_url: http://gpu-box.tailnet-xxx.ts.net:11434/v1
     model: qwen2.5-coder:32b
+  web_extract:
+    base_url: http://gpu-box.tailnet-xxx.ts.net:11434/v1
+    model: qwen2.5-coder:32b
+  vision:
+    provider: gemini            # local box has no vision model — Gemini Flash is cheap
+    model: gemini-3.7-flash
 ```
 
 Platform wiring lives in `~/.hermes/.env`, not config.yaml (Part 19, Layer 1):
@@ -125,7 +127,8 @@ Then enable the plugin and point it at your box: `hermes plugins enable observab
 for skill in /opt/hermes-optimization-guide/skills/*/*/; do
   ln -sfn "$skill" "/home/hermes/.hermes/skills/$(basename $skill)"
 done
-hermes /reload
+# Skills load at session start — next session picks them up.
+hermes skills list
 ```
 
 ## Honest tradeoffs

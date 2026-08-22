@@ -6,35 +6,37 @@
 #   - Telegram gateway (token + allowlist live in ~/.hermes/.env — see below)
 #   - Native local memory (Part 7); add LightRAG later via Part 3
 #   - Sensible approval defaults
-# Schema verified against Part 19 (v0.18).
+# Schema verified against the v0.20.4 docs (user-guide/configuration.md,
+# user-guide/configuring-models.md, user-guide/messaging/telegram.md).
+# Model IDs follow the live catalog (`hermes model`).
 # ------------------------------------------------------------
 
-# Primary model — drives the tool-calling loop.
-model: claude-sonnet-5
-provider: anthropic
+# Primary model — drives the tool-calling loop. Mapping shape as written
+# by `hermes model` / the dashboard.
+model:
+  provider: anthropic
+  default: claude-sonnet-5
 
-providers:
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-  google:
-    api_key: ${GOOGLE_API_KEY}
+# API keys live in ~/.hermes/.env (ANTHROPIC_API_KEY, GOOGLE_API_KEY or
+# GEMINI_API_KEY). The providers: dict is only for custom endpoints, so
+# there is nothing to declare here for the built-in providers.
 
-# Anthropic prompt caching — stable prefixes (system prompt, skills, memory)
-# are auto-marked cacheable; cached reads are ~90% off.
+# Anthropic prompt caching — on automatically for native Anthropic /
+# OpenRouter / Nous Portal; cache_ttl is the only knob.
 prompt_caching:
   cache_ttl: "5m"                    # "5m" or "1h" — the only two Anthropic tiers
 
 # Route the side-tasks (classification-ish work) to a cheap model.
-auxiliary_models:
+auxiliary:
   compression:
-    provider: google
-    model: gemini-3.1-flash
+    provider: gemini
+    model: gemini-3.7-flash
   web_extract:
-    provider: google
-    model: gemini-3.1-flash
+    provider: gemini
+    model: gemini-3.7-flash
   vision:
-    provider: google
-    model: gemini-3.1-flash
+    provider: gemini
+    model: gemini-3.7-flash          # needs a multimodal model
 
 # ------------------------------------------------------------
 # Telegram wiring lives in ~/.hermes/.env, not here (Part 4):
@@ -45,8 +47,9 @@ auxiliary_models:
 # Hermes is default-deny: no allowlist = nobody gets in. Never set
 # GATEWAY_ALLOW_ALL_USERS=true on a bot strangers can find.
 #
-# Want a public-facing bot too? Run it as a SEPARATE Hermes instance /
-# profile with its own token and a hardened config — see Part 19 and
+# Want a public-facing bot too? Run it as a SEPARATE profile (its own
+# config + .env + bot token) — `hermes profile create quarantine`, then
+# `hermes -p quarantine gateway run`. See Part 19 and
 # templates/config/security-hardened.yaml. Don't mix trust levels in
 # one deployment.
 # ------------------------------------------------------------
@@ -54,10 +57,10 @@ auxiliary_models:
 group_sessions_per_user: true        # Each group participant gets an isolated session
 
 # Dangerous-command approval (Part 19, Layer 2). The dangerous patterns
-# are built into Hermes (tools/approval.py) — you don't write regex here.
+# are built into Hermes — you don't write regex here.
 approvals:
-  mode: manual                       # manual | smart | off
-  timeout: 60                        # seconds before fail-closed deny
+  mode: manual                       # manual | smart (default) | off
+  timeout: 60                        # seconds before fail-closed deny (default 300)
   cron_mode: deny                    # cron jobs never auto-approve dangerous commands
 
 # "Always approve" pattern descriptions land here when you answer
@@ -67,7 +70,7 @@ command_allowlist: []
 security:
   redact_secrets: true               # default on — keep it on
 
-# Cron jobs live in ~/.hermes/cron.yaml (see Part 19 for examples), e.g.:
-#   - name: nightly-backup
-#     schedule: "0 3 * * *"
-#     task: /nightly-backup local 30
+# Cron jobs live in ~/.hermes/cron/jobs.json, managed via `hermes cron
+# create` / the cronjob tool (the old cron.yaml list is gone). Example:
+#   hermes cron create "0 3 * * *" "Run the nightly backup skill" \
+#     --skill nightly-backup --name nightly-backup --deliver telegram

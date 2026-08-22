@@ -2,69 +2,67 @@
 # Hermes — COST-OPTIMIZED config
 # ------------------------------------------------------------
 # Target: <$5/mo for personal daily-driver usage.
-#   - Gemini Flash as the primary (cheap + fast + huge context)
-#   - Every auxiliary task on cheap/free-tier models (Part 20, Rule 1 —
-#     auxiliary calls are where the silent cost bloat lives)
-#   - Prompt caching on, aggressive compression
+#   - Gemini Flash-class as the primary (cheap + fast + huge context)
+#   - Auxiliary tasks pinned to cheap models (Part 20, Rule 1 — auxiliary
+#     calls are where the silent cost bloat lives)
+#   - Prompt caching on (where the provider supports it), aggressive compression
 #   - Sonnet only when YOU say so (/model smart)
-# Schema verified against Part 19 (v0.18).
+# Schema verified against the v0.20.4 docs (user-guide/configuration.md,
+# user-guide/configuring-models.md). Model IDs follow the live catalog
+# (`hermes model`) — the values below were current at v0.20.4.
 #
-# Note: Hermes has no intent/complexity routing DSL (the old routing:
+# Note: Hermes has no intent/complexity routing DSL (the old `routing:`
 # block was removed upstream — see Part 20). The real levers are the
-# primary model, auxiliary_models, aliases, and fallback.
+# primary model, auxiliary.<task>, model_aliases, and `hermes fallback`.
 # ------------------------------------------------------------
 
 # Primary — cheap default that handles 90% of turns.
-model: gemini-3.1-flash
-provider: google
+model:
+  provider: gemini
+  default: gemini-3.7-flash
 
-providers:
-  google:
-    oauth_enabled: true              # Hermes-managed Gemini OAuth free tier
-    api_key: ${GOOGLE_API_KEY}       # Used only when OAuth is unavailable
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-  moonshot:
-    api_key: ${MOONSHOT_API_KEY}
-  cerebras:
-    api_key: ${CEREBRAS_API_KEY}
-    base_url: https://api.cerebras.ai/v1
-  zai:
-    api_key: ${ZAI_API_KEY}
+# API keys live in ~/.hermes/.env: GOOGLE_API_KEY (or GEMINI_API_KEY),
+# ANTHROPIC_API_KEY, KIMI_API_KEY, GLM_API_KEY / ZAI_API_KEY.
+# The providers: dict below is only for custom OpenAI-compatible
+# endpoints; nothing needs declaring here for built-in providers.
+# providers:
+#   my-proxy:
+#     base_url: https://llm.internal.example.com/v1
+#     key_env: MY_PROXY_API_KEY
 
-# Anthropic prompt caching for the opt-in Sonnet sessions.
+# Anthropic prompt caching for the opt-in Sonnet sessions — auto-on on
+# native Anthropic / OpenRouter / Nous Portal; cache_ttl is the only knob.
 prompt_caching:
   cache_ttl: "5m"
 
-# Side-tasks to the cheapest adequate model. Cerebras Qwen 3 32B is
-# near-free and 2000+ tok/s — perfect for compression/classification-ish jobs.
-auxiliary_models:
+# Side-tasks to the cheapest adequate model. Qwen/Kimi flash-class direct
+# or aggregator ids are near-free — pick what your auth actually has.
+auxiliary:
   compression:
-    provider: cerebras
-    model: qwen-3-32b
-    timeout: 30
+    provider: gemini
+    model: gemini-3.7-flash
   web_extract:
-    provider: cerebras
-    model: qwen-3-32b
+    provider: gemini
+    model: gemini-3.7-flash
   vision:
-    provider: google
-    model: gemini-3.1-flash          # needs a multimodal model
-  session_search: auto
-  approval: auto
+    provider: gemini
+    model: gemini-3.7-flash          # needs a multimodal model
+  # title_generation:
+  #   provider: auto
 
 # Escalate by hand when a task deserves it: /model coder, /model smart.
 model_aliases:
   fast:
-    model: qwen-3-32b
-    provider: cerebras
+    model: gemini-3.7-flash
+    provider: gemini
   coder:
-    model: kimi-k2.6
-    provider: moonshot
+    model: kimi-k3
+    provider: kimi-coding
   smart:
     model: claude-sonnet-5
     provider: anthropic
   glm:
-    model: glm-5
+    model: glm-5.2
     provider: zai
 
 # Compress early — Flash is cheap but context is still the real cost
@@ -80,7 +78,7 @@ compression:
 
 approvals:
   mode: manual
-  timeout: 60
+  timeout: 60                        # fail-closed deny on timeout (default 300)
   cron_mode: deny
 
 command_allowlist: []
@@ -92,6 +90,6 @@ security:
 #   TELEGRAM_BOT_TOKEN=...
 #   TELEGRAM_ALLOWED_USERS=<your-numeric-user-id>
 #
-# Cost visibility: /usage 7d --by-provider, plus the weekly /cost-report
+# Cost visibility: `hermes insights --days 7`, plus the weekly cost-report
 # cron. Hermes has no built-in cost-alert block — put alerts in your
 # tracing layer (Langfuse/Helicone) or a log-tailing script (Part 20, Rule 5).

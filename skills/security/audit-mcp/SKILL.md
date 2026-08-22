@@ -14,7 +14,7 @@ security:
   notes: |
     Read-only audit. Reads config.yaml and .env key NAMES (never values),
     runs npm view / git log. Never modifies config without confirmation.
-model_hint: google/gemini-3.1-flash
+model_hint: google/gemini-3.7-flash
 ---
 
 # audit-mcp — MCP Server Security Audit
@@ -87,5 +87,5 @@ Report as markdown. Paste into Telegram / Discord / dashboard as-is. Example:
 ## Notes
 
 - Runs entirely locally. No data leaves the host.
-- Pair with `cron.yaml` to run weekly (see [Part 19](../../../part19-security-playbook.md#periodic-security-hygiene)) — this skill is read-only, so `approvals.cron_mode: deny` won't block it.
+- Pair with a weekly cron job (see [Part 19](../../../part19-security-playbook.md#periodic-security-hygiene); create it with `hermes cron create "0 9 * * 1" ... --skill audit-mcp`) — this skill is read-only, so `approvals.cron_mode: deny` won't block it.
 - Uses `terminal` to exec `npm view` / `git log`; uses `file` to read the config.

@@ -1,6 +1,6 @@
 # Hermes Ecosystem
 
-The canonical "where do I find X for Hermes" directory. Maintained alongside the guide — if you ship something useful, open a PR to add it.
+The canonical "where do I find X for Hermes" directory. Maintained alongside the guide — if you ship something useful, open a PR to add it. *Last refreshed: August 2026 (Hermes v0.20.4 "Herald" era).*
 
 ---
 
@@ -8,12 +8,13 @@ The canonical "where do I find X for Hermes" directory. Maintained alongside the
 
 ### Official / reference
 - [`github/github-mcp-server`](https://github.com/github/github-mcp-server) — GitHub's official server: PRs, issues, code search, Actions (replaces the archived `@modelcontextprotocol/server-github`)
+- [GitLab MCP server](https://docs.gitlab.com/user/model_context_protocol/mcp_server/) — built into GitLab (`/api/v4/mcp`, HTTP or `mcp-remote`): issues, merge requests, projects
 - [`@modelcontextprotocol/server-filesystem`](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) — read/write to scoped directories
 - [`@modelcontextprotocol/server-postgres`](https://www.npmjs.com/package/@modelcontextprotocol/server-postgres) — read-only SQL *(archived/legacy — reference only; prefer a vendor Postgres MCP such as Supabase's)*
 - [`@modelcontextprotocol/server-sqlite`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite) — local SQLite
-- [`@modelcontextprotocol/server-puppeteer`](https://www.npmjs.com/package/@modelcontextprotocol/server-puppeteer) — headless browser automation *(archived/legacy — prefer Browserbase or Playwright MCP)*
 - [`@modelcontextprotocol/server-memory`](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) — lightweight KV memory
 - [`@modelcontextprotocol/server-google-drive`](https://www.npmjs.com/package/@modelcontextprotocol/server-gdrive) — Drive read
+- [`microsoft/playwright-mcp`](https://github.com/microsoft/playwright-mcp) — browser automation with accessibility snapshots, screenshots, and console/network traces (the de-facto successor of the archived puppeteer server)
 
 ### First-party vendor MCPs
 - [`AWS Labs MCP servers`](https://github.com/awslabs/mcp) — AWS docs, CDK, cost, diagrams, and service-specific helpers
@@ -24,17 +25,31 @@ The canonical "where do I find X for Hermes" directory. Maintained alongside the
 - [`@notionhq/notion-mcp-server`](https://github.com/makenotion/notion-mcp-server) — page read/write
 - [`@browserbase/mcp-server`](https://github.com/browserbase/mcp-server-browserbase) — managed headless browser
 - [`@chromadb/mcp-server-chroma`](https://github.com/chroma-core/chroma-mcp) — vector search
+- [`@upstash/context7-mcp`](https://github.com/upstash/context7) — live library/framework docs fetched on demand; the antidote to stale training-data answers
 
 ### Community
 - [`Mem0 remote MCP`](https://docs.mem0.ai/platform/mem0-mcp) — persistent cross-device memory
 - [`arxiv-mcp-server`](https://github.com/blazickjp/arxiv-mcp-server) — arxiv search + PDF extraction
 - [`mcp-server-atlassian`](https://github.com/sooperset/mcp-atlassian) — Jira + Confluence
-- [`@modelcontextprotocol/server-slack`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/slack) — message, search, profile
+- [`@modelcontextprotocol/server-slack`](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/slack) — message, search, profile *(archived/legacy — Slack's official hosted MCP is the current path)*
 - [`dbt-mcp`](https://github.com/dbt-labs/dbt-mcp) — dbt Cloud
 - [`e2b-dev/mcp-server`](https://github.com/e2b-dev/mcp-server) — disposable Python sandboxes
 - [`mcp-obsidian`](https://github.com/MarkusPfundstein/mcp-obsidian) — your Obsidian vault
 
 See [Part 17](./part17-mcp-servers.md) for install patterns and trust model guidance.
+
+---
+
+## Agent-to-agent & new channels (v0.20 "Herald", first-party)
+
+These ship with Hermes — enable via `hermes gateway setup`:
+
+- **A2A v1.0** — the Linux Foundation's [Agent2Agent protocol](https://a2a-protocol.org), both directions: Hermes calls other agents as tools (`a2a_discover` / `a2a_call` / `a2a_orchestrate`), or other agents hand your Hermes tasks over HTTP. Interops with any `a2a-sdk` peer — another Hermes, LangChain, CrewAI, Google ADK. [Hermes docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a)
+- **Photon iMessage** — managed iMessage channel via [Photon](https://photon.codes/): persistent-connection (no webhook), free shared-line pool, paid Business tier for a dedicated number, **no Mac required** (`hermes photon login`). [Hermes docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/photon)
+- **Raft** — Hermes as an [external agent](https://raft.build) over a local wake-channel bridge; the agent owns all message I/O through the Raft CLI. [Hermes docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/raft)
+- **Buzz** — Block's open-source [human + agent collaboration platform](https://github.com/block/buzz) on Nostr; Hermes relays channels/DMs with no extra Python deps. [Hermes docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/buzz)
+
+See [Part 15](./part15-new-platforms.md) for setup on these and the rest of the 25+ platform menu.
 
 ---
 
@@ -46,7 +61,7 @@ See [Part 22](./part22-latest-power-moves.md#4-use-plugins-for-integrations-not-
 
 ---
 
-## Community projects on the radar (July 2026)
+## Community projects on the radar (August 2026)
 
 *Community-maintained; audit before installing — anything that reads sessions or executes code deserves a code review first ([Part 19](./part19-security-playbook.md)).*
 
@@ -65,10 +80,10 @@ See [Part 22](./part22-latest-power-moves.md#4-use-plugins-for-integrations-not-
 
 ## Coding-agent integrations
 
-- [Claude Code](https://docs.claude.com/en/docs/claude-code) — `claude -p` + ACP; best unattended PR lane with Sonnet 5 / Opus 4.7
-- [OpenAI Codex CLI](https://github.com/openai/codex) — `codex -p`; strong sandboxed bug-fix lane with GPT-5.5/Codex models
+- [Claude Code](https://docs.claude.com/en/docs/claude-code) — `claude -p` + ACP; the premier unattended PR lane (Sonnet 5 / Opus 4.8 class models)
+- [OpenAI Codex CLI](https://github.com/openai/codex) — `codex -p`; strong sandboxed bug-fix lane with GPT-5.6 (Sol/Terra/Luna) / Codex-class models
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `gemini -p` (free tier via OAuth); best repo-scale read/research lane
-- [OpenCode](https://github.com/sst/opencode) — multi-model orchestrator; useful with Kimi K2.6 / GLM budget lanes
+- [OpenCode](https://github.com/sst/opencode) — multi-model orchestrator; useful with Kimi K3 / GLM-5.2 budget lanes (the OpenCode Free provider is also zero-config in the Hermes model picker)
 - [Aider](https://aider.chat) — pair-programming REPL
 
 See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.md#2-add-worker-lanes-instead-of-giant-prompt-swarms).
@@ -87,7 +102,7 @@ See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.m
 
 ## Observability + cost
 
-- [Langfuse](https://github.com/langfuse/langfuse) — self-hostable tracing + prompts + evals
+- [Langfuse](https://github.com/langfuse/langfuse) — self-hostable tracing + prompts + evals (Part 20 covers the Langfuse v4 / OpenTelemetry collector path)
 - [Helicone](https://github.com/Helicone/helicone) — gateway-first proxy, auto caching
 - [Arize Phoenix](https://github.com/Arize-ai/phoenix) — OpenTelemetry-native, offline
 - [OpenRouter](https://openrouter.ai) — provider aggregator with cost routing
@@ -95,6 +110,14 @@ See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.m
 - [Artificial Analysis](https://artificialanalysis.ai) — third-party benchmarks
 
 See [Part 20](./part20-observability.md).
+
+---
+
+## Egress, vaults & spend control
+
+- **iron-proxy / `hermes egress`** — remote sandboxes hold only **proxy tokens**; a local iron-proxy resolves them to real credentials at the egress boundary, so API keys never enter the sandbox. See [Part 21](./part21-remote-sandboxes.md) and [Part 19](./part19-security-playbook.md).
+- **External secrets managers** — provider keys can live in Bitwarden, 1Password, or any CLI vault; only the bootstrap token stays in `.env`. See [Part 19](./part19-security-playbook.md).
+- **Spend kernels** — for money-touching agents, put an external approval/payment layer in front (Custodian / `CommercePolicy`, and the Latch / payguard patterns from the radar above). See [Part 19](./part19-security-playbook.md#external-spend-kernels-when-the-agent-touches-money).
 
 ---
 
@@ -121,8 +144,10 @@ See [Part 19](./part19-security-playbook.md).
 ## Elsewhere on the web
 
 - [Hermes Agent (Nous Research)](https://github.com/NousResearch/hermes-agent) — upstream
+- [Hermes docs](https://hermes-agent.nousresearch.com/docs) — official docs (messaging, features, references)
 - [Model Context Protocol](https://modelcontextprotocol.io) — spec + servers catalog
 - [awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers)
+- [Agent2Agent protocol](https://a2a-protocol.org) — the open agent interoperability spec Hermes speaks
 - [Nous Research Discord](https://discord.gg/nousresearch) — community support
 
 ---

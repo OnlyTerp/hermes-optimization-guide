@@ -81,9 +81,8 @@ Thanks to @alice, @bob, @charlie for contributions this release.
 
 ## Cron wiring
 
-```yaml
-- name: weekly-release-preview
-  schedule: "0 16 * * 5"           # Fridays 4pm
-  task: /release-notes range=origin/main..last-release
-  notify: telegram_private
+```bash
+hermes cron create "0 16 * * 5" \
+  "Generate release notes for origin/main..last release" \
+  --skill release-notes --name weekly-release-preview --deliver telegram
 ```

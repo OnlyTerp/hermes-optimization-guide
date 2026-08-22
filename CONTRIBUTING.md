@@ -7,7 +7,7 @@ This guide is built in public. PRs welcome.
 - ✅ Corrections (docs drift fast — features, prices, PR numbers)
 - ✅ New skills under `skills/` (runnable `SKILL.md` files)
 - ✅ New config templates under `templates/config/`
-- ✅ New MCP / dashboard / tool entries in `ECOSYSTEM.md`
+- ✅ New MCP / dashboard / tool entries in `ECOSYSTEM.md` (community-maintained entries carry an explicit "audit before installing" note — see the radar section)
 - ✅ Benchmark contributions under `benchmarks/` (with methodology notes)
 - ✅ New diagrams in `diagrams/` (Mermaid preferred)
 - ✅ Typo fixes, cross-link fixes, formatting
@@ -59,7 +59,7 @@ The [README Repo Map](./README.md#repo-map) is the canonical, row-by-row descrip
 
 - **Plain English over jargon.** Explain *why*, not just *what*.
 - **Runnable over explained.** If you can ship a working template or skill alongside a doc section, do.
-- **Receipts.** Link PRs, release notes, advisories. Date anything that drifts (prices, benchmarks).
+- **Receipts.** Link PRs, release notes, advisories. Date anything that drifts (prices, version numbers, benchmarks).
 - **Opinionated where it matters.** Saying "Sonnet for coding" beats "here are 7 models, pick one."
 
 ## Local preview

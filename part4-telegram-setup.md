@@ -1,12 +1,12 @@
 # Part 4: Telegram Setup (Chat From Anywhere)
 
-*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 25+ messaging adapters — start here, branch out to the others as needed.*
+*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 35+ messaging adapters — start here, branch out to the others as needed.*
 
 ---
 
-## The 25+ Platform Gateway
+## The 35+ Platform Gateway
 
-As of v0.17, the Hermes gateway ships adapters/plugins for **25+ platforms**. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. v0.14 also improved Discord history/search fetches, so large server channels are more useful as context sources instead of one-message-only triggers.
+As of v0.20.4, the Hermes gateway ships adapters/plugins for **35+ platforms** — and the roster keeps growing. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. Large server channels (Telegram supergroups, Discord servers) are usable as rich context sources, not just message triggers.
 
 | Flagship | Consumer / regional | Enterprise / regional | Self-hosted / generic |
 |----------|---------------------|-----------------------|-----------------------|
@@ -76,6 +76,23 @@ sethome - Set this chat as the home channel
 status - Show agent status
 ```
 
+### Online / Offline Status Indicator (Optional)
+
+Telegram exposes no real presence dot for bots — the green "online" circle is a user-account feature. The closest surface is the bot's **short description** (the line under its name on the profile page). Hermes can update it automatically:
+
+```yaml
+gateway:
+  platforms:
+    telegram:
+      extra:
+        status_indicator: true
+        # Optional custom strings (defaults: "Online" / "Offline"):
+        status_online: "🟢 Online"
+        status_offline: "🔴 Offline"
+```
+
+The indicator writes **Online** when the gateway connects and **Offline** on a *clean* shutdown — a hard crash leaves the last-known state. It's off by default because it mutates the bot's global profile.
+
 ---
 
 ## Step 3: Privacy Mode (Critical for Groups)
@@ -99,6 +116,18 @@ Telegram bots have **privacy mode** enabled by default. This is the single most 
 > **You must remove and re-add the bot to any group** after changing the privacy setting. Telegram caches the privacy state when a bot joins a group — it won't update until removed and re-added.
 
 > **Alternative:** Promote the bot to **group admin**. Admin bots always receive all messages regardless of privacy settings.
+
+### Observe Group Messages Without Auto-Replying
+
+For OpenClaw / Yuanbao-style groups, the bot can **see** ordinary group messages (as context) while only **responding** when directly triggered:
+
+```bash
+TELEGRAM_ALLOWED_CHATS=-1001234567890
+TELEGRAM_GROUP_ALLOWED_CHATS=-1001234567890
+TELEGRAM_OBSERVE_UNMENTIONED_GROUP_MESSAGES=true
+```
+
+With this mode on, unmentioned messages from allowlisted chats/topics are appended to the shared group session as **observed context** — they never dispatch the agent, but a later `@your_bot` mention, reply, or configured mention pattern can use that context. The same settings live in `config.yaml` under a top-level `telegram:` block (`allowed_chats`, `group_allowed_chats`, `require_mention: true`, `observe_unmentioned_group_messages: true`). As above, this requires Telegram to deliver ordinary group messages — privacy mode off or the bot promoted to admin.
 
 ---
 
@@ -156,6 +185,9 @@ The bot should come online within seconds. Send it a message on Telegram to veri
 ## Gateway Management
 
 ```bash
+# Run in the foreground (keep the terminal open)
+hermes gateway run
+
 # Check gateway status
 hermes gateway status
 
@@ -165,8 +197,11 @@ hermes gateway stop
 # Restart after config changes
 hermes gateway restart
 
-# Run as a system service (auto-start on boot)
-hermes gateway install   # Sets up systemd/launchd service
+# Install as a background service (auto-start on boot)
+hermes gateway install   # systemd (Linux) / launchd (macOS); Scheduled Task on Windows
+
+# View every profile's gateway status
+hermes gateway list
 ```
 
 ---
@@ -198,11 +233,14 @@ The bot supports Telegram's native command menu (the `/` button in chat).
 Cron job results are delivered directly to your Telegram chat:
 
 ```bash
-# Deliver cron results to Telegram (cron expression: hourly)
-hermes cron create --deliver telegram --schedule "0 * * * *" "Check server status"
+# Deliver cron results to Telegram (schedule: hourly cron expression)
+hermes cron create --deliver telegram "0 * * * *" "Check server status"
+
+# Natural-language schedules work too
+hermes cron create --deliver telegram "every 2h" "Check server status"
 ```
 
-Cron schedules are standard cron expressions — the same format the dashboard's Cron page uses ([Part 12](./part12-web-dashboard.md#cron)). Since v0.17, **Automation Blueprints** give you pre-built scheduled workflows (morning briefings, monitors, digests) you can enable instead of writing cron jobs from scratch.
+Schedules accept standard cron expressions or plain language (`every 2h`, `30m`) — the dashboard's Cron page ([Part 12](./part12-web-dashboard.md#cron)) shows the same format. **Automation Blueprints** give you pre-built scheduled workflows (morning briefings, monitors, digests) you can enable instead of writing cron jobs from scratch.
 
 ---
 
@@ -258,7 +296,7 @@ Each user gets their own conversation session. The bot tracks sessions per user 
 
 1. Check the token is set — it lives in `~/.hermes/.env`, not your shell env: `grep -c '^TELEGRAM_BOT_TOKEN=' ~/.hermes/.env` (prints `1` if set, without leaking the value)
 2. Verify the gateway is running: `hermes gateway status`
-3. Check logs: `hermes gateway logs`
+3. Check logs: `hermes logs gateway` (or `hermes logs -f gateway` to tail)
 
 ### Bot in group but not seeing messages
 
@@ -278,11 +316,7 @@ brew install ffmpeg        # macOS
 
 ### Rate limiting
 
-Telegram limits bots to 30 messages/second to different chats and 20 messages/minute to the same group. If you're hitting limits, add a delay:
-
-```bash
-hermes config set telegram.rate_limit_delay 1
-```
+Telegram's Bot API allows roughly 30 messages/second to different chats and about 20 messages/minute to the same group. If you're hitting limits, space out deliveries: use larger cron intervals, deliver digests rather than per-event messages, and check the current [Telegram docs](https://core.telegram.org/bots/faq) for the latest published ceilings — throttling knobs differ by version, so consult the Hermes docs rather than trusting a hardcoded config key.
 
 ---
 

@@ -20,7 +20,7 @@
  Phone (Telegram) ──→ Driver VPS ($5/mo, always-on)
                             │
                             │   hermes.service
-                            │   remote_sandbox: modal (default)
+                            │   terminal.backend: modal
                             │
                             ▼
                      On-demand sandbox:
@@ -50,28 +50,24 @@ curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/m
 Then customize:
 
 ```yaml
-# /home/hermes/.hermes/config.yaml — schema verified against Part 19 (v0.18)
-model: gemini-3.1-flash                     # Cheap + fast for "plan the work" phase
-provider: google
+# /home/hermes/.hermes/config.yaml — v0.20.4 schema
+model:
+  provider: gemini
+  default: gemini-3.7-flash                  # Cheap + fast for "plan the work" phase
 
-providers:
-  google:
-    api_key: "${GOOGLE_API_KEY}"
-  anthropic:
-    api_key: "${ANTHROPIC_API_KEY}"         # Used by sandboxed Claude Code
+# Keys in ~/.hermes/.env — GOOGLE_API_KEY above;
+# ANTHROPIC_API_KEY is used by sandboxed Claude Code.
 
-# The money section — remote sandbox lanes from PR #8018 (Part 21).
-# Backend credentials (MODAL_TOKEN_ID/SECRET, ssh identity) live in
-# ~/.hermes/.env; pick the lane per-run with /sandbox modal | ssh.
-remote_sandbox:
-  default_backend: modal          # Or daytona / fly / e2b / ssh
-  backends:
-    modal:
-      image: "python:3.12-slim"
-      timeout_idle: 600           # 10m idle → auto-shutdown
-    ssh:                          # your home beast, if any
-      host: "beast.tailnet-xxx.ts.net"
-      user: "hermes"
+# The money section — remote sandbox lanes from Part 21. There is no
+# remote_sandbox: config block; the terminal backend IS the lane, per
+# user-guide/configuration.md (Modal / Daytona / SSH / Vercel Sandbox):
+#   terminal:
+#     backend: modal        # or daytona | ssh | vercel_sandbox
+#     container_cpu: 2
+#     container_memory: 8192
+#     container_persistent: true
+# Backend creds (MODAL_TOKEN_ID/SECRET, DAYTONA_API_KEY, ssh identity)
+# live in ~/.hermes/.env; pick the lane per run via the CLI flags.
 ```
 
 Telegram wiring goes in `~/.hermes/.env` — Hermes is default-deny (Part 19, Layer 1):
@@ -114,8 +110,9 @@ for s in /opt/hermes-optimization-guide/skills/*/*/; do
 done
 
 # Write a tiny remote-run skill (paste into ~/.hermes/skills/remote-run/SKILL.md)
-# that wraps `hermes sandbox run --repo acme/app -- claude -p "$@"`
-hermes /reload
+# that wraps `hermes chat -z "..."` with the sandbox terminal backend active
+# (or the backend-appropriate run flags from Part 21).
+hermes skills list
 ```
 
 ## Safety rails

@@ -4,7 +4,7 @@
   <img src="./assets/power-secrets.svg" alt="Power Secrets — 25 non-obvious mechanics across five clusters: context & cache, cost mechanics, profiles & files, Kanban & ops, and the one-page cheat sheet" width="920">
 </p>
 
-*Twenty-five non-obvious mechanics that separate people who fight Hermes from people who fly it. Distilled from the official Wingtips series (#1–#22 by @witcheer), Teknium's July guidance, and the highest-signal community field reports from July 2026 — verified against the real v0.18.x schema before inclusion.*
+*Twenty-five non-obvious mechanics that separate people who fight Hermes from people who fly it. Distilled from the official Wingtips series (#1–#22 by @witcheer), Teknium's July guidance, and the highest-signal community field reports from July 2026 — verified against the real v0.20.x schema before inclusion.*
 
 ---
 
@@ -209,15 +209,16 @@ md/qmd exports land in `~/.hermes/session-exports` with a manifest. Always `--re
 
 Group Privacy Mode defaults **ON**, so your bot only sees @mentions and `/` commands — plain group messages never arrive. Fix: BotFather → `/setprivacy` → Disable, then **remove and re-add** the bot to each group (the change doesn't apply to groups it already joined). Details: [Part 4](./part4-telegram-setup.md).
 
-### Secret #24 — Background computer use (macOS)
+### Secret #24 — Background computer use (any OS)
 
 ```bash
-hermes computer-use install
-# grant Screen Recording + Accessibility to CuaDriver
-hermes -t computer_use chat
+hermes -t computer_use chat          # session with the computer_use toolset enabled
+hermes computer-use doctor         # why isn't it working? per-check health matrix
+# older installs only, if the driver is missing:
+hermes computer-use install && hermes computer-use status
 ```
 
-The agent clicks and types in the background while **your cursor stays put**; destructive actions wait for approval. See [Part 25](./part25-nvidia-local.md).
+The agent clicks and types in the background — on **macOS, Windows, and Linux** — while **your cursor stays put**; destructive actions wait for approval. Fresh installs pre-install the driver, so it's usually just a `hermes tools` (🖱️ Computer Use) toggle away. Works with any vision-capable model, including a local one on LM Studio/Ollama. See [Part 25](./part25-nvidia-local.md).
 
 ### Secret #25 — Keep Hermes in the loop
 
@@ -271,4 +272,4 @@ Print this. Tape it somewhere.
 
 ---
 
-*Sources: Hermes Wingtips #1–#22 (@witcheer), Teknium's July 2026 posts, and community field reports from 2026-07-09 → 17 — cross-checked against the v0.18.x schema. When a claim couldn't be verified against real behavior, it didn't make this page.*
+*Sources: Hermes Wingtips #1–#22 (@witcheer), Teknium's July 2026 posts, and community field reports from 2026-07-09 → 17 — cross-checked against the v0.20.x schema. When a claim couldn't be verified against real behavior, it didn't make this page.*

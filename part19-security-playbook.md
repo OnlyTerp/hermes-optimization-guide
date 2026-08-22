@@ -195,6 +195,25 @@ Leave it on. `~/.hermes/logs/` is redacted by default; only set `redact_secrets:
 
 > **The honest caveat (from SECURITY.md §2.3):** this reduces casual exfiltration; it is *not* containment. Anything running *inside* the agent process — skills, plugins, hook handlers — can read whatever the agent can, including in-memory credentials. The mitigation for a hostile in-process component is operator review before install (Layer 5), not env scrubbing.
 
+### Layer 3B (v0.20): External secret managers and the egress proxy
+
+Two v0.20 "Herald" features changed the secrets story for the better:
+
+**External secret managers.** Instead of every provider key living in `~/.hermes/.env`, Hermes can pull keys from a secret manager at startup. Only a small **bootstrap token** stays in `.env`; everything else (OpenAI, Anthropic, OpenRouter, ...) rotates centrally. Supported sources ([official docs](https://hermes-agent.nousresearch.com/docs/user-guide/secrets)):
+
+- **Bitwarden Secrets Manager** — `bws` CLI, lazy-installed; the free tier works.
+- **1Password** — `op://` references via the official `op` CLI (service-account or desktop-session auth).
+- **Command helper** — any CLI vault (`keepassxc-cli`, `secret-tool`, `pass`, or your own script) via a helper that prints `KEY=VALUE` lines.
+
+Sources compose with a deterministic precedence ladder: your `.env`/shell wins by default; a source only replaces an existing value when it opts in with `override_existing: true` (Bitwarden defaults to true so central rotation actually lands).
+
+**Egress / iron-proxy** ([official docs](https://hermes-agent.nousresearch.com/docs/user-guide/egress)). For sandboxed terminal backends (Docker today; Modal/Daytona/SSH on the way), the sandbox no longer holds your real API keys: it gets opaque **proxy tokens**, and a local [iron-proxy](https://github.com/ironsh/iron-proxy) daemon (lazy-installed, managed by `hermes egress`) terminates TLS and swaps the proxy token for the real credential before forwarding the request. Compromise the sandbox and the attacker walks away with tokens that only work *behind your configured proxy boundary* — the CA private key and proxy endpoint are part of that boundary. This is the sandbox-compatible answer to "the agent can't read its own `.env`."
+
+```bash
+hermes egress status       # managed iron-proxy daemon + boundary health
+hermes egress enable       # wire proxy tokens into the Docker backend
+```
+
 ---
 
 ## Layer 4: Isolation Backends — Where Egress Control Actually Lives

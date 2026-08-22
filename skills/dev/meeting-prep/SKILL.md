@@ -19,7 +19,7 @@ security:
   notes: |
     Reads your calendar + email + Slack + memory. Does not write. Never
     forwards any of the prep content outside your approved channels.
-model_hint: google/gemini-3.1-flash
+model_hint: google/gemini-3.7-flash
 ---
 
 # meeting-prep — Pre-Meeting Brief
@@ -76,13 +76,16 @@ Produces a one-page markdown brief so you walk into meetings knowing what's goin
 
 ## Triggering 15 min before each meeting
 
-```yaml
-cron:
-  - name: meeting-prep
-    schedule: "*/5 * * * *"   # every 5 min, idempotent
-    task: "/meeting-prep next"
-    filter: "event_starts_within=15m AND event.metadata.prep=true"
-    notify: telegram_dm
+Cron jobs live in `~/.hermes/cron/jobs.json`, created via `hermes cron
+create`. The old YAML cron list (and its `filter:` field) was removed
+upstream — the cheapest honest pattern is a short-interval job that runs
+the skill and lets it decide whether a meeting is <15m away (the skill
+queries your calendar anyway):
+
+```bash
+hermes cron create "*/5 * * * *" \
+  "Prep for the next meeting if it starts within 15 minutes and is tagged prep:true" \
+  --skill meeting-prep --name meeting-prep --deliver telegram
 ```
 
 ## Tips

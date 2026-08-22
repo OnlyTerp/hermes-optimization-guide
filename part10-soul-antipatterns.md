@@ -2,6 +2,8 @@
 
 *SOUL.md is your agent's personality. Most people write terrible ones.*
 
+> **Verified current through Hermes Agent v0.20.4 (v2026.8.18, the "Herald" line)** — this part is deliberately timeless. The system-prompt mechanics haven't changed from v0.14 through v0.20.x: SOUL.md is injected into every message, and every antipattern below still triggers the same annoying agent. Refresh the version stamp; keep the content.
+
 ---
 
 ## What SOUL.md Does
@@ -126,7 +128,7 @@ If your agent is annoying:
 1. **Read your last 10 conversations.** Where does the agent waste words?
 2. **Find the pattern.** Does it always start with "Great question!"? Does it hedge everything?
 3. **Add it to Anti-Patterns.** Be specific: "Never open with 'Great question', 'I'd be happy to help', or 'Absolutely'"
-4. **Test.** Ask the same question again. If it still does the thing, the rule isn't strong enough.
+4. **Test.** Run the same scenario again. If it still does the thing, the rule isn't strong enough.
 
 ## Common Fixes
 
@@ -140,4 +142,4 @@ If your agent is annoying:
 
 ---
 
-*A good SOUL.md is the difference between an agent you tolerate and an agent you trust.*
+*A good SOUL.md is the difference between an agent you tolerate and an agent you trust. Write the personality once; it pays back on every single message.*

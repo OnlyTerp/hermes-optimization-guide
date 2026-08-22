@@ -56,7 +56,7 @@ After=network-online.target
 Type=simple
 User=%i
 WorkingDirectory=/home/%i
-ExecStart=/usr/local/bin/hermes run
+ExecStart=/usr/local/bin/hermes -p %i gateway run --replace
 EnvironmentFile=-/home/%i/.hermes/.env
 # ... all the hardening bits from templates/systemd/hermes.service
 
@@ -79,7 +79,11 @@ systemctl enable --now hermes@alice.service
 
 ## Per-client separation
 
-- **`profile:`** in the Hermes config — `quarantine` (untrusted input for a public bot) vs `trusted` (the dev's admin DM)
+- **Profiles, not a `profile:` config key** — in current Hermes a profile
+  is a separate home directory. Give each dev/client their own Hermes
+  profile (`hermes profile create <client>`) with its own `.env`, bots,
+  and config posture: `quarantine`-style (untrusted input for public
+  channels) vs the dev's trusted admin DM (Part 19)
 - **Approvals** — prompts route to the channel the request came from, so the *real* control is allowlists: the dev's DM is the only surface that reaches the trusted profile; client support channels stay in quarantine (Part 19)
 - **LightRAG dirs** — `~/.hermes/lightrag-<client>/` per client; never mix
 - **MCP** — per-client read-only PATs (`GITHUB_PAT_CLIENT_A`, `GITHUB_PAT_CLIENT_B`)
@@ -89,11 +93,11 @@ systemctl enable --now hermes@alice.service
 
 Use [`templates/config/production.yaml`](../../templates/config/production.yaml) as the base. Key rules:
 
-- **Triage** (most traffic): Cerebras Qwen 3 32B — free-ish tier
-- **Default coding:** Kimi/Moonshot (cheap competent coder)
+- **Triage** (most traffic): Gemini Flash-class — cheap tier
+- **Default coding:** Kimi K3 / Moonshot (cheap competent coder)
 - **"Hard" coding / architecture:** Anthropic Sonnet — explicit opt-in
-- **Long-context research:** Gemini 3.1 Pro
-- **Deep reasoning:** OpenAI reasoning model (opt-in)
+- **Long-context research:** Gemini 3.1 Pro / 3.7 Flash
+- **Deep reasoning:** GPT-5.5-class or Grok 4.6 (opt-in)
 
 With weekly `cost-report` → Discord ops channel, cost anomalies surface before the invoice.
 

@@ -8,7 +8,7 @@
 
 Hermes injects context every message: memory, skills, tool results, conversation history. In long sessions, this grows until you hit the context window limit and the agent freezes or starts forgetting.
 
-Context compression automatically summarizes older messages to keep the context lean. But there's a bug in the default implementation that can silently drop context.
+Context compression automatically summarizes older messages to keep the context lean. There **was** a bug in older implementations (pre-v0.18) that could silently drop context on summarizer failure — it is fixed upstream in current versions (v0.20.x). This part covers what's real today: the actual config keys, the levers that matter, and the newer no-LLM "micro-compaction" paths.
 
 ## The Bug (fixed upstream in v0.18)
 
@@ -58,37 +58,70 @@ return [make_summary_message(summary)]
 
 ## When Compression Triggers
 
-- Default: when context reaches ~80% of the model's window
-- Configurable via `hermes config set` (the same `compression:` block Part 1 uses):
+- Default: `compression.threshold: 0.5` — compression fires when the conversation reaches **50%** of the model's context window (older guides said ~80%; the current default is 0.5).
+- Configurable via `hermes config set` (or directly in `config.yaml` under `compression:`):
 
 ```bash
-# Turn compression on/off
+# Turn compression on/off (default: on)
 hermes config set compression.enabled true
 
-# Fraction of the context window that triggers compression (default: 0.8)
-hermes config set compression.threshold 0.8
+# Fraction of the context window that triggers compression (default: 0.5)
+hermes config set compression.threshold 0.6
 
 # How aggressively to shrink, and how many recent messages to never touch
-hermes config set compression.target_ratio 0.5
-hermes config set compression.protect_last_n 20
+hermes config set compression.target_ratio 0.2    # (default) — keep ~20% of the window as verbatim tail
+hermes config set compression.protect_last_n 20   # (default) — min recent messages kept verbatim
 ```
 
 ## What Compression Actually Keeps (and the Levers That Matter)
 
-When automatic compression fires (the 🗜️ icon — the configured default is the 0.8 threshold above, though community reports often see it fire around the half-full mark once fixed overhead like tool definitions and rule files is counted), it keeps roughly the **first few turns and the last `protect_last_n` messages**, and summarizes the middle. The middle is where "the agent redid work it already did" comes from. Three levers, all hot-reloaded on a running gateway:
+When automatic compression fires (the 🗜️ icon — default trigger is the 0.5 threshold above, though it often fires around the half- to two-thirds-full mark once fixed overhead like tool definitions and rule files is counted), it keeps the opening exchange, the last `protect_last_n` messages verbatim, and summarizes the middle. The middle is where "the agent re-explains decisions it already made" comes from. Real levers, all hot-reloaded on a running gateway:
 
 ```yaml
 compression:
-  protect_last_n: 30            # keep more recent turns verbatim (default 20)
+  enabled: true                 # toggle compression on/off (default: on)
+  threshold: 0.5                # compress at 50% of the model's context window (default)
+  target_ratio: 0.20            # fraction of the window preserved verbatim as the tail (default 0.2)
+  protect_last_n: 20            # min recent messages kept verbatim (default 20)
+  protect_first_n: 3            # opening exchange pinned across every compaction (default 3)
+  in_place: true                # compact in place on the same session id — pre-compaction turns
+                                # are soft-archived (searchable), never deleted
+  threshold_tokens: null        # optional absolute token cap — fires at the lower of ratio vs. absolute
+  tail_mode: legacy             # "lean" = clamped ~2.5% tail with digests — about 3x fewer retained tokens
+  idle_compact_after_seconds: 0 # opt-in: compact a stale resumed thread up front (0 = off)
+  proactive_prune_tokens: 0     # opt-in no-LLM tool-dump prune trigger (0 = off; see below)
+
+# The summarizer is a separate auxiliary LLM call — point it somewhere cheap:
 auxiliary:
   compression:
-    provider: openrouter
-    model: google/gemini-3-flash  # summarize on a cheap model, never your primary
-model:
-  context_length: 200000        # a bigger ceiling = compression fires later
+    provider: auto              # "auto" (default) or force "openrouter" / "nous" / ...
+    model: ""                   # empty = main chat model; e.g. "google/gemini-3-flash-preview"
 ```
 
-And compaction is a **structured brief, not amnesia** — it fills fixed slots (goal / constraints / progress / key decisions / relevant files / next steps / critical context), and the raw turns stay in `state.db` for `session_search`. So *write for the compactor*: state goals and decisions in plain declarative sentences, and put never-drop facts in `MEMORY.md` instead of chat. More context-survival mechanics: [Part 27](./part27-power-secrets.md#1-context-memory--the-prefix-cache).
+And compaction is **non-destructive, not amnesia**: with `in_place: true` (the default), the pre-compaction turns are soft-archived under the same session id — no session rotation, no `#2`/`#3` renumbering — and they stay searchable via `session_search`. Three levers that matter: pin the summarizer to a cheap model under `auxiliary.compression` (the summary model's context window **must be ≥ your main model's window**, or the middle turns get dropped without a summary), raise `model.context_length` to delay compaction, and keep never-drop facts in `MEMORY.md` rather than chat. More cache mechanics: [Part 27](./part27-power-secrets.md#1-context-memory--the-prefix-cache).
+
+## Micro-Compaction: The No-LLM Tool-Dump Prune (v0.20)
+
+Full compaction is a summarization LLM call — not something you want firing on every tool iteration. On large-window models the threshold compaction (~50% of the window) rarely fires, so bulky tool results (terminal output, file reads, web extracts) ride along in history and get re-sent every turn. Hermes adds a deterministic, **model-free** prune that runs independently of `threshold`:
+
+```yaml
+compression:
+  proactive_prune_tokens: 48000     # 0 (default) = off. When re-sent history exceeds this, prune.
+  proactive_prune_min_result_chars: 8000     # Only summarize tool results larger than this
+  proactive_prune_min_reclaim_tokens: 4096  # Only commit if it reclaims at least this many tokens
+```
+
+The prune deduplicates identical results, summarizes old oversized tool outputs, and truncates huge tool-call arguments — and it never calls the model. It leaves `protect_last_n` untouched, and full outputs stay recoverable from the session store. The minimum-reclaim gate is deliberate: a committed prune rewrites already-sent history and invalidates the provider's prompt-cache prefix, so the defaults keep cache breaks episodic (one meaningful break) instead of firing on every tool call. Set `proactive_prune_tokens: 48000` on a big-window model and stale tool dumps stop re-riding along on every turn.
+
+Sibling key: `idle_compact_after_seconds` (default 0) — a long-lived thread that resumes after at least that many idle seconds compacts its stale history up front, before the next reply (`1800` = after 30 minutes). And on the gateway, the count-based safety valve `compression.hygiene_hard_message_limit` (default 5000) forces compression when API calls keep disconnecting before token-usage data arrives — so an oversized session recovers even when the token threshold can't fire.
+
+You can also compress **manually** whenever you want, with a boundary you pick (same summarizer and locks as automatic compaction):
+
+```
+/compress                      # full summary now
+/compress here [N]             # keep the most recent N exchanges verbatim (default 2), summarize the rest
+/compress focus <topic>        # narrow what the full summary preserves
+```
 
 ## The Context You Didn't Order: Third-Party Rule Files
 

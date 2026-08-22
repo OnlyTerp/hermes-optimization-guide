@@ -1,28 +1,29 @@
 # Part 13: Tool Gateway, Local Proxy, and Live Search
 
-*If you have a paid Nous Portal or OAuth-backed provider subscription, Hermes can turn it into tools: managed web/image/TTS/browser calls, an OpenAI-compatible local proxy, and first-class live X search.*
+*If you have a paid Nous Portal subscription, Hermes can turn it into tools: managed web/image/TTS/STT/browser calls, an OpenAI-compatible local proxy for OAuth providers, keyless web search, and first-class live X search.*
 
 ---
 
 ## What It Is
 
-Historically, if you wanted Hermes to search the web, generate images, speak, or drive a browser, you needed **four separate accounts**:
+Historically, if you wanted Hermes to search the web, generate images, speak, or drive a browser, you needed **separate accounts**:
 
-- Firecrawl / Exa / Tavily / Parallel for web search
+- Firecrawl / Exa / Tavily / Parallel / Keenable for web search
 - FAL for image generation
 - OpenAI / ElevenLabs for TTS
 - Browser Use / Browserbase for browser automation
 
-That's four signups, four API keys, four billing pages, and four different free-tier limits.
+That's multiple signups, API keys, billing pages, and different free-tier limits.
 
-The **Nous Tool Gateway** collapses all of that into one line in your config. If you're a paid [Nous Portal](https://portal.nousresearch.com) subscriber, tool usage bills against your subscription — no extra keys required.
+The **Nous Tool Gateway** collapses all of that into one subscription. If you're a paid [Nous Portal](https://portal.nousresearch.com) subscriber, tool usage bills against your subscription — no extra keys required. Some accounts also get a **free tool pool** — a small managed-tool allowance covering gateway calls without a paid subscription (Hermes surfaces it with a setup prompt on first use).
 
 | Tool | Upstream | Direct key you'd otherwise need |
 |------|----------|---------------------------------|
-| Web search & extract | Firecrawl | `FIRECRAWL_API_KEY`, `EXA_API_KEY`, `PARALLEL_API_KEY`, `TAVILY_API_KEY` |
-| Image generation | FAL (FLUX 2 Pro + upscaling) | `FAL_KEY` |
-| Text-to-speech | OpenAI TTS | `VOICE_TOOLS_OPENAI_KEY`, `ELEVENLABS_API_KEY` |
-| Browser automation | Browser Use | `BROWSER_USE_API_KEY`, `BROWSERBASE_API_KEY` |
+| Web search & extract | Firecrawl through the gateway | `FIRECRAWL_API_KEY`, `EXA_API_KEY`, `PARALLEL_API_KEY`, `TAVILY_API_KEY` |
+| Image generation | Nine models under one endpoint, default FLUX 2 Klein 9B (FLUX 2 Pro, Nano Banana Pro, GPT Image 1.5/2, Ideogram V3, Recraft V4 Pro, Qwen Image, Z-Image Turbo) | `FAL_KEY` |
+| Text-to-speech | OpenAI TTS voices → `text_to_speech` tool | `VOICE_TOOLS_OPENAI_KEY`, `ELEVENLABS_API_KEY` |
+| Speech-to-text | Managed STT (voice-note transcription) | — |
+| Browser automation | Headless Chromium via Browser Use | `BROWSER_USE_API_KEY`, `BROWSERBASE_API_KEY` |
 
 Each tool is opt-in. You can route **any combination** through the gateway and keep direct keys for the rest — for example, gateway for web + images, your own ElevenLabs key for TTS.
 
@@ -30,12 +31,14 @@ Each tool is opt-in. You can route **any combination** through the gateway and k
 
 ## Who Gets It
 
-Paid [Nous Portal](https://portal.nousresearch.com/manage-subscription) subscribers. Free-tier accounts don't have gateway access.
+Paid [Nous Portal](https://portal.nousresearch.com/manage-subscription) subscribers — and accounts granted the **free tool pool**, a small managed-tool allowance that covers gateway calls without a paid subscription (Hermes surfaces a setup prompt on first use). Free-tier accounts without a pool don't get gateway access.
 
 Check your status:
 
 ```bash
-hermes status
+hermes portal info        # Portal auth + Tool Gateway routing summary
+hermes portal tools       # Gateway catalog with current routing per tool
+hermes status             # Full system status (Tool Gateway is one section)
 ```
 
 Look for the **Nous Tool Gateway** section. It shows which tools are active via the gateway, which are using direct keys, and which aren't configured yet.
@@ -46,7 +49,13 @@ Look for the **Nous Tool Gateway** section. It shows which tools are active via 
 
 ### Option A: During Model Setup (Easiest)
 
-When you run `hermes model` and pick **Nous Portal** as your provider, Hermes auto-prompts you to enable the Tool Gateway:
+Fresh installs can do it in one shot:
+
+```bash
+hermes setup --portal   # Nous OAuth + Nous provider + Tool Gateway in one flow
+```
+
+Or when you run `hermes model` and pick **Nous Portal** as your provider, Hermes auto-prompts you to enable the Tool Gateway:
 
 ```text
 Your Nous subscription includes the Tool Gateway.
@@ -72,50 +81,50 @@ If you already have direct keys for some tools, the prompt adapts — you can en
 hermes tools
 ```
 
-Pick a category (Web, Browser, Image Generation, or TTS), then choose **Nous Subscription** as the provider. That flips `use_gateway: true` for that tool in `config.yaml`.
+Pick a category (Web, Browser, Image Generation, TTS — or STT for voice-note transcription), then choose **Nous Subscription** as the provider. You don't have to log into Nous Portal first: selecting the Nous row runs the Portal login inline if needed and enables just that tool — it does **not** switch your inference provider. The picker writes the tool's selection key for you (see below). The Nous-managed backends are always listed, even if you've never signed in.
 
 ### Option C: Manual Config
 
-Edit `~/.hermes/config.yaml`:
+Edit `~/.hermes/config.yaml`. Each tool category has a single provider-selection key; the value `nous` routes it through the managed gateway, a vendor name (`fal`, `openai`, `firecrawl`, `browser-use`, …) goes direct with your own credentials:
 
 ```yaml
 web:
-  backend: firecrawl
-  use_gateway: true
+  backend: nous          # web search/extract via the Tool Gateway
 
 image_gen:
-  use_gateway: true
+  provider: nous         # image generation via the Gateway
 
 tts:
-  provider: openai
-  use_gateway: true
+  provider: nous         # TTS via the Gateway
+
+stt:
+  provider: nous         # speech-to-text via the Gateway
 
 browser:
-  cloud_provider: browser-use
-  use_gateway: true
+  cloud_provider: nous   # cloud browser via the Gateway
 ```
 
 ---
 
-## How Precedence Works
+## How Selection Works
 
-Per tool, the runtime checks `use_gateway` first:
+The runtime **always uses the stored selection** — credential presence never selects or reroutes a category. A `FAL_KEY` sitting in `.env` is ignored while `image_gen.provider: nous`; conversely, `image_gen.provider: fal` with no `FAL_KEY` set produces a clear error instead of silently falling back to the gateway.
 
-- `use_gateway: true` → **always** route through the gateway, even if direct API keys exist in `.env`
-- `use_gateway: false` (or unset) → use direct keys if available, fall back to the gateway only when no direct keys exist
+Categories you have **never configured** (no selection key ever written) autodetect from available credentials, same as before. But once a selection exists, adding a key to `.env` does not change the route — only `hermes tools` (or editing the selection key) does.
 
-This means you can have an `FAL_KEY` and a Nous subscription in `.env` at the same time and deterministically pick which one to use. No deleting keys, no commenting lines.
+### The Old `use_gateway` Flag Is Legacy
 
-### The Old Env Var Is Gone
+Older Hermes versions used a per-tool `use_gateway: true` boolean. That flag is **legacy**: it is never written anymore, and the `hermes tools` picker removes it from a category's config when it rewrites the selection. Old configs that still contain `use_gateway: true` are interpreted at read time as the `nous` selection, so existing setups keep working. Don't set `use_gateway` in new configs — pick the provider in `hermes tools` instead.
 
-`HERMES_ENABLE_NOUS_MANAGED_TOOLS` was a hidden env flag in v0.9. It's gone in v0.10 — replaced by clean subscription-based detection plus the per-tool `use_gateway` config. If you had that set, `hermes upgrade` migrates it for you.
+And the ancient hidden env flag `HERMES_ENABLE_NOUS_MANAGED_TOOLS` (v0.9) is long gone — replaced by these selection keys.
 
 ---
 
 ## Verifying It's Working
 
 ```bash
-hermes status
+hermes portal info     # routing summary, or
+hermes status          # full system status
 ```
 
 Look for:
@@ -127,12 +136,11 @@ Look for:
   Image gen     ✓ active via Nous subscription
   TTS           ✓ active via Nous subscription
   Browser       ○ active via Browser Use key
-  Modal         ○ available via subscription (optional)
 ```
 
 Rows marked "active via Nous subscription" are routed through the gateway. Rows with their own keys show which provider is active.
 
-You can also see gateway usage in the Dashboard's **Analytics** tab (Part 12) — gateway calls count toward your Nous subscription and are aggregated alongside LLM token usage.
+You can also see gateway usage in the Dashboard's **Analytics** tab (Part 12) — gateway calls count toward your Nous subscription and are aggregated alongside LLM token usage, and the [Nous Portal dashboard](https://portal.nousresearch.com) breaks usage down per tool.
 
 ---
 
@@ -142,47 +150,107 @@ Interactive:
 
 ```bash
 hermes tools
-# Pick the tool → choose a direct provider
+# Pick the tool → choose a direct provider (e.g. Firecrawl)
 ```
 
 Manual:
 
 ```yaml
 web:
-  backend: firecrawl
-  use_gateway: false   # now uses FIRECRAWL_API_KEY from .env
+  backend: firecrawl   # Hermes now uses FIRECRAWL_API_KEY from .env
 ```
 
-When you pick a non-gateway provider in `hermes tools`, `use_gateway` is automatically set to `false` to prevent contradictory config.
+Picking a non-gateway provider in `hermes tools` rewrites that category's selection key, so the two can never contradict.
 
 ---
 
-## OpenAI-Compatible Local Proxy
+## OpenAI-Compatible Local Proxy (`hermes proxy`)
 
-v0.14 adds `hermes proxy`: a local OpenAI-compatible endpoint backed by whichever OAuth provider you are signed into — Claude Pro, ChatGPT Pro/Codex, or SuperGrok. This is the clean way to let Codex CLI, Aider, Cline, Continue, or internal scripts reuse subscriptions without copying API keys.
+`hermes proxy` is a local HTTP server that forwards OpenAI-compatible chat/completions/embeddings requests to an OAuth-backed upstream — your **Nous Portal** subscription (default) or **xAI/Grok** — attaching the real, auto-refreshing credential on the way out, so the client app never holds an API key. This is the clean way to let Codex CLI, Aider, Cline, Continue, Open WebUI, OpenViking, Karakeep, or any OpenAI-compatible client reuse your subscription.
 
 ```bash
-hermes model          # sign in to Claude / OpenAI / xAI OAuth first
-hermes proxy --host 127.0.0.1 --port 11435
+hermes portal              # one-time: log into the provider (OAuth)
+hermes proxy start         # listens on http://127.0.0.1:8645/v1
 ```
 
-Then point OpenAI-compatible clients at `http://127.0.0.1:11435/v1` with a local dummy key. Keep it loopback-only unless you add real auth in front.
+Then point any OpenAI-compatible app at:
+
+```text
+Base URL:   http://127.0.0.1:8645/v1
+API key:    anything        # e.g. "sk-unused" — proxy attaches the real one
+Model:      Hermes-4-70B    # whatever your subscription serves
+```
+
+Management:
+
+```bash
+hermes proxy providers     # available upstreams (nous, xai; more via UpstreamAdapter)
+hermes proxy status        # credential readiness, bearer expiry
+hermes proxy start --provider xai --port 8645
+```
+
+The proxy forwards only a fixed allowlist of paths (`/v1/chat/completions`, `/v1/completions`, `/v1/embeddings`, `/v1/models`), ignores the client's `Authorization` header, and streams SSE responses through unchanged. It has no auth of its own — it accepts any bearer — so keep it on `127.0.0.1` unless you're behind a firewall/VPN, and note your subscription's RPM/TPM limits apply across the whole proxy. (Anthropic Messages via OAuth doesn't fit the OpenAI-compatible shape yet and is a documented future adapter.)
 
 ---
 
 ## `x_search`: First-Class X Search
 
-Use `x_search` when the source of truth is a live X/Twitter thread, launch post, or maintainer account. It supports X OAuth or API-key auth, and pairs naturally with Grok 4.3 / SuperGrok OAuth.
+`x_search` gives the agent server-side X search via xAI's Responses API — Grok searches the X index and returns synthesized results with **citations to the originating posts**. Use it when the source of truth is a live X/Twitter thread, launch post, or maintainer account; use `web_search` for docs/blogs.
+
+**Credentials (either path auto-enables the tool):**
+
+- `XAI_API_KEY` in `~/.hermes/.env` — the recommended path, returning real posts with citations. Subscription OAuth can answer in a degraded explanatory mode with no citations, so the key wins when both exist.
+- `hermes auth add xai-oauth` — xAI Grok OAuth (SuperGrok / X Premium+), refreshed automatically.
+
+Disable explicitly via `hermes tools` → Search if you don't want it. Configuration is global in `~/.hermes/config.yaml`:
 
 ```yaml
-tools:
-  x_search:
-    enabled: true
-    auth: oauth        # or api_key
-    max_results: 25
+x_search:
+  model: grok-4.5            # any Grok model with server-side x_search access
+  timeout_seconds: 180       # complex queries can take 60–120s
+  retries: 2                 # 5xx / ReadTimeout backoff
+  # reasoning_effort: low    # optional effort knob
 ```
 
-Use broader web search for docs/blogs; use `x_search` for real-time social signal.
+The agent can also pass narrowing parameters per calls — `allowed_x_handles`, `excluded_x_handles`, `from_date`/`to_date`, and image/video understanding. Responses carry a `degraded` flag: when you used filters and Grok synthesized an answer without citations, treat it as unsourced.
+
+The `xurl` skill is the other half of the X surface: exact, authenticated X API work (post, reply, like, DM, timelines). Use `x_search` for read-only discovery, then `xurl` for anything state-changing.
+
+---
+
+## Keyless Web Tier — No Gateway, No Keys, No Accounts
+
+Since v0.20, web search works out of the box even with **zero web credentials**: `web_search` and `web_extract` rotate round-robin across **five vendors' public free tiers** — Exa, Parallel, Tavily, Firecrawl, and Keenable — spreading load and automatically retrying a rate-limited request on the next vendor in the ring (multi-hop, until one serves or all throttle). No signup, no key; requests carry no user identifiers.
+
+This tier is strictly last-resort: any configured backend selection or present API key always wins, and the keyless ring only serves when nothing else matches. It is never sticky — the very next call tries your configured backend again. Disable it entirely with `web.keyless_fallback: false` (which also disables the one-shot keyless rescue for keyed backends, `web.keyless_rescue`).
+
+---
+
+## Outbound Webhooks (v0.20)
+
+Dynamic webhook subscriptions let an external service (GitHub, Stripe, CI, anything) POST into the gateway adapter and trigger an agent run:
+
+```bash
+hermes webhook subscribe github-events --prompt 'New {event} on {repo.full_name}' \
+  --events issues,pull_request --deliver telegram --deliver-chat-id 123456
+```
+
+Each subscription gets a route URL plus a one-time HMAC secret (subscriptions live in `webhook_subscriptions.json`, hot-reloaded — no gateway restart needed). The agent runs the prompt, and the result is **delivered outbound** to a target: `telegram`, `discord`, `slack`, `github_comment`, or local log. `--deliver-only` skips the agent and renders the prompt as a literal outbound message (zero LLM cost, sub-second). The dashboard's Webhooks page (Part 12) covers the same surface from the browser. Webhook safety: keep approvals on, scope the toolset, and template narrowly.
+
+---
+
+## Egress Proxy — one-time proxy tokens for sandboxes
+
+The **iron-proxy** egress layer is for anyone whose terminal runs in a Docker (or other remote) sandbox and doesn't want real API keys sitting inside it. Sandboxes hold opaque **proxy tokens**; a local TLS-intercepting proxy swaps them for real credentials at the network boundary. Managed entirely by `hermes egress`:
+
+```bash
+hermes egress install    # download the pinned iron-proxy binary
+hermes egress setup      # CA, mappings, config (optionally --from-bitwarden)
+hermes egress start
+hermes egress status     # binary + config + pid + listening + mappings
+```
+
+Wired into the **Docker** terminal backend (as of writing). `/egress` shows the same status from inside a session, and `~/.hermes/proxy/proxy.yaml` / `~/.hermes/proxy/iron-proxy.log` are where you look when something's wrong. The net effect: a compromised sandbox leaks useless tokens, never real keys.
 
 ---
 
@@ -204,13 +272,13 @@ These env vars are visible regardless of subscription status — they're here so
 ## FAQ
 
 ### Do I have to delete my existing API keys?
-No. When `use_gateway: true` is set, the runtime skips direct keys and routes through the gateway. Your keys stay in `.env`. Flip back to them any time.
+No. While a tool's selection is **Nous Subscription**, direct keys for that tool are simply ignored. Your keys stay in `.env`. Pick the direct provider again in `hermes tools` and they become the source again.
 
 ### Can I mix gateway and direct keys?
 Yes — it's per-tool. Gateway for web + images, ElevenLabs for TTS, Browserbase for browsing is a perfectly normal setup.
 
 ### What happens if my subscription lapses?
-Tools routed through the gateway stop working. Either renew at [portal.nousresearch.com](https://portal.nousresearch.com/manage-subscription) or switch those tools to direct keys via `hermes tools`.
+Tools routed through the gateway stop working (Hermes shows a clear error pointing at the portal). Either renew at [portal.nousresearch.com](https://portal.nousresearch.com/manage-subscription) or switch those tools to direct keys via `hermes tools`.
 
 ### Does it work on Telegram / Discord / Slack / etc.?
 Yes. The gateway operates at the tool runtime level, not the entry-point level. It works the same whether you're on the CLI, a messaging platform, a cron job, or the dashboard's REST API.
@@ -219,7 +287,7 @@ Yes. The gateway operates at the tool runtime level, not the entry-point level. 
 No — Modal is an optional subscription add-on. Configure it separately via `hermes setup terminal` or in `config.yaml`. The Tool Gateway prompt doesn't enable it automatically.
 
 ### Will the gateway auto-fall-back if the upstream is down?
-The gateway itself is a thin proxy — failures return the upstream's error. If you want resilience, keep a direct key as a fallback (`use_gateway: false` + `FIRECRAWL_API_KEY` set) and flip it on when the gateway has an incident.
+The gateway itself is a thin proxy — failures return the upstream's error. If you want resilience, configure a direct provider (`hermes tools` → pick Firecrawl/Browserbase/etc.) and switch when the gateway has an incident. Web search additionally has the keyless ring ([Keyless Web Tier](#keyless-web-tier--no-gateway-no-keys-no-accounts)) as a last-resort fallback behind any configured backend.
 
 ---
 
@@ -227,9 +295,10 @@ The gateway itself is a thin proxy — failures return the upstream's error. If 
 
 Rough guidance for picking between gateway vs direct keys:
 
-- **Heavy web search + browsing + images in the same month:** gateway almost always wins — one subscription covers all four.
+- **Heavy web search + browsing + images in the same month:** gateway almost always wins — one subscription covers them all.
 - **Only heavy TTS (audio generation):** ElevenLabs direct is often cheaper than the gateway's OpenAI TTS pricing. Keep TTS off the gateway.
 - **Low volume, experimenting:** gateway is perfect — no signups, no free-tier juggling, no surprise overages.
+- **Web search only, no Nous sub:** use the keyless ring (Exa/Parallel/Tavily/Firecrawl/Keenable) — it's free and needs zero setup; pin a provider or add a key when you want higher limits.
 - **Enterprise / regulated environment:** self-hosted gateway with the `TOOL_GATEWAY_*` env vars pointing at your own proxy.
 
 ---

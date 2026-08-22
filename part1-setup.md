@@ -6,7 +6,7 @@
 
 ## The Install
 
-One command. That's it. Hermes also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path. Prefer a GUI? Install the [desktop app](./part24-desktop-app.md) — same agent, same config, same keys.
+One command. That's it. Current at the time of writing: **Hermes v0.20.4 (2026.8.18)** — this guide tracks the v0.19/v0.20 release wave. Hermes also ships on PyPI, so use the installer for the full local stack or `pip install hermes-agent` for the leanest CLI path. Prefer a GUI? Install the [desktop app](./part24-desktop-app.md) — same agent, same config, same keys.
 
 ### Linux / macOS / WSL2
 
@@ -26,13 +26,13 @@ pip install hermes-agent
 
 ### Windows (native)
 
-Hermes now has a first-class native Windows installer. In PowerShell:
+Windows is a **first-class supported surface** — no WSL or Docker required. In PowerShell (no admin needed):
 
 ```powershell
-iex (irm https://hermes-agent.nousresearch.com/install.ps1)
+iex (irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1)
 ```
 
-[WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) is still a solid choice if you prefer a Linux environment for gateway work.
+The installer provisions everything under `%LOCALAPPDATA%\hermes` (Python via uv, PortableGit, Node) and adds `hermes` to your User PATH — open a new terminal after it finishes. [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) remains a solid choice if you prefer a Linux environment for gateway work; native data lives at `%LOCALAPPDATA%\hermes`, WSL data at `~/.hermes`.
 
 > **Android users:** the same installer detects Termux and installs the tested `[termux]` extra bundle automatically — CLI, cron, PTY/background terminal, Telegram gateway, MCP, Honcho, ACP. See [Part 15 — Android / Termux](./part15-new-platforms.md#android--termux-running-hermes-on-your-phone).
 
@@ -48,6 +48,7 @@ The installer handles everything automatically:
 - Installs **Python 3.11** via uv (no sudo needed)
 - Installs **Node.js v22** (for browser automation)
 - Installs **ripgrep** (fast file search) and **ffmpeg** (audio conversion)
+- Pre-installs **cua-driver** so the [Computer Use](./part24-desktop-app.md) toolset (background desktop control) works the moment you enable it
 - Installs the PyPI package or clones the Hermes repo when you choose source mode
 - Sets up the virtual environment
 - Creates the global `hermes` command
@@ -76,20 +77,22 @@ hermes model        # fuzzy-search every provider Hermes knows about
 
 **Hermes is model-agnostic** — the picker fuzzy-searches a catalog that refreshes hourly, so you're never stuck on last release's list. You don't have to commit to a single provider:
 
-- **Cloud APIs** — Anthropic, OpenAI, Google, xAI / Grok (OAuth), Moonshot / Kimi, z.ai / GLM, MiniMax, Cerebras, Groq, and more. Set the matching `*_API_KEY` or sign in by OAuth.
+- **Cloud APIs** — Anthropic, OpenAI, Google / Gemini, xAI / Grok (key or OAuth), Moonshot / Kimi, z.ai / GLM, MiniMax, DeepSeek, Novita, and more. Set the matching `*_API_KEY` or sign in by OAuth. Copilot and Codex OAuth subscriptions work, and **OpenCode Free** is a keyless option (no account needed).
 - **One key for everything** — OpenRouter (`OPENROUTER_API_KEY`) reaches hundreds of models with automatic fallback.
 - **Local / private** — Ollama, LM Studio, or llama.cpp with no key needed. See [Part 25: NVIDIA & Local Hardware](./part25-nvidia-local.md).
-- **Nous Portal** — `hermes portal` runs a guided **Quick Setup** that signs you in and picks a model for you.
+- **Nous Portal** — one OAuth login covers 300+ models plus the Tool Gateway (web search, image gen, TTS, browser). Fastest path: `hermes setup --portal`.
+
+**Flagships move fast — don't trust a printed list.** The picker draws from a live catalog ([model catalog](./part9-custom-models.md)) that refreshes hourly; run `hermes model` to see what's actually available. As of v0.20.4 the OpenRouter default is **GLM-5.x** (`z-ai/glm-5.2`), with **Kimi K3**, the **GPT-5.x family**, and **DeepSeek V4-class** models as the other current flagships.
 
 Configure **multiple providers** with automatic fallback — if one goes down, Hermes switches to the next. Routing, aliases, and fallback chains are covered in [Part 9](./part9-custom-models.md).
 
 ### 2. Set Your API Keys
 
 ```bash
-hermes auth
+hermes model
 ```
 
-This opens an interactive menu to add API keys for each provider. Keys are stored in `~/.hermes/.env` — never committed to git.
+Run `hermes model` from your terminal (not inside a chat session) to add providers, enter API keys, and run OAuth flows — it's the full provider setup wizard. (`hermes auth` exists too, but it manages *credential pools* — multiple keys per provider for same-provider key rotation — not first-time key entry.) Keys are stored in `~/.hermes/.env` — never committed to git.
 
 > **Tip:** You can also set keys manually using a text editor:
 > ```bash
@@ -97,7 +100,7 @@ This opens an interactive menu to add API keys for each provider. Keys are store
 > chmod 600 ~/.hermes/.env   # Restrict access to your user only
 > ```
 >
-> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes auth` instead. Always run `chmod 600 ~/.hermes/.env` to prevent other users on the system from reading your API keys.
+> **Avoid using `echo` to append secrets** — the command (including the key) is saved in your shell history (`~/.bash_history`). Use an editor or `hermes model` instead. Always run `chmod 600 ~/.hermes/.env` to prevent other users on the system from reading your API keys.
 
 ### 3. Configure Toolsets
 
@@ -107,15 +110,17 @@ hermes tools
 
 This opens an interactive TUI to enable/disable tool categories:
 
-- **core** — File read/write, terminal, web search
-- **web** — Browser automation, web extraction
-- **browser** — Full browser control (requires Node.js)
-- **code** — Code execution sandbox
-- **delegate** — Sub-agent spawning for parallel work
+- **file** — File read/write, search, and editing
+- **terminal** — Shell execution and background process management
+- **web** — Web search and page extraction
+- **browser** — Full browser automation (requires Node.js)
+- **code_execution** — Run Python scripts that call Hermes tools
+- **delegation** — Sub-agent spawning for parallel work
 - **skills** — Skill discovery and creation
 - **memory** — Memory search and management
+- **vision**, **image_gen**, **computer_use** — Image analysis/generation and background desktop control
 
-> **Recommendation:** Enable `core`, `web`, `skills`, and `memory` at minimum. Add `browser` and `code` if you need automation or sandboxed execution.
+> **Recommendation:** Enable `file`, `terminal`, `web`, `skills`, and `memory` at minimum. Add `browser`, `code_execution`, and `delegation` when you need automation, scripted tool loops, or parallel sub-agents. (Older toolset names like `core`, `code`, and `delegate` were renamed — the TUI above shows the current catalog.)
 
 ---
 
@@ -126,31 +131,43 @@ After initial setup, fine-tune with `hermes config set`:
 ### Model Settings
 
 ```bash
-# Set primary model
+# Set primary model (example; run `hermes model` for the live catalog)
 hermes config set model anthropic/claude-sonnet-5
 
-# Set fallback model (used when primary is rate-limited)
-hermes config set fallback_models '["openrouter/anthropic/claude-sonnet-5"]'
+# Set a fallback chain (used when primary is rate-limited or errors) —
+# canonical format is a top-level `fallback_providers` list in config.yaml:
+```
+
+```yaml
+model:
+  default: anthropic/claude-sonnet-5
+fallback_providers:
+  - provider: openrouter
+    model: z-ai/glm-5.2
+  - provider: deepseek
+    model: deepseek/deepseek-v4-pro
 ```
 
 ### Agent Behavior
 
 ```bash
-# Max turns per conversation (default: 90)
+# Max tool-calling iterations per conversation turn (default: none = unlimited;
+# the underlying iteration budget defaults to 500 steps)
 hermes config set agent.max_turns 90
 
 # Verbose mode: off, on, or full
 hermes config set agent.verbose off
 
-# Quiet mode (less terminal output)
-hermes config set agent.quiet_mode true
+# Quiet mode (less terminal output; also toggled in-session via /verbose)
+hermes config set display.tool_progress off
 ```
 
 ### Context Management
 
 ```bash
-# Enable prompt caching (reduces cost on repeated context)
-hermes config set prompt_caching.enabled true
+# Prompt caching is on by default; the explicit knob is the requested cache
+# TTL tier on Anthropic-style breakpoints ("5m" or "1h")
+hermes config set prompt_caching.cache_ttl "5m"
 
 # Context compression (auto-summarize old messages)
 hermes config set compression.enabled true
@@ -166,6 +183,7 @@ Everything lives under `~/.hermes/`:
 ~/.hermes/
 ├── config.yaml          # Main configuration
 ├── .env                 # API keys (never commit this)
+├── auth.json            # OAuth credentials (Nous Portal, Copilot, Codex, etc.)
 ├── SOUL.md             # Agent personality (injected every message)
 ├── memories/           # Long-term memory entries
 ├── skills/             # Skills (auto-discovered)
@@ -174,6 +192,8 @@ Everything lives under `~/.hermes/`:
 ├── logs/               # Session logs
 └── hermes-agent/       # Source code (git repo)
 ```
+
+> **Windows native:** the data directory is `%LOCALAPPDATA%\hermes` instead of `~/.hermes` (inside WSL it's `~/.hermes`).
 
 > **Important:** `SOUL.md` is injected into every message. Keep it under 1 KB. Every byte costs latency and tokens.
 

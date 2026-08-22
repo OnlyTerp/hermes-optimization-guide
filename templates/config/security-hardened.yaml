@@ -5,11 +5,12 @@
 # webhook-driven flows, email inbox, GitHub PR comments).
 # Every layer from Part 19, dialed to maximum:
 #   - OS-level isolation (container terminal backend) — the only real boundary
-#   - Quarantine profile as the default; trusted profile is opt-in
+#   - Separate quarantine profile as the default; trusted profile is opted in
 #   - approvals.mode: manual, cron_mode: deny, empty command_allowlist
 #   - MCP servers tool-filtered to an audited include list
 #   - Periodic security crons
-# Schema verified against Part 19 (v0.18).
+# Schema verified against the v0.20.4 docs (user-guide/configuration.md,
+# user-guide/security.md, user-guide/profiles.md).
 #
 # Layer 1 (who can talk to the agent) lives in ~/.hermes/.env, not here:
 #   TELEGRAM_ALLOWED_USERS=<owner-id-only>
@@ -19,79 +20,71 @@
 # default-deny without an allowlist.
 # ------------------------------------------------------------
 
-# Default profile: quarantine. Untrusted-facing surfaces get the locked-down
-# posture unless a session is explicitly started with the trusted profile
-# (`hermes -p trusted`, or per-bot routing below). Build/edit profiles in
-# the dashboard's profile builder (v0.17+, Part 12).
-profile: quarantine
+# ------------------------------------------------------------------
+# Quarantine vs. trusted — the PROFILE approach (v0.20)
+# ------------------------------------------------------------------
+# In current Hermes a profile is a separate home directory with its own
+# config.yaml / .env / memory / sessions / skills / gateway state — NOT a
+# `profiles:` dict inside config.yaml (that dashboard-era inline block was
+# removed upstream), and NOT a `telegram.bots` routing map (one bot token
+# per profile, one gateway per profile — see user-guide/messaging/telegram.md).
+#
+#   hermes profile create quarantine
+#   hermes -p quarantine chat            # run a session against that profile
+#   hermes -p quarantine gateway run      # run its gateway (its OWN bot token in .env)
+#
+# The quarantine profile gets the locked-down posture below (cheap model,
+# no MCP servers, approval on everything); `trusted` is the admin/CLI
+# profile you drive privileged work from. Keep the public bot's token in
+# the quarantine profile's .env and the admin bot's token in the trusted
+# profile's .env — never mix tokens across profiles. Then the only surface
+# that reaches `trusted` is the owner-only admin DM / local CLI; the public
+# bot stays in a capability desert.
 
-profiles:
-  quarantine:
-    # Untrusted-input-facing: cheap model, no MCP servers, approval on
-    # everything. A successful injection lands in a capability desert.
-    model: gemini-3.1-flash
-    provider: google
-    mcp_servers: []
-    approvals:
-      mode: manual
-      timeout: 60
-      cron_mode: deny
-  trusted:
-    # Admin-only (owner DM / local CLI). Full capability, still manual approval.
-    model: claude-sonnet-5
-    provider: anthropic
+# Default (trusted) profile model — the one YOU drive from the CLI / admin DM.
+model:
+  provider: anthropic
+  default: claude-sonnet-5
 
-# Per-bot profile routing: the public bot's token maps to the quarantine
-# profile; only the owner-allowlisted admin bot reaches trusted. Approvals
-# route to the channel the request came from (there is no separate
-# "approval channel" key) — so the REAL defense is keeping the public
-# bot's allowlist tight and driving privileged actions from the admin bot.
-telegram:
-  bots:
-    admin:
-      token: ${TELEGRAM_ADMIN_BOT_TOKEN}
-      profile: trusted
-    public:
-      token: ${TELEGRAM_PUBLIC_BOT_TOKEN}
-      profile: quarantine
-      default_skill: telegram-triage
+# All API keys live in ~/.hermes/.env — this file only carries the custom
+# endpoint overrides you actually need. The providers: dict is for custom
+# OpenAI-compatible endpoints only:
+# providers:
+#   my-proxy:
+#     base_url: https://proxy.example.com/v1
+#     key_env: MY_PROXY_API_KEY
+
+group_sessions_per_user: true
 
 discord:
   require_mention: true
   free_response_channels: ""
 
-group_sessions_per_user: true
-
-providers:
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-  google:
-    api_key: ${GOOGLE_API_KEY}
-
 # OS-level isolation — the single control Part 19 calls the only real
 # boundary. LLM-emitted shell + file ops run inside a container; the agent
-# cannot read ~/.hermes/.env or modify its own code.
-# NOTE: container backends intentionally SKIP dangerous-command approval
-# (the container is the boundary). If you drop back to backend: local,
-# the approvals block below becomes your primary gate again.
+# cannot read the host's ~/.hermes/.env or modify its own code.
+# NOTE: container backends intentionally SKIP the dangerous-command
+# approval layer (the container IS the boundary). If you drop back to
+# backend: local, the approvals block below becomes your primary gate again.
 terminal:
   backend: docker
   docker_image: nikolaik/python-nodejs:python3.11-nodejs20
   cwd: /workspace
-  docker_mount_cwd_to_workspace: false
-  container_persistent: false        # reset filesystem every session
+  docker_mount_cwd_to_workspace: false   # do not bind the launch directory in
+  container_persistent: false            # fresh container per session (no state carry-over)
 
-# Dangerous-command approval (applies on the local backend and to
-# anything outside the container path). Patterns are built into Hermes.
+# Dangerous-command approval (applies on the local backend and to anything
+# outside the container path). Patterns are built into Hermes.
 approvals:
   mode: manual                       # never smart/off on an untrusted-facing box
-  timeout: 60                        # fail-closed deny on timeout
+  timeout: 60                       # fail-closed deny on timeout (default 300)
   cron_mode: deny
+  single_query_mode: deny           # one-shot `hermes chat -q` runs, same rule
   mcp_reload_confirm: true
   destructive_slash_confirm: true
 
 # Empty by design. Every entry here is a standing approval bypass —
-# audit-approval-bypass flags anything that shows up.
+# the audit-approval-bypass skill flags anything that shows up.
 command_allowlist: []
 
 security:
@@ -102,16 +95,16 @@ security:
   # tirith_timeout: 5
   # tirith_fail_open: false          # fail closed here, unlike a dev box
 
-# MCP: only audited tools, read-only creds, nothing that ingests untrusted
-# content gets a broad surface. No trust:/allow_sampling: keys exist —
-# review + tools.include IS the control (Part 19, Layer 5).
+# MCP: only audited tools, read-only creds. No trust:/allow_sampling:
+# keys exist — review + tools.include IS the control (Part 19, Layer 5).
+# npx package names verified for v0.20.4; `hermes mcp catalog` lists
+# curated one-command servers (`hermes mcp install <name>`).
 mcp_servers:
   github:
     command: npx
     args: [-y, "@modelcontextprotocol/server-github"]
     env:
       GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_RO_TOKEN}   # read-only, one-repo PAT
-    enabled: true
     timeout: 120
     tools:
       include:
@@ -125,15 +118,16 @@ mcp_servers:
 # terminal backend alone doesn't confine MCP subprocesses or code-exec.
 # There is no security.network.egress_allowlist key (Part 19, Layer 4).
 
-# ~/.hermes/cron.yaml — the periodic hygiene loop. cron_mode: deny means
-# a cron job that trips a dangerous command is blocked headlessly, so keep
-# these read-only:
-#   - name: weekly-mcp-audit
-#     schedule: "0 9 * * 1"
-#     task: /audit-mcp
-#   - name: weekly-bypass-audit
-#     schedule: "0 10 * * 1"
-#     task: /audit-approval-bypass
-#   - name: monthly-rotate
-#     schedule: "0 4 1 * *"
-#     task: /rotate-secrets webhook_hmac_*    # interactive kinds prompt; run "all" manually
+# ~/.hermes/cron/jobs.json — the periodic hygiene loop. cron_mode: deny
+# means a cron job that trips a dangerous command is blocked headlessly,
+# so keep these read-only. Manage jobs via `hermes cron create`:
+#
+#   hermes cron create "0 9 * * 1" "Audit the configured MCP servers" \
+#     --skill audit-mcp --name weekly-mcp-audit
+#   hermes cron create "0 10 * * 1" "Audit approval bypasses" \
+#     --skill audit-approval-bypass --name weekly-bypass-audit
+#   hermes cron create "0 4 1 * *" "Rotate the webhook HMAC secrets" \
+#     --skill rotate-secrets --name monthly-rotate
+#
+# Note: rotate-secrets "all" prompts interactively — run that from an
+# admin DM/CLI, not from cron. See templates/cron/production-crons.yaml.

@@ -4,7 +4,7 @@
   <img src="./assets/recipe-book.svg" alt="The Recipe Book — twelve real-world Hermes builds across money & ops, content & career, and life & lab lanes" width="920">
 </p>
 
-*Twelve end-to-end builds observed running in the wild in July 2026 — each mapped onto the real Hermes primitives this guide teaches. These are community-reported architectures (labelled as such); treat the configs as starting points and re-verify anything that touches money, email, or production systems against [Part 19](./part19-security-playbook.md) before going live.*
+*Twelve end-to-end builds observed running in the wild in mid-2026 — each mapped onto the real Hermes primitives this guide teaches. These are community-reported architectures (labelled as such); treat the configs as starting points and re-verify anything that touches money, email, or production systems against [Part 19](./part19-security-playbook.md) before going live. All of them still work on the v0.20.4 "Herald" line unless noted.*
 
 ---
 
@@ -142,4 +142,4 @@ cron (schedule) → profile (identity) → skill (procedure) → tool/MCP (hands
 
 ---
 
-*These builds are community field reports from July 2026, mapped onto documented Hermes primitives. Where an original build used custom external code (spend kernels, action APIs), that's noted — Hermes orchestrates them but doesn't replace them.*
+*These builds are community field reports from mid-2026, mapped onto documented Hermes primitives. Where an original build used custom external code (spend kernels, action APIs), that's noted — Hermes orchestrates them but doesn't replace them. Configs stay within the real schema; primitives referenced are available as of v0.20.4.*

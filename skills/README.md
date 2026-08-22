@@ -11,8 +11,8 @@ git clone https://github.com/OnlyTerp/hermes-optimization-guide ~/repos/hermes-o
 # Symlink a skill into your Hermes skills directory
 ln -s ~/repos/hermes-optimization-guide/skills/security/audit-mcp ~/.hermes/skills/audit-mcp
 
-# Reload Hermes
-hermes /reload
+# Verify — skills are loaded by new sessions
+hermes skills list    # should show the symlinked skill as installed
 ```
 
 ## Install them all
@@ -22,7 +22,7 @@ for skill in ~/repos/hermes-optimization-guide/skills/*/*/SKILL.md; do
   name=$(basename $(dirname "$skill"))
   ln -sfn "$(dirname "$skill")" "$HOME/.hermes/skills/$name"
 done
-hermes /reload
+hermes skills list    # pick up happens at next session start
 ```
 
 ## Catalog
@@ -33,7 +33,7 @@ hermes /reload
 | **security** | `rotate-secrets` | Rotates webhook HMACs, API keys, and OAuth tokens; updates `.env` and restarts gateways |
 | **security** | `audit-approval-bypass` | Audits every path that bypasses dangerous-command approval — approvals mode, `command_allowlist` entries, cron mode, container backends |
 | **ops** | `nightly-backup` | `hermes backup`, uploads encrypted copy to configured storage, prunes old backups |
-| **ops** | `weekly-dep-audit` | Uses Gemini 3.1 Pro + GitHub MCP to audit dependencies across configured repos |
+| **ops** | `weekly-dep-audit` | Uses a Gemini 3.1 Pro-class model + GitHub MCP to audit dependencies across configured repos |
 | **ops** | `cost-report` | Generates a weekly LLM-cost breakdown by provider / gateway / skill, posts to your private DM |
 | **ops** | `telegram-triage` | Classifies inbound Telegram DMs, autoreplies low-stakes, escalates high-stakes to you |
 | **dev** | `pr-review` | Delegates a PR review to Claude Code with a scoped read-only GitHub PAT |

@@ -47,7 +47,7 @@ ollama pull <your-model>
 hermes model            # pick the local model in the fuzzy picker
 ```
 
-Any of these expose an OpenAI-compatible endpoint, so Hermes treats them like any other provider — including in fallback chains. A common, cheap pattern: **local model as primary**, small local model for embeddings, **cloud frontier model as fallback** for the hard cases.
+Any of these expose an OpenAI-compatible endpoint, so Hermes treats them like any other provider — including in fallback chains. Provider names in `hermes model` / `hermes auth`: **LM Studio** registers as its own provider (`lmstudio`); **Ollama**, **llama.cpp**, and **vLLM** register under the generic OpenAI-compatible `custom` provider (point it at your local base URL). A common, cheap pattern: **local model as primary**, small local model for embeddings, **cloud frontier model as fallback** for the hard cases.
 
 ---
 
@@ -88,23 +88,30 @@ v0.16 added **NVIDIA as a built-in trusted Skills source**, alongside OpenAI, An
 
 ## 8. A Note on Models (Kept Deliberately Light)
 
-Because Hermes is model-agnostic, the "best local model" changes constantly — don't hard-code this week's winner. As a *current* data point, NVIDIA highlights **Qwen 3.6** (27B/35B) running on RTX / DGX Spark and reports it matching or beating prior-generation 120B–400B models while fitting on far smaller hardware. Community mid-July reference points: **Qwen3.6 35B-A3B** as an agentic workhorse, **Bonsai-27B** at ~36 tok/s on a 16GB card, and **Gemma4 A4B** for full local privacy on modest hardware — with LM Studio or Ollama serving, including on Windows 11 via Docker. Use these as starting points, not gospel: open `hermes model`, fuzzy-search, and pick what's good *right now*. The harness is the durable part.
+Because Hermes is model-agnostic, the "best local model" changes constantly — don't hard-code this week's winner. As a *current* data point, NVIDIA highlights **Qwen 3.6** (27B/35B) running on RTX / DGX Spark and reports it matching or beating prior-generation 120B–400B models while fitting on far smaller hardware. Community mid-July reference points: **Qwen3.6 35B-A3B** as an agentic workhorse, **Bonsai-27B** at ~36 tok/s on a 16GB card, and **Gemma4 A4B** for full local privacy on modest hardware — with LM Studio or Ollama serving, including **natively on Windows** (Hermes on Windows runs natively as a first-class surface — no WSL or Docker required for the agent itself). Use these as starting points, not gospel: open `hermes model`, fuzzy-search, and pick what's good *right now*. The harness is the durable part.
 
 One local-specific cost note: llama.cpp/vLLM keep a **KV/prefix cache** too — the same rules from [Part 20](./part20-observability.md) apply. Stable system prompts and avoiding mid-session model swaps keep local generation fast.
 
 ---
 
-## 9. Background Computer Use (macOS)
+## 9. Background Computer Use (Every OS)
 
-Current builds add background **computer use** — the agent operates GUI apps while your cursor stays free:
+Current builds add background **computer use** — the agent operates GUI apps while your cursor stays free, on **macOS, Windows, and Linux**. No Anthropic-native schema needed: it works with any tool-capable model, including a **local vision model** served by LM Studio / Ollama / vLLM (as long as it handles multi-part tool content — the same local stack as §3):
 
 ```bash
-hermes computer-use install
-# System Settings → grant Screen Recording + Accessibility to CuaDriver
-hermes -t computer_use chat
+hermes -t computer_use chat          # start a session with the toolset enabled
 ```
 
-The agent clicks, types, and reads windows in the background; destructive actions still wait for approval ([Part 19](./part19-security-playbook.md)). If it can't see or click anything, it's always the permissions — re-check both grants after any macOS update.
+**Fresh installs already ship the driver** — the Hermes installer pre-installs `cua-driver`, so enabling is a config flip: pick `🖱️ Computer Use` in `hermes tools` (or toggle the toolset in the dashboard / desktop app; the toggle kicks off a background install if the driver is somehow missing). On older installs only:
+
+```bash
+hermes computer-use install          # manual fallback: fetch upstream cua-driver
+hermes computer-use status          # verify the install
+```
+
+**Platform prereqs:** macOS → grant **Accessibility + Screen Recording** to the identity `hermes computer-use doctor` names (re-check both after any OS update — this is the classic "it can't see or click anything" cause); Windows → nothing to grant at install time (if you drive over SSH rather than RDP/console you need the session-0 autostart pattern); Linux → a reachable display server (`DISPLAY` for X11, or Wayland with an XWayland bridge).
+
+When an action mysteriously doesn't land, `hermes computer-use doctor` runs cua-driver's structured health matrix and prints exactly what to fix (permissions, bundle identity, display reachability). Destructive actions still wait for approval ([Part 19](./part19-security-playbook.md)).
 
 ---
 

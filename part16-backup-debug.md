@@ -11,11 +11,11 @@
 Until v0.9, migrating a Hermes install between machines meant `rsync -a ~/.hermes user@new-host:`. Which mostly worked — except for:
 
 - Absolute paths baked into config (Docker mounts, log paths, skill script paths)
-- Machine-specific provider endpoints (local Ollama, LAN-only LightRAG)
+- Machine-specific provider endpoints (local Ollama, LAN-only LLM servers)
 - SQLite session DB file locks if the source machine was still running
 - Secrets you didn't actually want to copy (old dev keys, disabled provider API keys)
 
-`hermes backup` produces a portable archive that handles all of that. `hermes import` replays it on the new machine with interactive conflict resolution.
+`hermes backup` produces a single portable zip that handles the storage-safety part, and `hermes import` replays it on the new machine.
 
 ### Creating a Backup
 
@@ -23,48 +23,46 @@ Until v0.9, migrating a Hermes install between machines meant `rsync -a ~/.herme
 hermes backup
 ```
 
-Produces `~/.hermes/backups/hermes-YYYY-MM-DD-HHMMSS.tar.zst` containing:
+Produces `~/hermes-backup-<timestamp>.zip`. The archive uses SQLite's `backup()` API for database files, so it is **consistent even while Hermes is running** (WAL-mode safe) — no need to stop the gateway first for the backup itself.
 
-| Path | Included | Notes |
-|------|----------|-------|
-| `config.yaml` | yes | Machine-specific paths (Docker mounts, local provider URLs) are rewritten to portable placeholders |
-| `.env` | yes (redacted by default) | Secret values are zeroed; key names kept. Pass `--include-secrets` to include values in plaintext (use with care) |
-| `memories/` | yes | All memory files |
-| `skills/` | yes | All skills including executable scripts and references |
-| `sessions.db` | yes | SQLite DB is dumped via `VACUUM INTO` so it's consistent even with a running gateway |
-| `projects.db` | yes | Project registry — included since v0.18 |
-| `kanban.db` | yes | Kanban boards ([Part 23](./part23-tenacity-stack.md)) — included since v0.18 |
-| `plugins/` | yes | Both CLI and dashboard plugins |
-| `logs/` | no by default | Use `--include-logs` if you need them for debugging |
-| `auth.json` | no | Never backed up — re-authenticate on the new machine |
+| What's inside | Notes |
+|---------------|-------|
+| `config.yaml` | Your full configuration |
+| `.env`, `auth.json` | Your secrets — the backup is a **literal copy of your home**, so guard the archive like a password-manager vault |
+| `state.db` | The session database (sessions, message history, session store) |
+| `skills/`, `memories/`, `plugins/` | Skills (incl. executable scripts), memory files, installed plugins |
+| pairing data, cron jobs | Keep the access-control and scheduled-job state |
+| — | Everything else under `HERMES_HOME` |
+
+**Deliberately excluded from the archive:**
+
+- `*.db-wal`, `*.db-shm`, `*.db-journal` — SQLite's live sidecar files. The `*.db` snapshot is already consistent; shipping sidecars alongside it could let a restore see a half-committed state.
+- `checkpoints/` — per-session trajectory snapshots (see Checkpoints below). Hash-keyed and regenerated per session; they wouldn't port cleanly to another install anyway.
+- The `hermes-agent` code itself. This is a user-data backup, not a repo snapshot.
 
 ### Options
 
 | Flag | Description |
 |------|-------------|
-| `--output <path>` | Write to a specific path instead of the default backups directory |
-| `--include-secrets` | Include `.env` values in plaintext (default: redacted) |
-| `--include-logs` | Include `logs/` in the archive |
-| `--exclude <path>` | Exclude a specific subpath (repeatable) |
-| `--no-sessions` | Skip `sessions.db` (useful for sharing skill/memory libraries) |
+| `-o`, `--output <path>` | Write the zip to a specific path instead of the default backups location |
+| `-q`, `--quick` | Quick snapshot: only critical state files (`config.yaml`, `state.db`, `.env`, auth, cron jobs). Much faster than a full backup |
+| `-l`, `--label <name>` | Label for the snapshot (only used with `--quick`) |
 
 ### Common Recipes
 
-**Full portable backup for migrating to a new machine:**
+**Full backup before a risky upgrade or migration:**
 
 ```bash
-hermes backup --include-secrets --output ~/hermes-$(hostname).tar.zst
+hermes backup -o ~/hermes-$(hostname).zip
 ```
 
 Treat that archive like a password manager vault — it contains every key.
 
-**Share skills + memory with a teammate (no secrets, no sessions):**
+**Quick pre-upgrade snapshot with a label:**
 
 ```bash
-hermes backup --no-sessions --output ~/hermes-share.tar.zst
+hermes backup --quick --label "pre-upgrade"
 ```
-
-Contains your prompting knowledge and procedural skills — but **also your `memories/` directory**, which is often private (names, addresses, health notes, whatever you've told the agent). Skim `memories/` or add `--exclude memories/` before emailing it to anyone.
 
 **Scheduled backups to a mounted drive:**
 
@@ -72,7 +70,7 @@ Contains your prompting knowledge and procedural skills — but **also your `mem
 hermes cron create \
   --deliver local \
   --schedule "0 3 * * *" \
-  "run: hermes backup --output /mnt/backups/hermes-\$(date +%F).tar.zst"
+  "run: hermes backup --output /mnt/backups/hermes-\$(date +%F).zip"
 ```
 
 ---
@@ -82,136 +80,158 @@ hermes cron create \
 On the target machine:
 
 ```bash
-hermes import ~/hermes-2026-04-17-030000.tar.zst
+hermes import ~/hermes-backup-2026-08-18-030000.zip
 ```
 
-The importer walks through each section interactively:
+All files in the archive overwrite the corresponding files in your Hermes home. `--force` only skips the confirmation prompt that fires when the target already has a Hermes installation:
 
-```text
-config.yaml
-  ✓ No existing config. Importing.
-
-.env
-  ⚠ 12 existing keys, 18 in backup.
-    [m] Merge (keep existing for duplicates)
-    [r] Replace (backup overrides everything)
-    [s] Skip
-    [d] Diff before deciding
-  Choice [m]:
-
-memories/
-  ⚠ 47 existing files, 52 in backup, 14 differ.
-    [m] Merge (newer file wins)
-    [r] Replace
-    [s] Skip
-    [d] Diff each conflicting file
-  Choice [m]:
-
-skills/
-  ✓ Non-conflicting, importing 23 skills.
-
-sessions.db
-  ⚠ Existing sessions.db has 1,247 sessions. Backup has 892.
-    [m] Merge (session IDs already deduped — safe)
-    [r] Replace
-    [s] Skip
-  Choice [m]:
+```bash
+hermes import ~/hermes-backup-2026-08-18-030000.zip --force
 ```
 
-### Options
-
-| Flag | Description |
-|------|-------------|
-| `--dry-run` | Print what would happen without touching disk |
-| `--strategy <merge\|replace\|skip>` | Non-interactive default for all conflicts |
-| `--only <path>` | Import only a subpath (e.g. `--only skills/`) |
-| `--rewrite-paths` | Re-scan config for paths that don't exist on this machine and prompt to fix them |
+> ⚠️ **Stop the gateway before importing.** The importer does not coordinate with running processes; importing under a live gateway can produce conflicts. The backup itself is safe to take while running — the *import* is what wants a quiet machine.
 
 ### Cross-Platform Notes
 
-- **Sessions DB** — merges are deduplicated by session UUID; no risk of collisions.
-- **Skills with shell scripts** — Unix permissions (`+x`) are preserved inside the archive. On Windows, you'll need WSL to run script-based skills anyway.
-- **Config path rewriting** — on import, Hermes detects stale paths (e.g. `/home/alice/...` on a machine where `alice` doesn't exist) and prompts you to fix them before writing.
-- **LightRAG data** — lives outside `~/.hermes`, so it's not in the backup. Back up `~/.hermes/lightrag` separately with `tar` or re-ingest on the new machine.
+- **Sessions** live in `state.db`; the SQLite backup is portable across OSes.
+- **Skills with shell scripts** — Unix permissions (`+x`) are preserved on Linux/macOS archives. On native Windows, script-based skills may need WSL to run, depending on the script.
+- **Machine-specific config** — after import, re-check absolute paths in `config.yaml` on the new host (Docker mounts, provider base URLs, SSH endpoints). The backup does not rewrite those; you adjust them after restore.
+
+---
+
+## Checkpoints and `/rollback` — the per-project safety net
+
+Backups cover *machines*; checkpoints cover *working trees*. Hermes can automatically snapshot a project before destructive operations and restore it with a single command. Powered by a **shared shadow git store** at `~/.hermes/checkpoints/store/` — your real project `.git` is never touched, and git's content-addressable object DB deduplicates across projects and turns.
+
+**Opt-in by default.** Enable per session or globally:
+
+```bash
+hermes chat --checkpoints
+```
+
+```yaml
+# ~/.hermes/config.yaml
+checkpoints:
+  enabled: true
+```
+
+Snapshots are taken automatically before `write_file`/`patch` and before destructive terminal commands (`rm`, `mv`, `sed -i`, `truncate`, `dd`, output redirects, `git reset`/`clean`/`checkout`, ...) — at most one per directory per turn.
+
+In-session commands:
+
+| Command | Definition |
+|---------|------------|
+| `/rollback` | List all checkpoints with change stats |
+| `/rollback <N>` | Restore to checkpoint N, keeping your hand-edits |
+| `/rollback <N> --all` | Full restore — overwrites hand-edits too |
+| `/rollback diff <N>` | Preview the diff between N and current state |
+| `/rollback <N> <file>` | Restore a single file from N |
+
+CLI for the store itself (safe to run any time, agent doesn't need to be running):
+
+```bash
+hermes checkpoints                # status: size, project count, per-project breakdown
+hermes checkpoints prune          # sweep: drop orphans/stale, GC, enforce size cap
+hermes checkpoints clear          # wipe the whole store (asks first)
+hermes checkpoints clear-legacy   # drop v1→v2 migration archives
+```
+
+Auto-maintenance sweeps `~/.hermes/checkpoints/` at startup (default: `auto_prune: true`, `retention_days: 7`, at most once per 24h); `hermes checkpoints prune` forces a sweep immediately. Full knobs: `enabled`, `max_snapshots` (20), `max_total_size_mb` (500), `max_file_size_mb` (10).
+
+Why checkpoints matter for your backup story: a rollback will not resurrect files you deleted *before* a checkpoint, and backup archives exclude the checkpoint store — filesystem safety per-machine, archive safety cross-machine. Use both.
 
 ---
 
 ## `hermes sessions export` — Share a Session Without Sharing Your Keys
 
-Backups are for *you*; exports are for *everyone else*. Turn any session into a document:
+Backups are for *you*; exports are for *everyone else*. The session store is `~/.hermes/state.db`; `hermes sessions export` turns any slice of it into a file:
 
 ```bash
-hermes sessions export --format md      # or qmd | html
-hermes sessions export --format md --session-id <id> --redact
+hermes sessions export backup.jsonl                                    # JSONL (default)
+hermes sessions export --format md --session-id <id> --redact          # readable per-session markdown
+hermes sessions export --format html --newer-than 1w --source telegram # one self-contained HTML file
 ```
 
-- md/qmd exports land in `~/.hermes/session-exports` with a manifest; html renders a shareable transcript.
-- **Always `--redact` before sharing** — it scrubs keys and tokens from the transcript. A raw session log is a credential-disclosure incident waiting to happen ([Part 19](./part19-security-playbook.md)).
+Formats: **`jsonl`** (default — one JSON object per session), **`md`** / **`qmd`** (one file per session into `~/.hermes/session-exports` plus a `manifest.jsonl` with paths, message counts, lineage, SHA-256s), **`html`** (single self-contained transcript with collapsible tool output), and **`trace`** (tool-call traces, secret-redacted by default, built to leave the machine).
+
+Selection knobs work across formats: `--session-id` for one session, or the full `prune` filter set for bulk — `--older-than`/`--newer-than`, `--source telegram`, `--model`, `--min-/--max-messages`, etc. `--redact` scrubs API keys/tokens/credentials from the exported content. `--only user-prompts` exports just your prompts (great for building prompt libraries). Write to `-` for stdout.
+
+- **Always `--redact` before sharing.** A raw session log is a credential-disclosure incident waiting to happen ([Part 19](./part19-security-playbook.md)).
 - Great for bug reports, blog write-ups, and "how did the agent do this?" postmortems.
 
-While you're in session-hygiene mode: `hermes sessions prune` clears ended sessions from `state.db` (auto-prune is off by default — see [Part 11](./part11-gateway-recovery.md) for the size thresholds).
+While you're in session-hygiene mode:
+
+```bash
+hermes sessions prune              # delete old ended sessions (default: older than 90 days)
+hermes sessions optimize           # non-destructive: merge FTS5 segments + VACUUM
+hermes sessions repair             # fix a malformed state.db schema
+hermes sessions stats              # how big is the store, anyway
+```
+
+`hermes sessions import` also exists (`--from codex ...` for Codex exports) — session portability works both ways.
 
 ---
 
-## `/debug` and `hermes debug share`
+## `/debug`, `hermes debug share`, `hermes dump` — the diagnostic flow
 
-### The New Diagnostic Flow
+When something goes weird, the old flow was: grep through `~/.hermes/logs/`, paste 800 lines into a GitHub issue, hope you got the right ones. The modern flow is three tools with one rule: **the report leaves your machine already redacted.**
 
-When something goes weird, the old flow was: grep through `~/.hermes/logs/`, paste 800 lines into a GitHub issue, hope you got the right ones. The modern flow is:
+### `/debug` (CLI and messaging)
 
 ```text
 You → /debug
-  Collecting diagnostics…
-  ✓ Agent version: v0.18.0 (v2026.7.1)
-  ✓ Platform: Linux 6.8.0 / Python 3.12.3
-  ✓ Gateway: running (3 adapters connected)
-  ✓ Last 200 lines of agent.log
-  ✓ Last 200 lines of errors.log
-  ✓ Config snapshot (secrets redacted)
-  ✓ Active session metadata (no message content)
-
-  Bundle: ~/.hermes/debug/debug-2026-04-17-030000.tar.gz
-
-  Upload with: hermes debug share ~/.hermes/debug/debug-2026-04-17-030000.tar.gz
+  ✓ System info (OS, Python, Hermes version)
+  ✓ Recent agent, gateway, GUI/dashboard, and desktop logs
+  ✓ API key status (redacted)
+  → Uploading…
+  → Shareable link(s):
+      https://paste.rs/XXXX
 ```
 
-Then:
+Available in both the CLI **and** messaging. It builds the report, uploads it to a public paste service (paste.rs, then dpaste.com), and gives you a short link you can paste into a bug report. Everything lands on the paste service **redacted by default** — secrets are stripped before upload.
+
+### `hermes debug share` — the CLI twin
+
+Same bundler, explicit flags:
 
 ```bash
-hermes debug share ~/.hermes/debug/debug-2026-04-17-030000.tar.gz
+hermes debug share              # upload debug report, print URL
+hermes debug share --lines 500  # more log lines per file (default 200)
+hermes debug share --expire 30  # paste lifetime in days (default 7)
+hermes debug share --nous       # private Nous diagnostics storage instead of public paste
+hermes debug share --local      # print the report locally, upload nothing
 ```
 
-That uploads the bundle to the Hermes public debug endpoint and returns a short URL you can paste into a bug report. The upload:
+- `--nous` uploads the same bundle to **Nous-internal diagnostics storage** — the returned viewer link is for the Nous team and auto-deletes after 14 days. Use it when Nous support asks for a private diagnostic bundle.
+- `--no-redact` exists; do not use it casually.
+- The report includes system info (OS, Python, Hermes version), recent agent/gateway/dashboard/desktop logs (512 KB cap per file), and whether API keys are set (values never included).
+- To attach a bundle to an issue yourself without uploading, `--local` prints it straight to the terminal.
 
-- Redacts all `.env` secrets before leaving your machine
-- Strips message content by default — only metadata (session ID, model, message count, tool calls)
-- Expires after 14 days
-- Is only readable by Nous support staff with the link
-
-### What Gets Included
-
-| Section | Content |
-|---------|---------|
-| `system.json` | OS, Python, Hermes version, installed extras |
-| `config.yaml` | Your config, with `.env` values redacted |
-| `logs/agent.log` | Last N lines (default 200, `--lines` to change) |
-| `logs/errors.log` | Last N lines |
-| `logs/gateway.log` | Last N lines |
-| `gateway-state.json` | Connected platforms, PIDs, last event times |
-| `session-metadata.json` | Session IDs, models, message counts (no content) |
-| `pip-freeze.txt` | Exact dependency versions |
-
-### Opt-In for More
+### `hermes dump` — the paste-ready plain-text summary
 
 ```bash
-/debug --full
+hermes dump              # compact text: version, OS, model, providers, toolsets, MCP count,
+                         # gateway status, cron jobs, skills — literally designed to be
+                         # copy-pasted into a GitHub issue or Discord
+hermes dump --show-keys  # add redacted API-key prefixes (first/last 4 chars)
 ```
 
-Includes message content for the active session, recent session tool call arguments, and LLM request/response pairs (with auth headers stripped). Only use this when a bug genuinely requires reproducing your exact prompt chain — it's more revealing than the default bundle.
+`hermes dump` never leaves your machine — it prints. Paste the whole block into a bug report: it contains ~everything a maintainer needs and is formatted to be read by a human in one glance. `--show-keys` shows only the first and last 4 characters of each key.
 
-### Without the Share Step
+### `hermes doctor` — interactive diagnostics
 
-`/debug` always creates the local bundle. `hermes debug share` is a separate step. If you don't want to upload, just attach the tarball directly to a GitHub issue yourself.
+`hermes doctor` is the interactive companion: it checks your install and surface the specific checks you should fix before you open an issue. Dump is for sharing; `doctor` is for inspecting.
+
+---
+
+## Importing From Other Agents
+
+Tired of rebuilding? Current Hermes migrations:
+
+- **Claude Code / Codex CLI** — `hermes import-agent claude-code` (or `codex`) imports `CLAUDE.md`/`AGENTS.md` instructions to memory entries, `Bash(...)` permission rules to `command_allowlist`/`approvals.deny`, `mcpServers` → `mcp_servers` in `config.yaml`, and skill directories into `~/.hermes/skills/`. Always previews before applying; API keys/credentials are never imported.
+- **OpenClaw / ClawdBot / Moltbot** — `hermes claw migrate` reads `~/.openclaw` and writes `~/.hermes`, covering 30+ categories (persona, memory, skills, providers, messaging platforms, MCP servers, TTS, ...). Previews with `--dry-run`, refuses conflicts unless `--overwrite`, only touches secrets with an explicit `--migrate-secrets`, and writes a pre-migration restore-point zip to `~/.hermes/backups/pre-migration-*.zip` (restorable with `hermes import`).
+
+Both can be tested safely: `--dry-run` writes nothing.
 
 ---
 
@@ -221,14 +241,15 @@ Covered in more depth in [Part 14](./part14-fast-mode-watchers.md). TL;DR:
 
 ### Custom context engine
 
-Plug-and-play replacement for what gets injected into each agent turn:
+The context engine controls what happens when a conversation approaches the token limit — the built-in `compressor` engine uses lossy summarization; plugin engines replace that strategy:
 
 ```yaml
 # ~/.hermes/config.yaml
-context_engine: my-custom-engine
+context:
+  engine: "compressor"   # built-in default; set to a plugin's name to swap
 ```
 
-Use it to filter memory by project, pre-summarize tool output, pull from LightRAG or a private vector DB, etc. See Part 14 for a minimal implementation.
+Plugin engines are never auto-activated — you must set `context.engine` explicitly (browse/select via `hermes plugins` → Provider Plugins → Context Engine). See Part 14 for a minimal implementation.
 
 ### `/compress <topic>`
 
@@ -238,64 +259,48 @@ The context compressor (Part 6) accepts an optional focus topic — preserve det
 
 ## Security Hardening Notes
 
-A handful of hardening changes landed in the "everywhere" + "gateway" releases worth calling out explicitly:
+Hardening items worth keeping in mind for the v0.20 era:
 
-### v0.13+ redaction + hardline blocklist
-
-Hermes v0.13+ turns secret redaction on by default and keeps the hardline blocklist for commands that should not be recoverable through casual approval prompts. The dangerous-command patterns are **built into the source** (`tools/approval.py`) — there is no `security.approval.denylist` config key where you add your own regex. What you control is the top-level `approvals:` policy:
+### The approval layer (`approvals:`)
 
 ```yaml
-# ~/.hermes/config.yaml — schema verified against Part 19 (v0.18)
+# ~/.hermes/config.yaml
 approvals:
-  mode: manual        # manual | smart | off
-  timeout: 60         # fail-closed deny after this many seconds
-  cron_mode: deny     # headless cron jobs never auto-approve dangerous commands
+  mode: smart        # smart (default) | manual | off
 ```
 
-Do not rely on "the model will know this is dangerous" for commands that delete homes, scrape credentials, or hit metadata services — the real boundary is OS-level isolation. See [Part 19](./part19-security-playbook.md) for the full approval-layer reference.
+- `smart` (default) — an auxiliary LLM assesses whether a flagged command is actually dangerous: low-risk auto-approved for that command only, genuinely risky denied, uncertain escalates to you. `manual` prompts on every flagged command; `off` skips checks entirely (only in trusted, sandboxed environments).
+- **`approvals.deny` — your own hardline blocklist.** A list of glob patterns that block matching terminal commands *unconditionally* — even under yolo/off. This is the user-editable counterpart to the built-in hardline patterns:
+  ```yaml
+  approvals:
+    deny:
+      - "git push --force*"
+  ```
+- `approvals.denial_breaker_threshold` (default 3) stops the agent from retrying variants of a command the reviewer keeps denying — after that many denials it's told to stop and report.
+- `approvals.smart_policy` appends your own rules to the reviewer's instructions (tighten or relax for your environment).
+- `sudo` / `rm -rf` still require explicit approval regardless of service tier, gateway platform, or cron runner — `/fast` does not bypass approvals.
 
-### `hermes update --check` before upgrades
+### Update preflight: `hermes update --check`
 
 Before a major upgrade:
 
 ```bash
-hermes update --check
-hermes backup
+hermes update --check     # am I behind origin/main?
+hermes backup --quick --label "pre-upgrade"
 ```
 
-The preflight catches obvious incompatibilities and the backup gives you a rollback point for `HERMES_HOME`.
+`hermes update` already takes a pre-update backup itself — `quick` (lightweight state snapshot) by default; `--backup` forces a *full* zip; `updates.pre_update_backup: quick | full | off` sets the permanent mode. After a successful update, Hermes restarts running gateway profiles automatically.
 
-### Webhook secrets validated on startup
+### Redaction is the default everywhere
 
-Every webhook-based adapter (Telegram, BlueBubbles, WeCom, Feishu, generic Webhook) now validates its signing secret at gateway startup. (Weixin/personal WeChat isn't in this list — it's long-poll, no webhook to validate.) A missing/empty/weak secret produces a startup error instead of silently accepting forged requests.
+- `hermes debug share` uploads **redacted** unless you pass `--no-redact`.
+- `hermes dump --show-keys` shows only 4-character key prefixes, otherwise just `set`/`not set`.
+- Exports get `--redact`.
 
-Generate strong ones:
+<a id="approval-bypass-for-trusted-subagents"></a>
+### Approval posture flows to subagents
 
-```bash
-openssl rand -hex 32
-```
-
-### SSRF protection on outbound media
-
-WeChat, Telegram, and BlueBubbles download inbound media through a validator that blocks:
-- Private/loopback IPs (`10.0.0.0/8`, `192.168.0.0/16`, `127.0.0.0/8`, etc.)
-- Link-local addresses (`169.254.0.0/16`)
-- Metadata endpoints (`169.254.169.254` — AWS/GCP IMDS)
-- `file://`, `data://`, and other non-HTTP schemes
-
-Set `WEIXIN_ALLOW_PRIVATE_MEDIA_URLS=true` (for the Weixin adapter — see [Part 15](./part15-new-platforms.md)) only on trusted networks where your agent legitimately needs to fetch from an internal host.
-
-### Env values redacted in all logs
-
-Every log line now runs through a redactor by default that replaces values of known secret env vars with `<redacted:VAR_NAME>` before printing. Prevents accidental secret leakage to log aggregators or shared debug bundles.
-
-### `sudo` and `rm -rf` still require explicit approval
-
-Nothing new, but worth restating: dangerous commands still trigger the approval UI (`ask` / `yolo` / `deny`) regardless of service tier, gateway platform, or cron runner. `/fast` does not bypass approvals.
-
-### Approval bypass for trusted subagents
-
-Subagents spawned by the orchestrator now inherit the parent session's approval posture by default. If the parent session is in `yolo` mode (every tool call auto-approved), so is the subagent. If the parent is in `ask` mode, subagents prompt the user on dangerous calls. Override per delegation:
+Subagents spawned by the orchestrator inherit the parent session's approval posture by default. If the parent session is in `yolo` mode, so is the subagent. If the parent is in `ask` mode, subagents prompt the user on dangerous calls. Override per delegation:
 
 ```python
 delegate_task(
@@ -304,6 +309,8 @@ delegate_task(
     toolsets=["file"],
 )
 ```
+
+Adapter-level hardening (webhook signature validation, SSRF filters on outbound media, redaction of env values in logs) is per-adapter — see the messaging-platform sections in [Part 15](./part15-new-platforms.md) and the current official adapter docs for the live state of each.
 
 ---
 
@@ -314,7 +321,7 @@ You've now seen the backup/debug slice of the current feature surface:
 - [Part 12 — Web Dashboard](./part12-web-dashboard.md)
 - [Part 13 — Nous Tool Gateway](./part13-tool-gateway.md)
 - [Part 14 — Fast Mode & Background Watchers](./part14-fast-mode-watchers.md)
-- [Part 15 — New Platforms (Teams, LINE, SimpleX, iMessage, WeChat, Android)](./part15-new-platforms.md)
+- [Part 15 — New Platforms (35+ adapters: A2A, Buzz, IRC, Photon, Teams...)](./part15-new-platforms.md)
 - [Part 23 — Tenacity Stack](./part23-tenacity-stack.md)
 
-If you installed fresh on v0.18.0 and walked through [Part 1](./part1-setup.md) and this series, you're running the most capable Hermes configuration to date.
+If you installed fresh on v0.20.4 and walked through [Part 1](./part1-setup.md) and this series, you've got the most capable Hermes configuration to date — and the recovery kit to keep it that way.
