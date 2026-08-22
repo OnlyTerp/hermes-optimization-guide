@@ -2,8 +2,10 @@
 __pycache__/
 *.pyc
 
-# Benchmark run output (results are summarized in benchmarks/README.md)
-benchmarks/results/
+# Benchmark run output is ignored EXCEPT dated result receipts (*.csv),
+# which are committed as verification evidence (see benchmarks/README.md).
+benchmarks/results/*
+!benchmarks/results/*.csv
 
 # Editor/OS noise
 .DS_Store

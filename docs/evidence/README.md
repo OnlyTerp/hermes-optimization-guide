@@ -51,7 +51,7 @@ blocks and inline code exists in the real CLI, and the help output matches.
 
 **Does not prove:** that every YAML key in every template round-trips through
 the config loader, or that every flag combination runs cleanly. Config-key
-verification is tracked in the [issue tracker](../../issues) — the drift-guard
+verification is tracked in the [issue tracker](https://github.com/OnlyTerp/hermes-optimization-guide/issues) — the drift-guard
 covers command surface today; schema coverage is the next layer. We say this
 plainly because the alternative — claiming "fully verified" with receipts that
 don't actually cover it — is the failure mode this directory exists to kill.
