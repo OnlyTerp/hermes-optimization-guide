@@ -41,10 +41,14 @@ if [ -z "$API_KEY" ]; then
   exit 2
 fi
 
-# Flatten matrix.yaml to TSV: model<TAB>context<TAB>task<TAB>repeats<TAB>temp<TAB>skip_lt
-MATRIX_TSV=$(python3 - <<'PY'
+MATRIX_FILE="${HERMES_BENCH_MATRIX:-matrix.yaml}"
+[ -f "$MATRIX_FILE" ] || { echo "matrix file not found: $MATRIX_FILE" >&2; exit 2; }
+
+# Flatten $MATRIX_FILE to TSV: model<TAB>context<TAB>task<TAB>repeats<TAB>temp<TAB>skip_lt
+MATRIX_TSV=$(MATRIX_FILE="$MATRIX_FILE" python3 - <<'PY'
+import os
 import yaml
-m = yaml.safe_load(open("matrix.yaml"))
+m = yaml.safe_load(open(os.environ["MATRIX_FILE"]))
 for model in m["models"]:
     for task in m["tasks"]:
         print("\t".join(str(x) for x in (
@@ -56,7 +60,7 @@ PY
 )
 
 mkdir -p results
-OUT="results/results.csv"
+OUT="${HERMES_BENCH_OUT:-results/results.csv}"
 if [ ! -f "$OUT" ]; then
   echo "model,task,repeat,status,latency_s,prompt_tokens,completion_tokens,total_tokens" > "$OUT"
 fi

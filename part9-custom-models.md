@@ -217,7 +217,7 @@ hermes proxy status         # all ready + bearer expiry
 hermes proxy providers      # list upstreams
 ```
 
-This is *not* the same thing as the API server (`hermes api-server`), which serves the full agent — the proxy forwards pure model inference only. It also is not the egress/iron-proxy direction; those are different commands.
+This is *not* the same thing as the backend/API server (`hermes serve` — headless JSON-RPC/WebSocket backend for the desktop app and remote clients; or the `api_server` gateway platform for OpenAI-compatible serving), which serves the full agent — the proxy forwards pure model inference only. It also is not the egress/iron-proxy direction; those are different commands.
 
 ---
 

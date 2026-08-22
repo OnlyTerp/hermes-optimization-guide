@@ -165,8 +165,9 @@ The server starts on `http://localhost:9623` with:
 # Using nohup
 nohup lightrag-server --port 9623 > ~/.hermes/lightrag/server.log 2>&1 &
 
-# Or use hermes to manage it
-hermes background "cd ~/.hermes/lightrag/LightRAG && lightrag-server --port 9623"
+# (There is no CLI subcommand for this. To keep the server running under
+#  Hermes supervision, ask the agent in a session to start it with the
+#  terminal tool, or wrap it in a systemd unit — see Part 16.)
 ```
 
 ---

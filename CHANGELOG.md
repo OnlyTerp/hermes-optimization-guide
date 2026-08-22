@@ -2,6 +2,30 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-08-22 — Receipts, drift guard, and honesty hardening
+
+Direct response to an external review that called the Herald refresh "a competent version chase, not a hardened upgrade." This pass publishes the receipts and removes every overclaim.
+
+### Added
+- **`scripts/score-your-setup.py`** — runnable 50-point self-audit (10 categories incl. a plaintext-key hygiene scanner). Ends in a shareable verdict: `hermes score 43/50 (WAR-DESK GRADE)`.
+- **`docs/failure-modes.md`** — 8 real incident postmortems, each shaped Symptom → Root cause → Recovery → Permanent fix (update wedge, gateway wedge, secret scrubbing, truncate-before-read zeroing, zombie browser locks, 400-vs-quota payload ladder, cache cost explosion, retry-loop trap).
+- **`docs/evidence/`** — dated, machine-reproducible verification receipts: version transcript, live `hermes --help`, upstream command list, and the audit output. README states what the audit does and does not prove.
+- **`.github/workflows/drift-guard.yml`** — CI job that clones upstream Hermes, extracts the real CLI surface (`_BUILTIN_SUBCOMMANDS` + plugin commands), and **fails the build if the guide references a command that doesn't exist**. Runs on push + weekly cron.
+- **`benchmarks/run.py`** — canonical cross-platform harness (Python stdlib + PyYAML); `run.sh` gains matrix/output overrides.
+- **`benchmarks/results/2026-08-22-local.csv`** — a real, fresh, dated measurement: RTX 5090 llama.cpp, `local-qwen38-27b`, 5 tasks × 5 repeats, **25/25 ok**, with the exact reproduce command in `matrix-local.yaml`.
+- README front door: **scorecard hook**, **"pick your pain" decision table** (every row a ≤10-minute win), and a **"never do this" kill list**.
+
+### Changed
+- **Installer path pinned**: `scripts/vps-bootstrap.sh` no longer pipes the upstream installer to bash — it downloads, sha256-verifies against a pinned value, and refuses to run on mismatch. README leads with the verify-then-run one-liner.
+- **Benchmark honesty**: `render.py` prints a dollar cost only when the matrix entry is `verified: true`; every stale/estimated price renders as `—`. README states the 2026-04-17 tables are historical and the Wafer 402 run is logged (not hidden).
+- `README-zh.md` / `README-ja.md` now carry explicit "entry-level summary only — translations queued" banners.
+
+### Fixed (drift the new audit caught)
+- `hermes bind-thread` — **not a real subcommand**; replaced with the honest profile-routing mechanism (Part 18).
+- `hermes background "..."` — replaced with the real `/background` slash primitive + nohup/systemd paths (Part 3).
+- `hermes platforms` — no such CLI command; corrected to the live `/platforms` view (Parts 22, 23).
+- `hermes api-server` — corrected to the real `hermes serve` backend / `api_server` gateway platform (Part 9).
+
 ## 2026-08-22 — Herald refresh (v0.20.4)
 
 ### Added

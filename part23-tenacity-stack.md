@@ -235,7 +235,7 @@ Model guidance: keep a **cheap multimodal** model in the vision/video auxiliary 
 
 v0.14 pushed the plugin/provider surfaces further; v0.19/v0.20 widened them again. The current mental model:
 
-- **Platforms.** The gateway ships ~35+ adapters now (a2a, webhooks, teams-meetings, wecom, qqbot, yuanbao, bluebubbles, homeassistant, … on top of the classics). Treat the *live* `hermes platforms` output as the count — "22+"/"25+" from older guide waves is stale.
+- **Platforms.** The gateway ships ~35+ adapters now (a2a, webhooks, teams-meetings, wecom, qqbot, yuanbao, bluebubbles, homeassistant, … on top of the classics). Treat the *live* `/platforms` slash output as the count — "22+"/"25+" from older guide waves is stale.
 - **Providers.** Model providers can ship as plugins; `hermes model` is the picker for everything (full live catalog, OAuth flows, keyless options like the OpenCode free tier). `hermes migrate` rewrites config when a provider you used is retired.
 - **`hermes proxy`** still exposes OAuth-backed providers through an OpenAI-compatible local endpoint for Codex/Aider/Cline/Continue — keep it loopback-only.
 - **Sandbox credentials.** For Docker-based terminal backends, the egress proxy ([Part 21](./part21-remote-sandboxes.md)) hands the sandbox *proxy tokens* instead of real keys; `hermes egress` manages the daemon. For SSH/Modal/Daytona the host's `~/.hermes/` state (including credential files) is synced into the sandbox — keep shared/other-provider secrets out of profiles aimed at those.

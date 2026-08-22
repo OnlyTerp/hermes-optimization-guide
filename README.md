@@ -36,11 +36,20 @@ Pick the surface that fits you — they all drive the **same** agent, config, ke
 
 **Easiest — the desktop app.** Grab the [Hermes Desktop](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) installer for macOS/Windows/Linux (or run `hermes desktop` if you already have the CLI). First launch offers **Quick Setup via Nous Portal** — sign in, pick a model, start chatting. Full tour: **[Part 24: Hermes Desktop App](./part24-desktop-app.md)**.
 
-**Terminal — one line.** macOS / Linux:
+**Terminal — verify, then run.** macOS / Linux (pinned: downloads the official
+installer, checks its sha256, refuses to run on mismatch):
 
 ```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh -o hermes-install.sh \
+  && echo "0582d9b1562efcb6e0ac62f4451021667830b830a72ce7d91eaea9fee8b6c09b  hermes-install.sh" | sha256sum -c - \
+  && bash hermes-install.sh
 ```
+
+The pin was computed from the live installer on 2026-08-22 (see
+[`docs/evidence/`](./docs/evidence)). If the hash mismatches, upstream rotated
+the script — inspect the diff before re-pinning. Prefer this over piping
+straight to `bash` (`curl -fsSL …/install.sh | bash`), which runs whatever
+shows up without asking.
 
 Windows (native, PowerShell):
 
@@ -54,9 +63,85 @@ iex (irm https://hermes-agent.nousresearch.com/install.ps1)
 curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/main/scripts/vps-bootstrap.sh | sudo bash
 ```
 
-This installs Hermes, Node.js, Caddy (auto-TLS reverse proxy), UFW, fail2ban, creates a non-root `hermes` user, drops in hardened systemd units, and symlinks every skill from this repo into `~hermes/.hermes/skills/`. See [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) for what it does line by line — it's non-destructive and re-runnable.
+This installs Hermes (**via the pinned-hash installer path above** — the
+bootstrap never pipes the upstream installer directly), Node.js, Caddy
+(auto-TLS reverse proxy), UFW, fail2ban, creates a non-root `hermes` user,
+drops in hardened systemd units, and symlinks every skill from this repo into
+`~hermes/.hermes/skills/`. See [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh)
+for what it does line by line — it's non-destructive and re-runnable.
 
 Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart.md)** (zero to Telegram bot in 5 min).
+
+---
+
+## Score your setup in 30 seconds
+
+Everything else in this repo is built to move ONE number. Run it on any
+machine with Hermes installed:
+
+```bash
+python scripts/score-your-setup.py
+```
+
+It reads your local install (never your secrets) and scores 10 categories
+out of 50 — install health, config sanity, provider wiring, security posture,
+hygiene (plaintext-key scanner), memory, skills, multi-platform, cron, cost
+controls. Output ends with a shareable verdict:
+
+```text
+TOTAL: 43/50  ->  WAR-DESK GRADE
+Share it: "hermes score 43/50 (WAR-DESK GRADE)"
+```
+
+**Your mission: 45/50.** The guide below is the map for every point you're
+missing — start from your MISS lines. (We scored the maintainer's own machine
+while writing this; it leaked a plaintext API key into the hygiene check and
+we're telling you so it can't surprise anyone.)
+
+---
+
+## Pick your pain, skip everything else
+
+Don't read 29 parts. Find your symptom, run the fix, done.
+
+| Your pain | Do this | Then read |
+|---|---|---|
+| "Installation feels sketchy / I don't trust pipe-to-bash" | Run the pinned-hash install above (downloads, sha256-verifies, then runs) | [Part 1](./part1-setup.md) |
+| "I want it in Telegram, now" | `hermes setup` → Telegram → paste bot token | [Part 4](./part4-telegram-setup.md) |
+| "Discord / Slack / Teams / LINE / WhatsApp / iMessage" | Pick the adapter, wire credentials | [Part 15](./part15-new-platforms.md) |
+| "It's too expensive / I want to use my own model" | Point it at any provider; route cheap models to routine work | [Part 9](./part9-custom-models.md), [cost template](./templates/config) |
+| "I'm scared what it can do on my box" | Set `approvals.mode`, fill `command_allowlist`, turn on `security.redact_secrets` | [Part 19](./part19-security-playbook.md) |
+| "It forgets everything / repeats itself" | Enable memory + profile, tune `memory_char_limit` | [Part 7](./part7-memory-system.md) |
+| "I want it running a job every morning" | Cron job via config or dashboard | [Part 22](./part22-latest-power-moves.md) |
+| "I want it driving Claude Code / Codex / my repo" | Kanban worker lane, not raw chat delegation | [Part 18](./part18-coding-agents.md) |
+| "How do I know it didn't hallucinate that it worked?" | Demand evidence — exit code, log, file. Verify completion | [Part 26](./part26-moa-verification.md) |
+| "It broke at 3am / I don't know what state it's in" | Gateway recovery runbook, then the failure-mode index | [Part 11](./part11-gateway-recovery.md), [docs/failure-modes.md](./docs/failure-modes.md) |
+
+Every row is a ≤10-minute win. If you do one thing today, run the scorecard
+and fix your lowest category.
+
+---
+
+## Never do this (the kill list)
+
+These are the actual ways people get burned running Hermes unattended. Full
+postmortems with recovery steps: **[docs/failure-modes.md](./docs/failure-modes.md)**.
+
+1. **Never `curl | bash` an installer you haven't hashed** — this guide pins
+   the upstream installer's sha256 and fails loud on mismatch. Do the same for
+   anything else you pipe to a shell.
+2. **Never store API keys in plaintext config.yaml** — the scorecard's hygiene
+   check exists because real configs leak. Use `secrets:` / a secret manager /
+   env vars.
+3. **Never run `hermes update` while anything is live on the box** — drain the
+   gateway, stop cron jobs first. A mid-flight update while a worker is holding
+   state is how you get wedged sessions.
+4. **Never truncate-before-read on a file you need** (`open(p,'wb').write(open(p,'rb').read()…)`
+   truncates before the inner read finishes) — read into memory first.
+5. **Never approve a gateway/DM pairing you didn't initiate** — treat allowlists
+   as the only truth; `require_mention` + explicit allowed channels/users.
+6. **Never trust a model's claim that it ran something** — demand the exit
+   code, the log, the file. Evidence over narration, always.
 
 ---
 
@@ -64,6 +149,10 @@ Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart
 
 | Folder | What's in it |
 |---|---|
+| [`scripts/score-your-setup.py`](./scripts/score-your-setup.py) | **The scorecard.** Run it on any Hermes box → 50-point shareable setup grade. |
+| [`scripts/audit-cli-surface.py`](./scripts/audit-cli-surface.py) + [`.github/workflows/drift-guard.yml`](./.github/workflows/drift-guard.yml) | **The drift guard.** CI fails if the guide names a `hermes` command that doesn't exist upstream. Runs on every push + weekly. |
+| [`docs/evidence/`](./docs/evidence) | **Verification receipts.** Version transcript, live `hermes --help`, upstream command list, audit output — dated and machine-reproducible. |
+| [`docs/failure-modes.md`](./docs/failure-modes.md) | **Scar tissue.** 8 real incident postmortems: symptom → root cause → recovery → permanent fix. |
 | [`skills/`](./skills) | **13 installable `SKILL.md`** files. `ln -s` into `~/.hermes/skills/` and they're live. |
 | [`templates/config/`](./templates/config) | **5 opinionated `config.yaml`** — minimum, telegram-bot, production, cost-optimized, security-hardened. |
 | [`templates/compose/`](./templates/compose) | Self-hosted Langfuse v3 stack (ClickHouse + MinIO + Redis). |

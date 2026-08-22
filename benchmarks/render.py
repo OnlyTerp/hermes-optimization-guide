@@ -3,11 +3,14 @@
 benchmarks/README.md.
 
 Usage:
-    python3 render.py results/results.csv > snapshot.md
+    python3 render.py results/results.csv [matrix.yaml] > snapshot.md
 
-Reads matrix.yaml (in the same directory as this script) for prices, and
-computes per-(model, task):
-    Cost  — mean of (prompt_tokens * in_price + completion_tokens * out_price)
+Reads the matrix file (second arg, default `matrix.yaml` in this directory)
+for prices, and computes per-(model, task):
+    Cost  — mean of (prompt_tokens * in_price + completion_tokens * out_price).
+            Only rendered when the model's prices are flagged `verified: true`
+            in the matrix; unverified (stale) prices render as "—" so they can
+            never be quoted as real numbers.
     p50 / p95 latency — over the ok repeats
     Runs  — ok/total (quality pass/fail stays a human+rubric judgment;
             this script reports run health, not quality)
@@ -37,13 +40,19 @@ def percentile(values: list[float], pct: float) -> float:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         print(__doc__, file=sys.stderr)
         return 2
 
-    matrix = yaml.safe_load((HERE / "matrix.yaml").read_text())
+    matrix_path = pathlib.Path(sys.argv[2]) if len(sys.argv) == 3 else (HERE / "matrix.yaml")
+    matrix = yaml.safe_load(matrix_path.read_text())
+    # prices[model] = (in, out, verified). Only verified prices render a cost.
     prices = {
-        m["id"]: (m["price_per_mtok_in"], m["price_per_mtok_out"])
+        m["id"]: (
+            m.get("price_per_mtok_in"),
+            m.get("price_per_mtok_out"),
+            bool(m.get("verified", False)),
+        )
         for m in matrix["models"]
     }
     task_ids = [t["id"] for t in matrix["tasks"]]
@@ -73,13 +82,15 @@ def main() -> int:
                 continue
             ok = [r for r in runs if r["status"] == "ok"]
             lat = [float(r["latency_s"]) for r in ok]
-            in_p, out_p = prices[model]
-            costs = [
-                int(r["prompt_tokens"]) / 1e6 * in_p
-                + int(r["completion_tokens"]) / 1e6 * out_p
-                for r in ok
-                if r["prompt_tokens"] and r["completion_tokens"]
-            ]
+            in_p, out_p, verified = prices[model]
+            costs = []
+            if verified and in_p is not None and out_p is not None:
+                costs = [
+                    int(r["prompt_tokens"]) / 1e6 * in_p
+                    + int(r["completion_tokens"]) / 1e6 * out_p
+                    for r in ok
+                    if r["prompt_tokens"] and r["completion_tokens"]
+                ]
             cost = f"${statistics.mean(costs):.4f}" if costs else "—"
             p50 = f"{percentile(lat, 0.50):.1f}s" if lat else "—"
             p95 = f"{percentile(lat, 0.95):.1f}s" if lat else "—"

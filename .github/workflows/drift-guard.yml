@@ -1,0 +1,58 @@
+name: CLI drift guard
+
+# Verifies every `hermes <subcommand>` referenced anywhere in the guide
+# actually exists in the CURRENT upstream Hermes Agent CLI surface.
+#
+# How: extracts _BUILTIN_SUBCOMMANDS (AST-parsed, not regex) and plugin-
+# registered commands from a shallow checkout of NousResearch/hermes-agent,
+# then audits every markdown file in this repo against that list.
+#
+# This is the anti-drift machine: when upstream removes/renames a command,
+# CI turns red instead of readers hitting a wall. See docs/evidence/README.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "part*.md"
+      - "README.md"
+      - "scripts/audit-cli-surface.py"
+      - "scripts/extract-upstream-commands.py"
+      - ".github/workflows/drift-guard.yml"
+  pull_request:
+  schedule:
+    # Hermes ships fast — re-check weekly even when the guide hasn't moved
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  drift-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Shallow-clone upstream Hermes Agent
+        run: |
+          git clone --depth 1 https://github.com/NousResearch/hermes-agent.git /tmp/hermes-upstream
+
+      - name: Extract real CLI command surface from upstream source
+        run: |
+          python scripts/extract-upstream-commands.py /tmp/hermes-upstream --output /tmp/real-commands.txt
+          echo "=== real command surface ==="
+          wc -l /tmp/real-commands.txt
+
+      - name: Audit guide references against real CLI
+        run: python scripts/audit-cli-surface.py --commands-file /tmp/real-commands.txt --exit-on-drift
+
+      - name: Publish evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-guard-receipts
+          path: |
+            /tmp/real-commands.txt
+          if-no-files-found: ignore

@@ -308,7 +308,8 @@ Schedules got two highways: the dashboard/desktop **cron editors** now let you p
 
 Streaming TTS with barge-in, wake words ("Hey Hermes"), and A2A v1.0 (agent-to-agent protocol, both directions) are the release's public faces — see the voice-mode and A2A guides in the docs. The practical hook for most setups: Agent-to-Agent lets other agents reach your Hermes, and reach out from it, as a first-class messaging surface.
 
-> **Platform count check:** the gateway now ships ~35+ adapters (A2A, webhooks, teams-meetings, wecom, qqbot, yuanbao, … on top of the classics). Wording like "22+" is stale — count names change every release, so treat the *live* `hermes platforms` output as truth.
+> **Platform count check:** the gateway now ships ~35+ adapters (A2A, webhooks, teams-meetings, wecom, qqbot, yuanbao, … on top of the classics). Wording like "22+" is stale — count names change every release, so treat the *live*
+`/platforms` (slash-command) output as truth.
 
 ---
 

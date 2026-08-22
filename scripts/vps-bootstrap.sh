@@ -90,13 +90,24 @@ else
 fi
 
 # ------------------------------------------------------------
-# 6. Hermes install (as hermes user)
+# 6. Hermes install (as hermes user) — PINNED, not curl|bash
 # ------------------------------------------------------------
+# We download the official installer, verify its sha256 against a pinned
+# value, and only then execute it. If upstream rotates the script, the hash
+# check fails LOUDLY and nothing runs — update PINNED_INSTALL_SHA256 below
+# after reviewing the new installer (see docs/evidence/ in the guide repo).
 HERMES_BIN=/home/hermes/.local/bin/hermes
+INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
+PINNED_INSTALL_SHA256="0582d9b1562efcb6e0ac62f4451021667830b830a72ce7d91eaea9fee8b6c09b"
 if [ ! -x "$HERMES_BIN" ]; then
-  log "Installing Hermes..."
-  sudo -u hermes bash -c 'curl -sSL https://hermes-agent.nousresearch.com/install.sh | bash' \
-    || warn "Hermes installer not reachable yet — install manually and re-run."
+  log "Installing Hermes (pinned installer)..."
+  sudo -u hermes bash -c '
+    set -e
+    curl -fsSL "'"${INSTALL_URL}"'" -o /tmp/hermes-install.sh
+    echo "'"${PINNED_INSTALL_SHA256}"'  /tmp/hermes-install.sh" | sha256sum -c - \
+      || { echo "FATAL: installer hash mismatch — review and re-pin before running." >&2; exit 1; }
+    bash /tmp/hermes-install.sh
+  ' || warn "Hermes installer not reachable / hash mismatch — install manually and re-run."
 fi
 
 # Expose the CLI system-wide so the systemd units (ExecStart=/usr/local/bin/hermes)

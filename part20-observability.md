@@ -420,7 +420,7 @@ Langfuse v4 is OTEL-native: it accepts spans directly at `/api/public/otel`, so 
 
 ## Eval-Driven Regression Prevention
 
-Hermes does not ship a built-in `hermes evals` subcommand — that's a Langfuse
+Hermes does not ship a built-in evals subcommand — that's a Langfuse
 workflow, not a Hermes one. Once Langfuse is wired up, do the eval loop on the
 Langfuse side:
 

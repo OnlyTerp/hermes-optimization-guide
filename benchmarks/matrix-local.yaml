@@ -1,0 +1,37 @@
+# benchmarks/matrix-local.yaml — the matrix run 2026-08-22 against the
+# maintainer's local RTX 5090 llama.cpp server (127.0.0.1:30000). This is the
+# "local inference" lane — zero API cost, fully reproducible by anyone with a
+# 5090 running the same build. The API-cost column is intentionally $0.00.
+#
+# Model ID verified live via GET /models on 2026-08-22.
+#
+# Reproduce:
+#   HERMES_BENCH_BASE_URL=http://127.0.0.1:30000/v1 \
+#   HERMES_BENCH_API_KEY=*** \
+#   HERMES_BENCH_MATRIX=matrix-local.yaml \
+#   HERMES_BENCH_OUT=results/2026-08-22-local.csv \
+#   python run.py
+
+models:
+  - id: local-qwen38-27b
+    price_per_mtok_in: 0.0
+    price_per_mtok_out: 0.0
+    context_tokens: 262144
+    verified: true          # local = $0 cost, verified by construction
+
+tasks:
+  - id: T1_triage
+    repeats: 5
+    temperature: 0
+  - id: T2_summarize
+    repeats: 5
+    temperature: 0
+  - id: T3_codefix
+    repeats: 5
+    temperature: 0
+  - id: T4_deepreason
+    repeats: 5
+    temperature: 0
+  - id: T5_bulk_extract
+    repeats: 5
+    temperature: 0

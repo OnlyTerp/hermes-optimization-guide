@@ -1,0 +1,49 @@
+# benchmarks/matrix-wafer.yaml — the matrix actually run on 2026-08-22 against
+# pass.wafer.ai/v1 (the provider this maintainer has live keys for).
+#
+# These are the EXACT model IDs that endpoint serves (verified via GET /models
+# on 2026-08-22). Prices stay unverified (verified: false), so render.py shows
+# measured latency + tokens but renders cost as "—" until someone verifies
+# per-Mtok pricing for this gateway. That is the point: only real numbers print.
+#
+# Reproduce:
+#   HERMES_BENCH_BASE_URL=https://pass.wafer.ai/v1 \
+#   HERMES_BENCH_API_KEY=<your key> \
+#   HERMES_BENCH_MATRIX=matrix-wafer.yaml \
+#   HERMES_BENCH_OUT=results/2026-08-22-wafer.csv \
+#   ./run.sh
+
+models:
+  - id: Kimi-K3
+    price_per_mtok_in: 0.15          # TODO: verify against gateway pricing
+    price_per_mtok_out: 0.60
+    context_tokens: 262144
+    verified: false
+  - id: GLM-5.2
+    price_per_mtok_in: 0.20          # TODO: verify against gateway pricing
+    price_per_mtok_out: 2.00
+    context_tokens: 1000000
+    verified: false
+  - id: DeepSeek-V4-Flash-0731-Fast
+    price_per_mtok_in: 0.15          # TODO: verify against gateway pricing
+    price_per_mtok_out: 0.60
+    context_tokens: 1000000
+    verified: false
+
+tasks:
+  - id: T1_triage
+    repeats: 5
+    temperature: 0
+  - id: T2_summarize
+    repeats: 5
+    temperature: 0
+    skip_if_context_lt: 300000
+  - id: T3_codefix
+    repeats: 5
+    temperature: 0
+  - id: T4_deepreason
+    repeats: 5
+    temperature: 0
+  - id: T5_bulk_extract
+    repeats: 5
+    temperature: 0

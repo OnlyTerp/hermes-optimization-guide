@@ -132,9 +132,16 @@ What you actually want on your phone: a Telegram topic named "Claude Code" where
 
 This pattern is useful for pair-programming from chat. For unattended work, prefer Kanban worker lanes so task state and review gates survive restarts. The interactive workflow:
 
-```bash
-# In Telegram, create a topic, then from the CLI or dashboard:
-hermes bind-thread <thread-id> --runtime claude-code --cwd ~/projects/myapp
+```text
+# IMPORTANT (v0.20.4 check): bind-thread is NOT a real Hermes subcommand —
+# it was carried over from OpenClaw-era material. The current honest way to get
+# "this Telegram topic = this coding-agent workdir" is:
+#
+#   1. Lexical: use Telegram topic mode and name the topic after the task.
+#   2. Real per-thread context: switch the session's workdir with the session/
+#      project primitives (Part 23), or spawn a profile per workspace.
+#   3. For raw runtime control on a thread, use the /... slash commands that
+#      exist (check `hermes --help` and the slash-command reference first).
 ```
 
 From that point:

@@ -1,0 +1,8 @@
+Sources: hermes --help (live)
+Real commands: 72
+Distinct commands mentioned in guide: 51
+
+=== MENTIONED IN GUIDE BUT NOT IN REAL CLI (0) ===
+
+Real commands actually referenced: 51
+CLEAN: all referenced subcommands exist.

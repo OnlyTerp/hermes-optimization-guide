@@ -5,6 +5,8 @@
 </p>
 
 > [English 完整版](./README.md) · 本页是入口摘要，章节正文仍为英文。 · 最后同步：2026-08-22
+>
+> ⚠️ 状态说明：本文件**有意保持为入口级摘要**——完整指南（29 章 + 评分脚本、"绝不这样做" 清单、故障复盘）目前仅有英文。翻译是排队的后续工作；在翻译完成前，请以英文版为准。
 
 实用指南 + 可安装制品（Skills、配置模板、基础设施脚本），针对 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（当前覆盖到 **v0.20.4 “Herald”（v2026.8.18）**，含流式语音、A2A 代理协议、外部密钥管理、egress/iron-proxy、桌面 Bots 与 computer use）。
 

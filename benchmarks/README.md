@@ -1,8 +1,57 @@
 # Benchmarks
 
-Real, reproducible cost + latency benchmarks across flagship models, run on standardized tasks. This folder contains the **methodology**, the **task set**, and the **raw results**.
+Real, reproducible cost + latency benchmarks across flagship models, run on standardized tasks. This folder contains the **methodology**, the **task set**, the **harness**, and the **raw results**.
 
-> ⚠ Benchmark numbers drift as providers re-price and models update. The committed results are a dated **2026-04-17** snapshot. On **2026-08-22** `matrix.yaml` model IDs were refreshed to the **v0.20.4-era frontier** (13 models: GPT-5.6 Terra / GPT-5.5, Claude Opus 5 / Sonnet 5 / Haiku 4.5, Gemini 3.7 Flash / 3.1 Pro preview, Kimi K3, GLM-5.2, DeepSeek V4 Pro/Flash, Qwen 3.8 Max, Grok 4.6) — but **prices/context windows are still unverified estimates** (flagged `TODO(v0.20)` in the file) and **no v0.20.4 results exist yet**. Refresh prices in `matrix.yaml`, then re-run with [`./run.sh`](./run.sh) before quoting numbers externally.
+> ⚠ **Honesty rules this folder lives by** (as of 2026-08-22):
+>
+> 1. **Only verified prices render.** `render.py` shows a dollar cost for a model only when its matrix entry carries `verified: true`. Every stale/estimated price renders as `—`. You can't quote a number the file never claimed.
+> 2. **The committed cost tables below are a dated 2026-04-17 snapshot** of API list prices. Model IDs were refreshed to the v0.20.4-era catalog, but prices remain unverified estimates (`TODO(v0.20)` in `matrix.yaml`) until someone checks them against live provider docs. Treat the dollar column as historical until re-verified.
+> 3. **Fresh measured data ships with receipts.** `results/2026-08-22-local.csv` is a real 25-run measurement from this date (RTX 5090, llama.cpp, `local-qwen38-27b`, 5 tasks × 5 repeats, all `ok`). Reproduce it with the exact command in [`matrix-local.yaml`](./matrix-local.yaml).
+> 4. **Wafer gateway attempt logged, not hidden.** A 2026-08-22 run against `pass.wafer.ai/v1` (Kimi-K3, GLM-5.2, DeepSeek-V4-Flash) returned HTTP 402 `insufficient_credits` on every call — the gateway had $0 balance. No numbers from that run are published; this is documented so the next runner knows why.
+
+---
+
+## Running the harness
+
+Two harnesses, same CSV contract:
+
+- **`run.py`** (canonical, cross-platform) — Python stdlib + PyYAML only. Works on Windows/macOS/Linux.
+- **`run.sh`** — bash version for Linux/macOS hosts.
+
+```bash
+# Local inference (free, reproducible — what produced results/2026-08-22-local.csv)
+HERMES_BENCH_BASE_URL=http://127.0.0.1:30000/v1 \
+HERMES_BENCH_API_KEY=*** \
+HERMES_BENCH_MATRIX=matrix-local.yaml \
+HERMES_BENCH_OUT=results/2026-08-22-local.csv \
+python run.py
+
+# Any OpenAI-compatible gateway
+HERMES_BENCH_BASE_URL=https://openrouter.ai/api/v1 \
+HERMES_BENCH_API_KEY=*** \
+python run.py
+
+# Render tables from the CSV (costs print only for verified prices)
+python render.py results/2026-08-22-local.csv matrix-local.yaml
+```
+
+## Fresh measured results — 2026-08-22 (local RTX 5090)
+
+Measured on the maintainer's RTX 5090 (llama.cpp server, 262144 ctx, DFlash2
+drafting) with `local-qwen38-27b`. 5 tasks × 5 repeats, `temperature=0`,
+**25/25 runs ok**, zero errors. Raw data: [`results/2026-08-22-local.csv`](./results/2026-08-22-local.csv).
+
+| Task | p50 | p95 | API cost |
+|---|---:|---:|---:|
+| T1_triage (502 tok prompt) | 7.0s | 7.2s | $0.00 (local) |
+| T2_summarize | 8.8s | 9.4s | $0.00 (local) |
+| T3_codefix | 1.7s | 1.9s | $0.00 (local) |
+| T4_deepreason | 5.0s | 5.1s | $0.00 (local) |
+| T5_bulk_extract | 5.4s | 5.6s | $0.00 (local) |
+
+This is the honest state of measured-on-v0.20-era-hardware data today: one
+model, one machine, fully reproducible. More rows land as keys/balances for
+cloud gateways become available — each with its own dated CSV and matrix file.
 
 ---
 
