@@ -22,7 +22,7 @@ jobs:
           args: >-
             --no-progress
             --timeout 20
-            --retry-count 3
+            --max-retries 3
             --retry-wait-time 10
             --accept 200,204,206
             --exclude-path README-zh.md
