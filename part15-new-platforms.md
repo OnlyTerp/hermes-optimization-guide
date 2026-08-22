@@ -1,13 +1,13 @@
-# Part 15: Messaging Platforms — 35+ Adapters (iMessage via Photon, WhatsApp Cloud, Teams, LINE, SimpleX, Google Chat, A2A, Buzz, IRC, WeChat, Android)
+# Part 15: Messaging Platforms — 30+ Adapters (iMessage via Photon, WhatsApp Cloud, Teams, LINE, SimpleX, Google Chat, A2A, Buzz, IRC, WeChat, Android)
 
-*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wired Teams end-to-end and added LINE + SimpleX Chat; v0.15 added ntfy; and v0.17 "Reach" added the three biggest asks at once — **iMessage with no Mac required (Photon)**, an **official WhatsApp Business Cloud API** adapter, and the **Raft** agent-to-agent network. The v0.18–v0.20 wave kept widening the roster: **IRC** (stdlib-only, no deps), **Buzz** (Block's Nostr-based human+agent community platform), **A2A** (the Linux Foundation's Agent2Agent protocol v1.0 — agents calling agents), a **Microsoft Graph webhook** connector powering the Teams Meeting Pipeline, and the experimental **Hermes Relay** connector system that fronts platforms without holding their credentials. As of **v0.20.4 (2026.8.18)**, the official docs catalog **35+ adapter pages** — this part is the curated tour.*
+*Hermes' gateway is now a plugin host. v0.9 made Hermes "everywhere"; v0.11/v0.12 added QQBot, Tencent Yuanbao, and Microsoft Teams; v0.13 added Google Chat; v0.14 wired Teams end-to-end and added LINE + SimpleX Chat; v0.15 added ntfy; and v0.17 "Reach" added the three biggest asks at once — **iMessage with no Mac required (Photon)**, an **official WhatsApp Business Cloud API** adapter, and the **Raft** agent-to-agent network. The v0.18–v0.20 wave kept widening the roster: **IRC** (stdlib-only, no deps), **Buzz** (Block's Nostr-based human+agent community platform), **A2A** (the Linux Foundation's Agent2Agent protocol v1.0 — agents calling agents), a **Microsoft Graph webhook** connector powering the Teams Meeting Pipeline, and the experimental **Hermes Relay** connector system that fronts platforms without holding their credentials. As of **v0.20.4 (2026.8.18)**, the official docs catalog **34 adapter pages** — this part is the curated tour.*
 
 ---
 
 <a id="the-25-platform-lineup"></a>
-## The 35+ Platform Lineup
+## The 30+ Platform Lineup
 
-As of v0.20.4, the gateway ships **35+ adapter pages** in the official docs — built-in adapters plus plugin-shipped platforms. The full capability matrix (voice, images, files, threads, reactions, typing, streaming per platform) lives in the [official Messaging Gateway docs](https://nousresearch.github.io/hermes-agent/docs/user-guide/messaging/) and changes with every release; the roster below is the current shape:
+As of v0.20.4, the gateway ships **34 adapter pages** in the official docs — built-in adapters plus plugin-shipped platforms. The full capability matrix (voice, images, files, threads, reactions, typing, streaming per platform) lives in the [official Messaging Gateway docs](https://nousresearch.github.io/hermes-agent/docs/user-guide/messaging/) and changes with every release; the roster below is the current shape:
 
 | Platform | Mode | Notes |
 |----------|------|-------|
@@ -108,7 +108,7 @@ The [Buzz](https://github.com/block/buzz) adapter connects Hermes to a Buzz comm
 
 ### IRC — the zero-dependency classic
 
-The IRC adapter is pure Python stdlib `asyncio` — no SDK, no daemon, no extra packages. It speaks the IRC protocol directly, so it works on public networks (Libera.Chat) or any self-hosted ircd. Plain text means **no voice/images/files/threads/reactions** — replies are `PRIVMSG` lines, long messages split to fit the line limit. Configure with `gateway.platforms.irc.extra` (`server`, `port`, `nickname`, `channels`, optional NickServ password). Ideal for tireless on-call bots in a channel everyone already lives in.
+The IRC adapter is pure Python stdlib `asyncio` — no SDK, no daemon, no extra packages. It speaks the IRC protocol directly, so it works on public networks (Libera.Chat) or any self-hosted ircd. Plain text means **no voice/images/files/threads/reactions** — replies are `PRIVMSG` lines, long messages split to fit the line limit. Configure with `platforms.irc.extra` (`server`, `port`, `nickname`, `channel`/`channels`, optional NickServ password) in `config.yaml` — the gateway merges the top-level `platforms.` map into its platform config. Ideal for tireless on-call bots in a channel everyone already lives in.
 
 ### Hermes Relay — front platforms without holding their credentials (experimental)
 

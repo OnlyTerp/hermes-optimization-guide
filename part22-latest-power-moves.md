@@ -42,7 +42,7 @@ Habits that pay off:
 - `/background <prompt>` (`/bg`) for independent research or monitoring.
 - `/resume`, and delete stale sessions from the picker with `d`.
 - `/reload` after editing `.env`; avoid restarting the session just to pick up keys.
-- Toggle `/mouse` if your terminal/ConPTY injects phantom mouse events.
+- Set `HERMES_TUI_DISABLE_MOUSE=1` if your terminal/ConPTY injects phantom mouse events into the TUI.
 - `/model` opens the fuzzy filterable picker (section 8) — type part of a model name to narrow.
 
 If the dashboard Chat tab is enabled, it embeds the same TUI through a PTY, so improving your TUI workflow also improves the browser workflow.
@@ -308,7 +308,7 @@ Schedules got two highways: the dashboard/desktop **cron editors** now let you p
 
 Streaming TTS with barge-in, wake words ("Hey Hermes"), and A2A v1.0 (agent-to-agent protocol, both directions) are the release's public faces — see the voice-mode and A2A guides in the docs. The practical hook for most setups: Agent-to-Agent lets other agents reach your Hermes, and reach out from it, as a first-class messaging surface.
 
-> **Platform count check:** the gateway now ships ~35+ adapters (A2A, webhooks, teams-meetings, wecom, qqbot, yuanbao, … on top of the classics). Wording like "22+" is stale — count names change every release, so treat the *live*
+> **Platform count check:** the gateway now ships ~30+ adapters (A2A, webhooks, teams-meetings, wecom, qqbot, yuanbao, … on top of the classics). Wording like "22+" is stale — count names change every release, so treat the *live*
 `/platforms` (slash-command) output as truth.
 
 ---

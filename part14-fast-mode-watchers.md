@@ -38,7 +38,7 @@ It persists for the session until you turn it off. For non-interactive entry poi
 ### Where It Works
 
 - ✅ Interactive CLI (`hermes`)
-- ✅ Every gateway platform — the full 35+ adapter lineup ([Part 15](./part15-new-platforms.md)): Telegram, Discord, Slack, Google Chat, WhatsApp (personal + Business Cloud API), Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Feishu/Lark, WeCom, WeCom Callback, Weixin/WeChat, BlueBubbles and Photon (iMessage), QQBot, Tencent Yuanbao, Microsoft Teams, LINE, ntfy, IRC, Buzz, SimpleX, Raft, webhooks, the API server (Open WebUI), A2A, and Hermes Relay frontends
+- ✅ Every gateway platform — the full 30+ adapter lineup ([Part 15](./part15-new-platforms.md)): Telegram, Discord, Slack, Google Chat, WhatsApp (personal + Business Cloud API), Signal, SMS, Email, Home Assistant, Mattermost, Matrix, DingTalk, Feishu/Lark, WeCom, WeCom Callback, Weixin/WeChat, BlueBubbles and Photon (iMessage), QQBot, Tencent Yuanbao, Microsoft Teams, LINE, ntfy, IRC, Buzz, SimpleX, Raft, webhooks, the API server (Open WebUI), A2A, and Hermes Relay frontends
 - ✅ Cron jobs started from a session where `/fast fast` is active
 - ✅ Subagents (`delegate_task` inherits the parent's tier)
 - ❌ Local/Ollama models (no priority tier exists)

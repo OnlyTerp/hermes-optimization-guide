@@ -2,6 +2,31 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-08-22 (evening) — Second review: lockout guard, pinned-tag drift guard, three-surface audit, README surgery
+
+Direct response to a second external review ("Fable"): "fix #1 (SSH lockout), #2 (pin story), #6 (README navigation) and this is a repo I'd point people at." All three fixed, plus the rest of the list.
+
+### Fixed
+- **SSH lockout (the dangerous one).** `vps-bootstrap.sh` now parses every `Port` directive from `/etc/ssh/sshd_config` and `/etc/ssh/sshd_config.d/*`, allows each, and **refuses to enable UFW** if it cannot determine the SSH port. Never assumes 22.
+- **`HERMES_ALLOW_UNPINNED=1` override** for operators who inspected a rotated installer, with a loud warning.
+- **fail2ban** gets a working `jail.local` (`backend = systemd`) before the sshd jail is enabled; systemd units are installed always but **enabled only if the Hermes install actually succeeded**; header comment matches README (`sudo bash`, not `| bash`).
+- **4 fabricated slash commands** caught by the extended drift guard and fixed against upstream `COMMAND_REGISTRY`: `/unbind` + `/runtime` (part18 — the ACP story rewritten honestly: `hermes acp` runs the other direction), `/switch` → `/sessions` (part7), `/mouse` → `HERMES_TUI_DISABLE_MOUSE=1` (part22), `/billing` → `/topup` + `/subscription` (part26).
+- **2 config-key drifts**: `gateway.platforms.irc.extra` → `platforms.irc.extra` (part15), `prompt_caching.enabled` → `prompt_caching.cache_ttl` (README).
+- **Platform count standardized to "30+"** everywhere (upstream docs catalog 34 adapter pages at the pinned tag; "35+" was an overcount, "25+" was stale).
+
+### Changed
+- **Drift guard now audits three surfaces, pinned to a tag.** `scripts/extract-upstream-surface.py` extracts CLI commands + slash commands + config-key paths (incl. `_EXTRA_KNOWN_ROOT_KEYS`) from upstream at `v2026.8.19` (v0.20.5). CI checks the guide against that tag — no more "one patch stale on update day" (`UPSTREAM_TAG` in the workflow moves with the badge).
+- **Version framing is pinned-tag**: badge + sync note say v0.20.5 (2026.8.19), and the README states version claims move with the drift-guard pin, not "current as of today."
+- **README surgery (558 → 427 lines):** deleted Pick Your Path (pain table replaces it), The Problem / What This Fixes, How the Pieces Fit Together, and the giant What's New section (collapsed to three lines pointing at the CHANGELOG). The pain table is the front door; `docs/outreach/` removed from the Repo Map.
+- **Scorecard rework:** scores only what's verifiable on disk (50 pts, 8 categories). Removed surface-area rewards (platform count, cron count, "current wave") and the gamified verdicts. Maintainer's machine: 42/50, one honest gap (plaintext key).
+- **Link checker:** swapped `github-action-markdown-link-check` (tolerated 403/429 = effectively unchecked GitHub links) for **lychee with a GitHub token**.
+- **Bootstrap pin hardened:** the README publishes `vps-bootstrap.sh`'s sha256 at a tagged release (`v1.3`) so the pin can't be edited by an attacker who controls `main`; NodeSource setup script pinned inside the bootstrap (`575583bb…`).
+
+### Added
+- **`.github/workflows/pin-watch.yml`** — daily job that fetches the live upstream installer, compares against the pinned sha256, and opens an issue on rotation (so fresh installs never silently sit on a stale pin).
+- **`scripts/extract-upstream-surface.py`** — replaces `extract-upstream-commands.py` (kept for the old receipt); AST/regex extraction of all three surfaces.
+- **CONTRIBUTING rule:** no command ships without a transcript in `docs/evidence/` — the proactive half of the lesson the ten fabrications taught.
+
 ## 2026-08-22 — Receipts, drift guard, and honesty hardening
 
 Direct response to an external review that called the Herald refresh "a competent version chase, not a hardened upgrade." This pass publishes the receipts and removes every overclaim.

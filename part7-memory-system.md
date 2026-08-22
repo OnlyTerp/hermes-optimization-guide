@@ -66,7 +66,7 @@ session_search()
 session_search(session_id="20260822_204335_d62c16", around_message_id=12345)
 ```
 
-From the CLI, `hermes sessions list` browses past sessions, and `hermes sessions` (TUI alias `/switch`) resumes any of them.
+From the CLI, `hermes sessions list` browses past sessions, and `hermes sessions` (in-session: `/sessions`) resumes any of them.
 
 **When to use it:**
 - User says "we did this before" or "remember when"

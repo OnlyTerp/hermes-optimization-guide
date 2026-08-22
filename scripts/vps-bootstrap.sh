@@ -2,27 +2,36 @@
 # ============================================================
 # scripts/vps-bootstrap.sh
 # ------------------------------------------------------------
-# Hetzner CX22 (or any Debian 12 / Ubuntu 24.04 VPS) -> production
-# Hermes in ~10 minutes.
+# Any Debian 12 / Ubuntu 24.04 VPS (tested on Hetzner CX22-class
+# hardware) -> production Hermes in ~10 minutes.
 #
 # What it does:
 #   1. Creates a non-root `hermes` user
 #   2. Installs prereqs: curl, jq, git, python3-venv, nodejs, age, rclone, ufw, fail2ban
-#   3. Installs Hermes via official installer
+#   3. Installs Hermes via official installer (sha256-pinned, override available)
 #   4. Sets up Caddy (reverse proxy + auto TLS)
-#   5. Sets up UFW (22, 80, 443 only) + fail2ban
+#   5. Sets up UFW (your ACTUAL sshd port, 80, 443) + fail2ban with a
+#      working jail.local — refuses to enable UFW if it cannot determine
+#      the SSH port
 #   6. Installs the guide repo at /opt/hermes-optimization-guide
 #   7. Symlinks all skills into ~hermes/.hermes/skills/
-#   8. Copies templates/systemd/ unit files + enables them
+#   8. Copies templates/systemd/ unit files; enables them ONLY if the
+#      Hermes install actually succeeded
 #   9. Drops templates/caddy/Caddyfile as a reference
 #  10. Leaves .env + config.yaml as stubs the operator fills in
 #
-# USAGE (as root on a fresh box):
-#   curl -sSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/main/scripts/vps-bootstrap.sh | bash
+# HOW TO RUN THIS SCRIPT SAFELY (do not pipe it from `main`):
+#   The README publishes this file's sha256 at a tagged release. Fetch the
+#   tagged copy, verify it, then run:
 #
-# Or clone first and run from the repo:
-#   git clone https://github.com/OnlyTerp/hermes-optimization-guide /opt/hermes-optimization-guide
-#   sudo bash /opt/hermes-optimization-guide/scripts/vps-bootstrap.sh
+#     curl -fsSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/<TAG>/scripts/vps-bootstrap.sh \
+#       -o vps-bootstrap.sh
+#     echo "<README-PUBLISHED-SHA256>  vps-bootstrap.sh" | sha256sum -c -
+#     sudo bash vps-bootstrap.sh
+#
+#   Or clone the repo at the tag and run from the checkout:
+#     git clone --depth 1 --branch <TAG> https://github.com/OnlyTerp/hermes-optimization-guide /opt/hermes-optimization-guide
+#     sudo bash /opt/hermes-optimization-guide/scripts/vps-bootstrap.sh
 #
 # Non-destructive by default. Re-runnable.
 # ============================================================
@@ -47,11 +56,21 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
   debian-keyring debian-archive-keyring apt-transport-https
 
 # ------------------------------------------------------------
-# 2. Node.js (required by MCP servers)
+# 2. Node.js (required by MCP servers) — sha256-pinned setup script
 # ------------------------------------------------------------
 if ! command -v node >/dev/null 2>&1; then
-  log "Installing Node.js 22 (LTS)..."
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  log "Installing Node.js 22 (LTS) via pinned NodeSource setup script..."
+  NODESOURCE_URL="https://deb.nodesource.com/setup_22.x"
+  PINNED_NODESOURCE_SHA256="575583bbac2fccc0b5edd0dbc03e222d9f9dc8d724da996d22754d6411104fd1"
+  if [ "${HERMES_ALLOW_UNPINNED:-0}" = "1" ]; then
+    warn "HERMES_ALLOW_UNPINNED=1 — running NodeSource setup script WITHOUT hash verification."
+    curl -fsSL "$NODESOURCE_URL" | bash -
+  else
+    curl -fsSL "$NODESOURCE_URL" -o /tmp/nodesource-setup.sh
+    echo "${PINNED_NODESOURCE_SHA256}  /tmp/nodesource-setup.sh" | sha256sum -c - \
+      || die "NodeSource setup script hash mismatch — NodeSource rotated it. Review the new script, re-pin PINNED_NODESOURCE_SHA256, or re-run with HERMES_ALLOW_UNPINNED=1 after inspection."
+    bash /tmp/nodesource-setup.sh
+  fi
   apt-get install -y -qq nodejs
 fi
 
@@ -95,19 +114,36 @@ fi
 # We download the official installer, verify its sha256 against a pinned
 # value, and only then execute it. If upstream rotates the script, the hash
 # check fails LOUDLY and nothing runs — update PINNED_INSTALL_SHA256 below
-# after reviewing the new installer (see docs/evidence/ in the guide repo).
+# after reviewing the new installer (the daily pin-watch CI job opens an
+# issue when the live installer hash drifts from this pin).
+#
+# Operator escape hatch: if you have inspected the new installer yourself,
+# HERMES_ALLOW_UNPINNED=1 skips verification for this run.
 HERMES_BIN=/home/hermes/.local/bin/hermes
 INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 PINNED_INSTALL_SHA256="0582d9b1562efcb6e0ac62f4451021667830b830a72ce7d91eaea9fee8b6c09b"
+HERMES_INSTALL_OK=0
 if [ ! -x "$HERMES_BIN" ]; then
   log "Installing Hermes (pinned installer)..."
-  sudo -u hermes bash -c '
-    set -e
-    curl -fsSL "'"${INSTALL_URL}"'" -o /tmp/hermes-install.sh
-    echo "'"${PINNED_INSTALL_SHA256}"'  /tmp/hermes-install.sh" | sha256sum -c - \
-      || { echo "FATAL: installer hash mismatch — review and re-pin before running." >&2; exit 1; }
-    bash /tmp/hermes-install.sh
-  ' || warn "Hermes installer not reachable / hash mismatch — install manually and re-run."
+  if [ "${HERMES_ALLOW_UNPINNED:-0}" = "1" ]; then
+    warn "HERMES_ALLOW_UNPINNED=1 — running Hermes installer WITHOUT hash verification."
+    if sudo -u hermes bash -c 'curl -fsSL "'"${INSTALL_URL}"'" | bash'; then
+      HERMES_INSTALL_OK=1
+    fi
+  else
+    if sudo -u hermes bash -c '
+      set -e
+      curl -fsSL "'"${INSTALL_URL}"'" -o /tmp/hermes-install.sh
+      echo "'"${PINNED_INSTALL_SHA256}"'  /tmp/hermes-install.sh" | sha256sum -c - \
+        || { echo "FATAL: installer hash mismatch — upstream rotated install.sh. Review it, re-pin PINNED_INSTALL_SHA256, or re-run with HERMES_ALLOW_UNPINNED=1 after inspection." >&2; exit 1; }
+      bash /tmp/hermes-install.sh
+    '; then
+      HERMES_INSTALL_OK=1
+    fi
+  fi
+  [ "$HERMES_INSTALL_OK" = "1" ] || warn "Hermes installer failed or hash mismatch — install manually and re-run."
+else
+  HERMES_INSTALL_OK=1
 fi
 
 # Expose the CLI system-wide so the systemd units (ExecStart=/usr/local/bin/hermes)
@@ -169,13 +205,17 @@ EOF
 fi
 
 # ------------------------------------------------------------
-# 8. systemd units
+# 8. systemd units — enabled ONLY if the Hermes install succeeded
 # ------------------------------------------------------------
-log "Installing systemd units..."
 install -m 0644 "$GUIDE_DIR/templates/systemd/hermes.service"           /etc/systemd/system/hermes.service
 install -m 0644 "$GUIDE_DIR/templates/systemd/hermes-dashboard.service" /etc/systemd/system/hermes-dashboard.service
 systemctl daemon-reload
-systemctl enable hermes.service hermes-dashboard.service
+if [ "$HERMES_INSTALL_OK" = "1" ]; then
+  log "Enabling hermes systemd units..."
+  systemctl enable hermes.service hermes-dashboard.service
+else
+  warn "Hermes binary missing/failed — units installed but NOT enabled. Install Hermes, then: systemctl enable hermes hermes-dashboard"
+fi
 
 # ------------------------------------------------------------
 # 9. Caddy reference config
@@ -186,22 +226,59 @@ if [ ! -f /etc/caddy/Caddyfile.hermes.reference ]; then
 fi
 
 # ------------------------------------------------------------
-# 10. UFW + fail2ban
+# 10. UFW + fail2ban — sshd-port-aware (no lockouts)
 # ------------------------------------------------------------
-log "Hardening: UFW..."
+# THE LOCKOUT GUARD: we never assume sshd listens on 22. We parse every
+# `Port` directive from /etc/ssh/sshd_config and /etc/ssh/sshd_config.d/*,
+# allow EACH of them, and REFUSE to enable UFW if we cannot determine at
+# least one port. An operator on a non-default port who runs the old
+# `ufw allow 22` version gets locked out; this block exists because of that.
+log "Hardening: determining sshd port(s) before touching UFW..."
+SSH_PORTS=$(grep -hE '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null \
+  | awk '{print $2}' | sort -un)
+if [ -z "$SSH_PORTS" ]; then
+  if [ -f /etc/ssh/sshd_config ]; then
+    # No explicit Port directive: sshd default is 22, but only trust that
+    # when the config file genuinely exists (default install).
+    SSH_PORTS="22"
+    log "No explicit 'Port' directive in sshd_config — assuming default 22."
+  else
+    die "Cannot determine sshd port (no /etc/ssh/sshd_config and no Port directives). UFW NOT enabled — refusing to risk locking you out. Open your SSH port manually: ufw allow <port>/tcp && ufw --force enable"
+  fi
+fi
+
+log "Hardening: UFW (allowing ssh on: $(echo "$SSH_PORTS" | tr '\n' ' '))..."
 # Additive + idempotent on purpose: never `ufw reset` here — a reset wipes any
 # operator-added rules and transiently drops the firewall on re-runs.
 if ! ufw status | grep -q "Status: active"; then
   ufw default deny incoming
   ufw default allow outgoing
 fi
-ufw allow 22/tcp  comment 'ssh'
+for p in $SSH_PORTS; do
+  ufw allow "${p}/tcp" comment "ssh"
+done
 ufw allow 80/tcp  comment 'http-acme-challenge'
 ufw allow 443/tcp comment 'https'
 ufw --force enable
 
-log "Hardening: fail2ban (default jail set)..."
+log "Hardening: fail2ban with a working sshd jail..."
+# Minimal Debian 12 images commonly fail the stock sshd jail without
+# `backend = systemd`; write an explicit jail.local and point it at the
+# port(s) we just parsed.
+cat > /etc/fail2ban/jail.local <<EOF
+[sshd]
+enabled  = true
+port     = $(echo "$SSH_PORTS" | paste -sd, -)
+backend  = systemd
+maxretry = 5
+EOF
 systemctl enable --now fail2ban
+systemctl restart fail2ban
+if systemctl is-active --quiet fail2ban; then
+  log "fail2ban active (sshd jail on port(s): $(echo "$SSH_PORTS" | tr '\n' ' '))."
+else
+  warn "fail2ban did not come up clean — check: journalctl -u fail2ban -n 50"
+fi
 
 # ------------------------------------------------------------
 # 11. Unattended upgrades

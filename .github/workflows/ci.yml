@@ -8,18 +8,37 @@ on:
 
 jobs:
   markdown-links:
-    name: markdown-link-check
+    name: link check (lychee + GH token)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check markdown links (full repo)
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
+      # lychee with a GitHub token: GitHub links are checked for real instead
+      # of passing via a blanket 403/429 tolerance (the previous checker
+      # treated every bot-blocked GitHub URL as alive — the largest link
+      # class in this repo went effectively unchecked).
+      - name: Lychee link check
+        uses: lycheeverse/lychee-action@v2
         with:
-          config-file: '.github/markdown-link-check.json'
-          folder-path: '.'
-          use-quiet-mode: 'yes'
-          # Full-repo scan on every run; 403/429 from rate-limited hosts are
-          # tolerated via aliveStatusCodes in the config file.
+          args: >-
+            --no-progress
+            --timeout 20
+            --retry-count 3
+            --retry-wait-time 10
+            --accept 200,204,206
+            --exclude-path README-zh.md
+            --exclude-path README-ja.md
+            --exclude-path CHANGELOG.md
+            --exclude 'https://t\.me/.*'
+            --exclude 'https://hermes-agent\.nousresearch\.com.*'
+            --exclude 'https?://(localhost|127\.0\.0\.1|0\.0\.0\.0).*'
+            --exclude 'https?://.*yourdomain\.com.*'
+            --exclude 'https://discord\.gg/.*'
+            --exclude 'https://portal\.nousresearch\.com.*'
+            --exclude 'https://x\.com/.*'
+            '**/*.md'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   anchor-check:
     name: internal anchors
@@ -69,6 +88,23 @@ jobs:
           for f in scripts/*.sh benchmarks/*.sh; do
             echo "bash -n $f"
             bash -n "$f" || rc=1
+          done
+          exit $rc
+
+  python-syntax:
+    name: python compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile-check every shipped Python script
+        run: |
+          rc=0
+          for f in scripts/*.py benchmarks/*.py .github/scripts/*.py; do
+            echo "py_compile $f"
+            python -m py_compile "$f" || rc=1
           done
           exit $rc
 

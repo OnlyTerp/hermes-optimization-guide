@@ -165,7 +165,7 @@ Your chat is never blocked; the CLI/TUI status bar tracks running background sub
 - **`/prompt`** — opens `$EDITOR` to compose a long multi-line prompt in real markdown, queued as your next message. Stop fighting the one-line input box.
 - **`/reasoning <level>`** — set reasoning effort up to `high` / `xhigh` / `max` / `ultra` (`--global` persists it to config); `/reasoning full` toggles showing the full reasoning trace.
 - **`/timestamps`** + timestamps in `/history` — see when turns actually happened.
-- **`/version`** and **`/billing`** — version info and interactive billing from inside the TUI/CLI.
+- **`/version`**, **`/topup`**, and **`/subscription`** — version info, Nous balance/billing, and plan management from inside the TUI/CLI.
 - **In-place compaction** is now the default — compression rewrites the session under a single session id instead of rotating to a new one, so `@session` links and integrations stop breaking on long sessions.
 - **Blank Slate setup** — a minimal-agent onboarding mode: start with nothing enabled and opt in tool by tool. The right choice for locked-down or compliance-sensitive boxes.
 

@@ -321,7 +321,7 @@ You've now seen the backup/debug slice of the current feature surface:
 - [Part 12 — Web Dashboard](./part12-web-dashboard.md)
 - [Part 13 — Nous Tool Gateway](./part13-tool-gateway.md)
 - [Part 14 — Fast Mode & Background Watchers](./part14-fast-mode-watchers.md)
-- [Part 15 — New Platforms (35+ adapters: A2A, Buzz, IRC, Photon, Teams...)](./part15-new-platforms.md)
+- [Part 15 — New Platforms (30+ adapters: A2A, Buzz, IRC, Photon, Teams...)](./part15-new-platforms.md)
 - [Part 23 — Tenacity Stack](./part23-tenacity-stack.md)
 
 If you installed fresh on v0.20.4 and walked through [Part 1](./part1-setup.md) and this series, you've got the most capable Hermes configuration to date — and the recovery kit to keep it that way.

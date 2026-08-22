@@ -1,8 +1,15 @@
-Sources: hermes --help (live)
-Real commands: 72
+Sources: C:\Users\User\AppData\Local/Temp/surface-tagged/commands.txt
+Real commands: 74
 Distinct commands mentioned in guide: 51
 
 === MENTIONED IN GUIDE BUT NOT IN REAL CLI (0) ===
 
 Real commands actually referenced: 51
+
+=== SLASH: mentioned but NOT in upstream COMMAND_REGISTRY (0) ===
+Slash surface checked: 126 real, 47 referenced
+
+=== CONFIG: referenced but NOT in upstream DEFAULT_CONFIG (0) ===
+Config surface checked: 894 real paths (+69 wildcards), 122 referenced
+
 CLEAN: all referenced subcommands exist.

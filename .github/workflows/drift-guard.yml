@@ -1,14 +1,17 @@
 name: CLI drift guard
 
-# Verifies every `hermes <subcommand>` referenced anywhere in the guide
-# actually exists in the CURRENT upstream Hermes Agent CLI surface.
+# Verifies every `hermes <subcommand>`, `/<slash-command>`, and config key
+# referenced anywhere in the guide actually exists in the upstream Hermes
+# Agent surface — pinned to the SAME tag the README claims to be synced with.
 #
-# How: extracts _BUILTIN_SUBCOMMANDS (AST-parsed, not regex) and plugin-
-# registered commands from a shallow checkout of NousResearch/hermes-agent,
-# then audits every markdown file in this repo against that list.
+# Three surfaces, all AST/regex-parsed from upstream source (no install):
+#   commands.txt       _BUILTIN_SUBCOMMANDS + plugin-registered CLI commands
+#   slash-commands.txt COMMAND_REGISTRY in hermes_cli/commands.py (+ aliases)
+#   config-keys.txt    DEFAULT_CONFIG paths + _EXTRA_KNOWN_ROOT_KEYS wildcards
 #
-# This is the anti-drift machine: when upstream removes/renames a command,
-# CI turns red instead of readers hitting a wall. See docs/evidence/README.md.
+# When upstream removes/renames anything the guide names, CI turns red
+# instead of readers hitting a wall. When you bump UPSTREAM_TAG, bump the
+# README badge in the same commit. See docs/evidence/README.md.
 
 on:
   push:
@@ -16,14 +19,19 @@ on:
     paths:
       - "part*.md"
       - "README.md"
+      - "templates/**"
       - "scripts/audit-cli-surface.py"
-      - "scripts/extract-upstream-commands.py"
+      - "scripts/extract-upstream-surface.py"
       - ".github/workflows/drift-guard.yml"
   pull_request:
   schedule:
-    # Hermes ships fast — re-check weekly even when the guide hasn't moved
+    # Re-check weekly even when the guide hasn't moved
     - cron: "0 9 * * 1"
   workflow_dispatch:
+
+env:
+  # The baseline this guide claims. Bump in lockstep with the README badge.
+  UPSTREAM_TAG: "v2026.8.19"
 
 jobs:
   drift-guard:
@@ -35,24 +43,29 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Shallow-clone upstream Hermes Agent
+      - name: Shallow-clone upstream Hermes Agent at the pinned tag
         run: |
-          git clone --depth 1 https://github.com/NousResearch/hermes-agent.git /tmp/hermes-upstream
+          git clone --depth 1 --branch "$UPSTREAM_TAG" \
+            https://github.com/NousResearch/hermes-agent.git /tmp/hermes-upstream
 
-      - name: Extract real CLI command surface from upstream source
+      - name: Extract the real command + config surface from upstream source
         run: |
-          python scripts/extract-upstream-commands.py /tmp/hermes-upstream --output /tmp/real-commands.txt
-          echo "=== real command surface ==="
-          wc -l /tmp/real-commands.txt
+          python scripts/extract-upstream-surface.py /tmp/hermes-upstream --out-dir /tmp/surface
+          echo "=== real surface ==="
+          wc -l /tmp/surface/commands.txt /tmp/surface/slash-commands.txt /tmp/surface/config-keys.txt
 
-      - name: Audit guide references against real CLI
-        run: python scripts/audit-cli-surface.py --commands-file /tmp/real-commands.txt --exit-on-drift
+      - name: Audit guide references against the real surface
+        run: |
+          python scripts/audit-cli-surface.py \
+            --commands-file /tmp/surface/commands.txt \
+            --slash-file /tmp/surface/slash-commands.txt \
+            --config-file /tmp/surface/config-keys.txt \
+            --exit-on-drift
 
       - name: Publish evidence artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: drift-guard-receipts
-          path: |
-            /tmp/real-commands.txt
+          path: /tmp/surface/
           if-no-files-found: ignore

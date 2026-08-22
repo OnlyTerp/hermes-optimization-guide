@@ -1,0 +1,90 @@
+name: Installer pin watch
+
+# Hermes ships every few days; the moment upstream rotates install.sh, every
+# fresh install hits "FATAL: hash mismatch" (by design — that's the point of
+# the pin). This job fetches the LIVE installer daily and compares its sha256
+# against PINNED_INSTALL_SHA256 in scripts/vps-bootstrap.sh.
+#
+# On change it opens (or updates) an issue so the maintainer re-pins. The
+# workflow stays green — staleness is an operational event, not a build
+# failure.
+
+on:
+  schedule:
+    - cron: "30 8 * * *"   # daily, 08:30 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  pin-watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch live installer and compare against the pinned hash
+        id: watch
+        run: |
+          curl -fsSL https://hermes-agent.nousresearch.com/install.sh -o /tmp/live-install.sh
+          LIVE_SHA=$(sha256sum /tmp/live-install.sh | cut -d' ' -f1)
+          PINNED_SHA=$(grep -oP 'PINNED_INSTALL_SHA256="\K[0-9a-f]+' scripts/vps-bootstrap.sh)
+          echo "live   = $LIVE_SHA"
+          echo "pinned = $PINNED_SHA"
+          if [ "$LIVE_SHA" = "$PINNED_SHA" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "live=$LIVE_SHA" >> "$GITHUB_OUTPUT"
+            echo "pinned=$PINNED_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update the re-pin issue
+        if: steps.watch.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const live = "${{ steps.watch.outputs.live }}";
+            const pinned = "${{ steps.watch.outputs.pinned }}";
+            const title = "Upstream install.sh changed — re-pin PINNED_INSTALL_SHA256";
+            const body = [
+              "The live Hermes installer's sha256 no longer matches the pin in",
+              "`scripts/vps-bootstrap.sh` (and the README install block).",
+              "",
+              "- **Live sha256:** `" + live + "`",
+              "- **Pinned sha256:** `" + pinned + "`",
+              "",
+              "Action: review the new installer, then update `PINNED_INSTALL_SHA256`",
+              "in `scripts/vps-bootstrap.sh` and the hash in the README install",
+              "one-liner. Until then, fresh installs fail fast with a loud",
+              "hash-mismatch error (the pin working as intended).",
+              "",
+              "Or run with `HERMES_ALLOW_UNPINNED=1` after inspecting the script.",
+            ].join("\n");
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "pin-watch",
+            });
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              console.log("updated issue #" + existing.number);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ["pin-watch"],
+              });
+              console.log("opened new issue");
+            }

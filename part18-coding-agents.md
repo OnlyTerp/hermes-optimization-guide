@@ -144,15 +144,24 @@ This pattern is useful for pair-programming from chat. For unattended work, pref
 #      exist (check `hermes --help` and the slash-command reference first).
 ```
 
-From that point:
-- Every message in the topic goes to a persistent Claude Code session
-- File edits happen in `~/projects/myapp` on the Hermes host
+From that point, the honest scope of this pattern:
+- Messages in the topic continue a persistent Hermes session (the coding-agent
+  workdir is set via the session/project primitives from Part 23 — there is no
+  per-topic runtime binding)
+- File edits happen in the session's workdir on the Hermes host
 - Orchestrator subagents can spawn their own workers if `max_spawn_depth` allows it
 - Concurrent workers coordinate file state instead of blindly overwriting siblings
-- `/unbind` in the topic detaches and reverts to normal Hermes chat
-- `/runtime gemini-cli` swaps the runtime without losing the thread
+- There is **no /unbind and no /runtime slash command** — those were
+  OpenClaw-era fiction that earlier revisions repeated. To stop routing a topic
+  to a session, use `/topic off` (Telegram DM topic mode) or start a fresh
+  session with `/new`.
 
-The same binding works for Codex, Gemini CLI, OpenCode, and any ACP-compatible coding agent.
+If what you actually want is "my editor drives Hermes as a coding agent," that's
+the real, supported direction of the ACP integration: Hermes runs as an ACP
+*server* (`hermes acp` / `python -m acp_adapter`) and an ACP-compatible editor
+(Zed, Emacs, etc.) owns the conversation transport — chat, tool activity, diffs,
+and approval prompts render in the editor. See the upstream ACP docs for the
+`hermes-acp` toolset details.
 
 **Remote execution bonus:** combine with the [remote sandbox feature](./part21-remote-sandboxes.md) and the coding agent runs on a Modal/Daytona/SSH host — your phone drives, a beefy remote does the work.
 

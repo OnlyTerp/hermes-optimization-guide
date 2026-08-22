@@ -1,12 +1,12 @@
 # Part 4: Telegram Setup (Chat From Anywhere)
 
-*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 35+ messaging adapters — start here, branch out to the others as needed.*
+*Connect Hermes to Telegram for mobile access, voice memos, group chats, and scheduled task delivery. This is the most battle-tested of the 30+ messaging adapters — start here, branch out to the others as needed.*
 
 ---
 
-## The 35+ Platform Gateway
+## The 30+ Platform Gateway
 
-As of v0.20.4, the Hermes gateway ships adapters/plugins for **35+ platforms** — and the roster keeps growing. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. Large server channels (Telegram supergroups, Discord servers) are usable as rich context sources, not just message triggers.
+As of v0.20.4, the Hermes gateway ships adapters/plugins for **30+ platforms** — and the roster keeps growing. They all share the same session DB, the same `/fast` toggle, the same Tool Gateway plumbing, and the same cron delivery mechanism. Large server channels (Telegram supergroups, Discord servers) are usable as rich context sources, not just message triggers.
 
 | Flagship | Consumer / regional | Enterprise / regional | Self-hosted / generic |
 |----------|---------------------|-----------------------|-----------------------|

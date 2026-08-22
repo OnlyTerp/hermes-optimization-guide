@@ -7,7 +7,7 @@
 ## What the Gateway Does
 
 The gateway (`hermes gateway run` in the foreground, or `hermes gateway start` for the installed service) is the always-on process that:
-- Receives messages from **35+ messaging platforms** — Telegram, Discord, Slack, WhatsApp (personal + Business Cloud), Signal, SMS, email, Matrix, Mattermost, DingTalk, Feishu/Lark, WeCom, QQ, BlueBubbles/Photon (iMessage), LINE, ntfy, IRC, SimpleX, webhooks, and more (see [Part 15](./part15-new-platforms.md))
+- Receives messages from **30+ messaging platforms** — Telegram, Discord, Slack, WhatsApp (personal + Business Cloud), Signal, SMS, email, Matrix, Mattermost, DingTalk, Feishu/Lark, WeCom, QQ, BlueBubbles/Photon (iMessage), LINE, ntfy, IRC, SimpleX, webhooks, and more (see [Part 15](./part15-new-platforms.md))
 - Routes them to the agent
 - Manages sessions and context
 - Runs cron jobs

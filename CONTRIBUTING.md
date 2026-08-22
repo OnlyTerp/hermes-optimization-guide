@@ -21,6 +21,13 @@ This guide is built in public. PRs welcome.
 ## PR checklist
 
 - [ ] Clear title (`docs:`, `skill:`, `template:`, `bench:`, `fix:` prefixes welcome)
+- [ ] **No command ships without a transcript.** Any `hermes …`, `/…`, or
+      `config.yaml` key you add must be pasted from a real session or verified
+      against the live CLI — not from release notes or memory. Drop the
+      evidence (command + output) into `docs/evidence/` and reference it in
+      the PR. The drift-guard CI enforces this on every push; this rule exists
+      because four fabricated commands survived three review rounds before it
+      did (see CHANGELOG 2026-08-22).
 - [ ] For skills: follow the `skills/README.md` structure (frontmatter, procedure, security notes, cron example if applicable)
 - [ ] For templates: comment every non-obvious field; include a header explaining what the template is *for*
 - [ ] For benchmark entries: include a reproduction command and date of measurement
