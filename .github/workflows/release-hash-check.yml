@@ -1,0 +1,40 @@
+name: release hash check
+
+# Closes the round-3 failure mode: a hand-typed hash in the README that
+# disagrees with the bytes the tag actually serves. On every push, this job
+# parses the pin table in README.md, fetches the bootstrap from that tag,
+# and fails if the hashes disagree. If the table row lacks a bare 64-hex
+# hash, the job also fails — the README must always carry a checkable hash.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  readme-hash-vs-tag:
+    name: README pin matches tagged bytes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify README hash against the tag's served bytes
+        run: |
+          set -euo pipefail
+          row=$(grep -E '^\| `scripts/vps-bootstrap\.sh` \| `v[0-9][0-9.]*` \| `[0-9a-f]{64}` \|' README.md || true)
+          if [ -z "$row" ]; then
+            echo "FAIL: README pin table has no checkable row (need bare tag + 64-hex hash)."
+            exit 1
+          fi
+          tag=$(echo "$row" | awk -F'|' '{print $3}' | tr -d ' `')
+          want=$(echo "$row" | awk -F'|' '{print $4}' | tr -d ' `')
+          got=$(curl -fsSL "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$tag/scripts/vps-bootstrap.sh" | sha256sum | awk '{print $1}')
+          echo "tag=$tag"
+          echo "README hash:  $want"
+          echo "served bytes: $got"
+          if [ "$want" != "$got" ]; then
+            echo "FAIL: hash mismatch — the README advertises a bootstrap the tag does not serve."
+            exit 1
+          fi
+          echo "PASS: README hash matches the bytes served at $tag."

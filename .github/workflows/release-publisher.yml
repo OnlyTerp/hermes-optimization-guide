@@ -1,0 +1,50 @@
+name: release publisher
+
+# On tag push: compute SHA256SUMS from the tag's ACTUAL bytes and attach it
+# to a GitHub Release. Never hand-type a hash — the release asset is the
+# authoritative pin the README's install instructions verify against.
+#
+# Why: review round 3 caught a hand-typed README hash that disagreed with
+# what the tag actually served (file was touched after hashing). This job
+# makes the hash a computed artifact of the tag itself.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: compute SHA256SUMS + create release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute SHA256SUMS from the tag's bytes
+        run: |
+          set -euo pipefail
+          cd scripts
+          sha256sum vps-bootstrap.sh > SHA256SUMS
+          echo "--- published SHA256SUMS for ${GITHUB_REF_NAME} ---"
+          cat SHA256SUMS
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: scripts/SHA256SUMS
+          generate_release_notes: true
+          body: |
+            Pinned release for `scripts/vps-bootstrap.sh`.
+
+            Verify before running:
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/${{ github.ref_name }}/scripts/vps-bootstrap.sh -o vps-bootstrap.sh
+            curl -fsSL https://github.com/OnlyTerp/hermes-optimization-guide/releases/download/${{ github.ref_name }}/SHA256SUMS -o SHA256SUMS
+            grep " vps-bootstrap.sh$" SHA256SUMS | sha256sum -c -
+            sudo bash vps-bootstrap.sh
+            ```
+
+            The `SHA256SUMS` asset was computed by CI from the tag's actual
+            bytes — never hand-typed.

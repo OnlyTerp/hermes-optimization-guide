@@ -58,29 +58,37 @@ iex (irm https://hermes-agent.nousresearch.com/install.ps1)
 ```
 
 **Server — pinned, never pipe-to-bash from `main`.** On a fresh Debian 12 /
-Ubuntu 24.04 box (Hetzner CX22 works great for ~$5/mo). Fetch the bootstrap
+Ubuntu 24.04 box (2 vCPU / 4 GB RAM is plenty, ~$5/mo). Fetch the bootstrap
 **from a tagged release**, verify its sha256, then run it — never `curl | bash`
 from a moving branch, because a compromised repo could edit the pins inside:
 
 ```bash
 # 1. Fetch from the tagged release (not main)
-curl -fsSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/v1.3/scripts/vps-bootstrap.sh \
+curl -fsSL https://raw.githubusercontent.com/OnlyTerp/hermes-optimization-guide/v1.4/scripts/vps-bootstrap.sh \
   -o vps-bootstrap.sh
 
-# 2. Verify against the published hash (see table below)
-echo "7ac51fec8dd855ed99cf2f93c9ec2c74a0861cc59e777ef826b86068a3164bff  vps-bootstrap.sh" | sha256sum -c -
+# 2. Verify against the SHA256SUMS published on the Release page
+curl -fsSL https://github.com/OnlyTerp/hermes-optimization-guide/releases/download/v1.4/SHA256SUMS \
+  -o SHA256SUMS
+grep " vps-bootstrap.sh$" SHA256SUMS | sha256sum -c -
 
 # 3. Run
 sudo bash vps-bootstrap.sh
 ```
 
+The authoritative hashes live in the **`SHA256SUMS` asset attached to the
+[GitHub Release](https://github.com/OnlyTerp/hermes-optimization-guide/releases)**
+(computed by CI from the tag's actual bytes at release time — never
+hand-typed). The table below mirrors that asset; CI's
+[`release-hash-check`](./.github/workflows/release-hash-check.yml) job
+re-fetches the tagged file on every push and fails if they disagree.
+
 | File | Tag | sha256 |
 |---|---|---|
-| `scripts/vps-bootstrap.sh` | `v1.3` | `7ac51fec8dd855ed99cf2f93c9ec2c74a0861cc59e777ef826b86068a3164bff` |
+| `scripts/vps-bootstrap.sh` | `v1.4` | `098c902514e54019591a8d5125fdbb7a208c6a45b778991fe5154f30fd53dab2` |
 
-(The hash above is computed from `scripts/vps-bootstrap.sh` at tag `v1.3` —
-CI's pin-watch job tracks the upstream installer pin daily and opens an issue
-when it rotates.)
+(CI's pin-watch job also tracks the upstream Hermes installer pin daily and
+opens an issue when it rotates.)
 
 The bootstrap installs Hermes **via the pinned-hash installer path above**
 (it never pipes the upstream installer directly), plus Node.js (pinned
@@ -90,8 +98,10 @@ fail2ban with a working sshd jail, a non-root `hermes` user, hardened systemd
 units (enabled only if the Hermes install succeeded), and symlinks every skill
 from this repo into `~hermes/.hermes/skills/`. See
 [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) for what it does line
-by line — it's non-destructive and re-runnable, and `HERMES_ALLOW_UNPINNED=1`
-is the documented override for operators who have inspected a rotated script.
+by line — it's **idempotent** and re-runnable (it does enable a firewall and
+write config files, so "non-destructive" was never the right word), and
+`HERMES_ALLOW_UNPINNED=1` is the documented override for operators who have
+inspected a rotated script.
 
 Prefer a 5-minute local-only setup? → **[docs/quickstart.md](./docs/quickstart.md)** (zero to Telegram bot in 5 min).
 

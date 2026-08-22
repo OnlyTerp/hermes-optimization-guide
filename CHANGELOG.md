@@ -2,6 +2,22 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-08-22 (night) — Third review: wrong hash, pipefail death, execution evidence
+
+Fable's round 3: "claims shipped without execution." Both bugs he found reproduced and fixed, plus a third he missed, plus the machinery he prescribed.
+
+### Fixed
+- **The published bootstrap hash was wrong.** README advertised `7ac51fec…` while tag `v1.3` served `b0c050cd…` — the file was touched after the hash was hand-typed, so the hardened install path was guaranteed to fail for everyone. Root cause: a hand-typed hash. Fix: release publisher CI computes `SHA256SUMS` from the tag's actual bytes and attaches it to the GitHub Release; `release-hash-check` CI fails every push where README's pin row disagrees with the bytes the tag serves (bare 64-hex hash required in the row). v1.4 ships with the hash computed from its own bytes.
+- **The SSH-port parse died on every stock Debian box.** Under `set -euo pipefail`, `grep` matching nothing (stock boxes have only `#Port 22` commented out) exits 1, the pipeline exits 1, and the assignment aborts the script before the `-z` fallback can run. Reproduced locally (exit 2, silent death). Fixed with `|| true` on the pipeline — the fallback now actually runs, and the fix is comment-documented as load-bearing.
+- **Scorecard's `strict` approval mode was fabricated.** Upstream `VALID_APPROVAL_MODES = ("manual", "smart", "off")` — `strict` never existed. Fixed, and security posture now scores the VALUE (`manual` 6/6, `smart` 4, `off` 0, unset 3 with "not written down" label), not mere presence.
+- **README "non-destructive" → "idempotent"** (it enables a firewall and writes config files — "non-destructive" was a lie). **Hetzner CX22 → "2 vCPU / 4 GB RAM-class"** in README + bootstrap header.
+
+### Added
+- **`.github/workflows/bootstrap-smoke.yml`** — runs `vps-bootstrap.sh` inside `debian:12` with system commands stubbed, two scenarios asserted end-to-end: (1) stock Debian commented-out Port → fallback to 22, UFW enabled, banner reached; (2) `Port 2222` in `sshd_config.d` → 2222 allowed. Both scenarios also verified standalone before push. This is the answer to "neither version was ever run."
+- **`.github/workflows/release-publisher.yml`** — tag push → SHA256SUMS from tag bytes → Release asset.
+- **`.github/workflows/release-hash-check.yml`** — README hash vs. served bytes on every push.
+- Bootstrap gains `HERMES_SKIP_INSTALL=1` (smoke-test mode) and `HERMES_GUIDE_DIR` override (checkout-under-test).
+
 ## 2026-08-22 (evening) — Second review: lockout guard, pinned-tag drift guard, three-surface audit, README surgery
 
 Direct response to a second external review ("Fable"): "fix #1 (SSH lockout), #2 (pin story), #6 (README navigation) and this is a repo I'd point people at." All three fixed, plus the rest of the list.

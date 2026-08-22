@@ -1,0 +1,105 @@
+name: bootstrap smoke test
+
+# Runs scripts/vps-bootstrap.sh inside a fresh debian:12 container with
+# system commands stubbed, and asserts it reaches "Bootstrap complete".
+#
+# Exists because two bootstrap versions shipped in 24 hours and NEITHER was
+# executed: the wrong-hash README (hand-typed) and the `set -euo pipefail`
+# grep death on a stock Debian box (commented-out `#Port 22`) both shipped
+# on the strength of `bash -n`, which only catches syntax. This job runs
+# the script. Reviewer demand: "claims shipped with execution."
+#
+# Scenarios:
+#   1. Stock Debian: sshd_config exists with ONLY `#Port 22` (commented).
+#      The pipefail-bug repro case — must fall back to port 22, not die.
+#   2. Non-default port: `Port 2222` in sshd_config.d — must allow 2222.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/vps-bootstrap.sh'
+      - '.github/workflows/bootstrap-smoke.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/vps-bootstrap.sh'
+      - '.github/workflows/bootstrap-smoke.yml'
+
+jobs:
+  smoke:
+    name: run bootstrap in debian:12 (stubbed system cmds)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build stub bin
+        run: |
+          mkdir -p stubbin
+          # Commands that need side-effect-free success:
+          for cmd in apt-get systemctl dpkg-reconfigure adduser chown; do
+            printf '#!/bin/sh\necho "[stub] %s $*" >> /tmp/stub-calls.log\nexit 0\n' "$cmd" > "stubbin/$cmd"
+            chmod +x "stubbin/$cmd"
+          done
+          # ufw: log calls so we can assert WHICH ports got allowed:
+          printf '#!/bin/sh\necho "[stub] ufw $*" >> /tmp/stub-calls.log\nexit 0\n' > stubbin/ufw
+          chmod +x stubbin/ufw
+          # node + caddy present => those install sections are skipped:
+          printf '#!/bin/sh\nexit 0\n' > stubbin/node
+          printf '#!/bin/sh\nexit 0\n' > stubbin/caddy
+          chmod +x stubbin/node stubbin/caddy
+          # sudo stub: strip "-u <user>" and exec the rest (HERMES_SKIP_INSTALL=1
+          # means no installer sub-shell is ever executed):
+          cat > stubbin/sudo <<'STUB'
+          #!/bin/sh
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              -u) shift 2 ;;
+              *) break ;;
+            esac
+          done
+          exec "$@"
+          STUB
+          chmod +x stubbin/sudo
+
+      - name: Scenario 1 — stock Debian (commented-out Port, the pipefail repro)
+        run: |
+          docker run --rm \
+            -v "$PWD":/repo -v "$PWD/stubbin":/stubbin \
+            -e PATH="/stubbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            -e HERMES_SKIP_INSTALL=1 \
+            -e HERMES_GUIDE_DIR=/repo \
+            debian:12 bash -c '
+              set -x
+              mkdir -p /etc/ssh
+              mkdir -p /etc/fail2ban   # real boxes get this from the apt install we stubbed
+              printf "#Port 22\n#AddressFamily any\n" > /etc/ssh/sshd_config
+              rm -f /tmp/stub-calls.log
+              bash /repo/scripts/vps-bootstrap.sh 2>&1 | tee /tmp/bootstrap-out.log
+              grep -q "Bootstrap complete" /tmp/bootstrap-out.log || { echo "SMOKE FAIL: no completion banner"; exit 1; }
+              grep -q "assuming default 22" /tmp/bootstrap-out.log || { echo "SMOKE FAIL: default-port fallback did not run"; exit 1; }
+              grep -q "ufw allow 22/tcp" /tmp/stub-calls.log || { echo "SMOKE FAIL: ssh port 22 not allowed"; exit 1; }
+              grep -q "ufw --force enable" /tmp/stub-calls.log || { echo "SMOKE FAIL: UFW never enabled"; exit 1; }
+              echo "SCENARIO 1 PASS: stock-Debian default-port path reaches the banner"
+            '
+
+      - name: Scenario 2 — non-default sshd port via sshd_config.d
+        run: |
+          docker run --rm \
+            -v "$PWD":/repo -v "$PWD/stubbin":/stubbin \
+            -e PATH="/stubbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            -e HERMES_SKIP_INSTALL=1 \
+            -e HERMES_GUIDE_DIR=/repo \
+            debian:12 bash -c '
+              set -x
+              mkdir -p /etc/ssh/sshd_config.d
+              mkdir -p /etc/fail2ban   # real boxes get this from the apt install we stubbed
+              printf "#Port 22\n" > /etc/ssh/sshd_config
+              printf "Port 2222\n" > /etc/ssh/sshd_config.d/custom.conf
+              rm -f /tmp/stub-calls.log
+              bash /repo/scripts/vps-bootstrap.sh 2>&1 | tee /tmp/bootstrap-out.log
+              grep -q "Bootstrap complete" /tmp/bootstrap-out.log || { echo "SMOKE FAIL: no completion banner"; exit 1; }
+              grep -q "ufw allow 2222/tcp" /tmp/stub-calls.log || { echo "SMOKE FAIL: parsed port 2222 not allowed"; exit 1; }
+              grep -q "fail2ban" /tmp/bootstrap-out.log || { echo "SMOKE FAIL: fail2ban section never ran"; exit 1; }
+              echo "SCENARIO 2 PASS: non-default port parsed from sshd_config.d and allowed"
+            '

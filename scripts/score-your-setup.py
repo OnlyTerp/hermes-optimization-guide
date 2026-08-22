@@ -35,8 +35,10 @@ from pathlib import Path
 CHECK_MARK = "[PASS]"
 MISS_MARK = "[MISS]"
 
-# Real values approvals.mode accepts (upstream hermes_cli/approval_mode.py).
-REAL_APPROVAL_MODES = {"off", "manual", "smart", "strict"}
+# Real values approvals.mode accepts (upstream hermes_cli/approval_mode.py:
+# VALID_APPROVAL_MODES = ("manual", "smart", "off"); default when unset is
+# "manual" per tools/approval.py _get_approval_mode).
+REAL_APPROVAL_MODES = {"manual", "smart", "off"}
 
 
 def hermes_home() -> Path:
@@ -147,7 +149,21 @@ def main():
     # ---- 4. Security posture (14) ----
     fk = set(flat_keys(cfg)) if parsed else set()
     approval_mode = get_path(cfg, "approvals.mode") if parsed else None
-    approvals_ok = isinstance(approval_mode, str) and approval_mode.lower() in REAL_APPROVAL_MODES
+    # Score the VALUE, not mere presence (review caught: presence-scoring
+    # credits `off` — approvals disabled — the same as `manual`).
+    # manual = full credit (safest explicit), smart = partial, off = zero
+    # (approvals disabled), unset = partial credit because the upstream
+    # runtime default IS manual, but it isn't written down where a human
+    # can see it.
+    approval_pts = {"manual": 6, "smart": 4, "off": 0}.get(
+        (approval_mode or "").lower() if isinstance(approval_mode, str) else "", 3)
+    approvals_ok = approval_pts > 0
+    if approval_mode is None:
+        approval_label = "approvals.mode unset — upstream default 'manual' applies, but it's not written down"
+    elif isinstance(approval_mode, str) and approval_mode.lower() in REAL_APPROVAL_MODES:
+        approval_label = f"approvals.mode = {approval_mode} ({approval_pts}/6)"
+    else:
+        approval_label = f"approvals.mode = {approval_mode!r} — not a real mode (manual|smart|off)"
     gated = False
     if parsed:
         if get_path(cfg, "command_allowlist"):
@@ -165,8 +181,7 @@ def main():
                     else "secrets redaction on (upstream default)" if redact_ok
                     else "secrets redaction DISABLED")
     section("Security posture", 14, [
-        (approvals_ok, 6, f"approvals.mode set to a real mode "
-                          f"({approval_mode or 'unset'})"),
+        (approvals_ok, approval_pts, approval_label),
         (gated, 4, "allowlist / mention-gating configured"),
         (redact_ok, 4, redact_label),
     ])

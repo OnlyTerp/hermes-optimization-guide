@@ -2,7 +2,7 @@
 # ============================================================
 # scripts/vps-bootstrap.sh
 # ------------------------------------------------------------
-# Any Debian 12 / Ubuntu 24.04 VPS (tested on Hetzner CX22-class
+# Any Debian 12 / Ubuntu 24.04 VPS (tested on 2 vCPU / 4 GB RAM-class
 # hardware) -> production Hermes in ~10 minutes.
 #
 # What it does:
@@ -33,7 +33,13 @@
 #     git clone --depth 1 --branch <TAG> https://github.com/OnlyTerp/hermes-optimization-guide /opt/hermes-optimization-guide
 #     sudo bash /opt/hermes-optimization-guide/scripts/vps-bootstrap.sh
 #
-# Non-destructive by default. Re-runnable.
+# Idempotent and re-runnable (re-running never wipes operator rules/files;
+# it enables a firewall, writes /etc/fail2ban/jail.local, and reconfigures
+# unattended-upgrades, so "non-destructive" would be a lie — "idempotent"
+# is the true claim).
+#
+# CI note: HERMES_SKIP_INSTALL=1 skips the Hermes installer step (used by the
+# container smoke test in .github/workflows/bootstrap-smoke.yml).
 # ============================================================
 
 set -euo pipefail
@@ -99,7 +105,9 @@ fi
 # ------------------------------------------------------------
 # 5. Clone the guide
 # ------------------------------------------------------------
-GUIDE_DIR=/opt/hermes-optimization-guide
+# HERMES_GUIDE_DIR override lets the CI smoke test point at the checkout
+# under test instead of cloning main.
+GUIDE_DIR="${HERMES_GUIDE_DIR:-/opt/hermes-optimization-guide}"
 if [ ! -d "$GUIDE_DIR/.git" ]; then
   log "Cloning the optimization guide to $GUIDE_DIR..."
   git clone --depth 1 https://github.com/OnlyTerp/hermes-optimization-guide "$GUIDE_DIR"
@@ -123,7 +131,9 @@ HERMES_BIN=/home/hermes/.local/bin/hermes
 INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 PINNED_INSTALL_SHA256="0582d9b1562efcb6e0ac62f4451021667830b830a72ce7d91eaea9fee8b6c09b"
 HERMES_INSTALL_OK=0
-if [ ! -x "$HERMES_BIN" ]; then
+if [ "${HERMES_SKIP_INSTALL:-0}" = "1" ]; then
+  warn "HERMES_SKIP_INSTALL=1 — skipping Hermes installer (smoke-test mode)."
+elif [ ! -x "$HERMES_BIN" ]; then
   log "Installing Hermes (pinned installer)..."
   if [ "${HERMES_ALLOW_UNPINNED:-0}" = "1" ]; then
     warn "HERMES_ALLOW_UNPINNED=1 — running Hermes installer WITHOUT hash verification."
@@ -234,8 +244,13 @@ fi
 # least one port. An operator on a non-default port who runs the old
 # `ufw allow 22` version gets locked out; this block exists because of that.
 log "Hardening: determining sshd port(s) before touching UFW..."
+# NB: the `|| true` is load-bearing. Under `set -euo pipefail`, a stock
+# Debian box has only a commented-out `#Port 22`, grep matches nothing and
+# exits 1, the pipeline exits 1, and the assignment would abort the script
+# BEFORE the `-z` fallback below could ever run. Fixed after review caught
+# this exact silent death.
 SSH_PORTS=$(grep -hE '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null \
-  | awk '{print $2}' | sort -un)
+  | awk '{print $2}' | sort -un || true)
 if [ -z "$SSH_PORTS" ]; then
   if [ -f /etc/ssh/sshd_config ]; then
     # No explicit Port directive: sshd default is 22, but only trust that
