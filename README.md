@@ -85,7 +85,7 @@ re-fetches the tagged file on every push and fails if they disagree.
 
 | File | Tag | sha256 |
 |---|---|---|
-| `scripts/vps-bootstrap.sh` | `v1.4` | `098c902514e54019591a8d5125fdbb7a208c6a45b778991fe5154f30fd53dab2` |
+| `scripts/vps-bootstrap.sh` | `v1.4` | `8f8f93929582edf426d8ad3fa8724adbac412fac3f3ae17cc8940c023301a24e` |
 
 (CI's pin-watch job also tracks the upstream Hermes installer pin daily and
 opens an issue when it rotates.)

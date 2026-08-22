@@ -72,7 +72,7 @@ jobs:
             debian:12 bash -c '
               set -x
               mkdir -p /etc/ssh
-              mkdir -p /etc/fail2ban   # real boxes get this from the apt install we stubbed
+              mkdir -p /etc/fail2ban /etc/systemd/system /etc/caddy   # real boxes get these from the apt installs we stubbed
               printf "#Port 22\n#AddressFamily any\n" > /etc/ssh/sshd_config
               rm -f /tmp/stub-calls.log
               bash /repo/scripts/vps-bootstrap.sh 2>&1 | tee /tmp/bootstrap-out.log
@@ -93,7 +93,7 @@ jobs:
             debian:12 bash -c '
               set -x
               mkdir -p /etc/ssh/sshd_config.d
-              mkdir -p /etc/fail2ban   # real boxes get this from the apt install we stubbed
+              mkdir -p /etc/fail2ban /etc/systemd/system /etc/caddy   # real boxes get these from the apt installs we stubbed
               printf "#Port 22\n" > /etc/ssh/sshd_config
               printf "Port 2222\n" > /etc/ssh/sshd_config.d/custom.conf
               rm -f /tmp/stub-calls.log
