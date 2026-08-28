@@ -252,7 +252,7 @@ the traps:
   silently.
 - **Scripted edits need guardrails:** a blanket find-replace matches in
   unrelated functions and SyntaxErrors a file you never touched. Copy the
-  file first, locate exact bounds, `ast.parse` after *every* edit.
+  file first, locate exact bounds, parse-check the AST after *every* edit.
 - **Safe-write law:** never
   `open(p,'wb').write(open(p,'rb').read())` — `wb` truncates *before* the
   inner read runs. Read into a variable first. (Also in
@@ -308,7 +308,7 @@ enthusiastically. Rules that keep allowances alive:
   Metered = weekly-capped, per-seat, or rate-billed. Unmetered = flat
   subscription or free tier.
 - **Static verification only for metered lanes by default:** list models,
-  check `/health`-style endpoints, inspect config — never fire a live
+  check health-style endpoints, inspect config — never fire a live
   completion "just to check."
 - **Live smoke tests need explicit per-session permission**, and even then,
   one call, not a sweep. A 200-model picker sweep against a capped weekly
