@@ -120,13 +120,13 @@ while agents are live. The wrong way is `kill -9`:
 
 **The right way — graceful drain:**
 
-1. Add a `/shutdown` endpoint that stops accepting new requests and lets
+1. Add a shutdown endpoint that stops accepting new requests and lets
    in-flight streams finish (with a time cap).
 2. New requests during drain get an immediate clean error so *their* retry
    logic engages instantly — that's failover working, not a failure.
 3. Wait for the port to free and in-flight counts to hit zero. Only then
    relaunch.
-4. If you must force-kill (old build without `/shutdown`), do it only when
+4. If you must force-kill (old build without a shutdown endpoint), do it only when
    zero connections are established — check first.
 
 **Corollary:** anything that kills processes mid-stream (watchdogs, update
