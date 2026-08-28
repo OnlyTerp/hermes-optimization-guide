@@ -1,10 +1,10 @@
 # Part 27: Power Secrets — The Field Manual the Docs Don't Give You
 
 <p align="center">
-  <img src="./assets/power-secrets.svg" alt="Power Secrets — 25 non-obvious mechanics across five clusters: context & cache, cost mechanics, profiles & files, Kanban & ops, and the one-page cheat sheet" width="920">
+  <img src="./assets/power-secrets.svg" alt="Power Secrets — 31 non-obvious mechanics across five clusters: context & cache, cost mechanics, profiles & files, Kanban & ops, and the one-page cheat sheet" width="920">
 </p>
 
-*Twenty-five non-obvious mechanics that separate people who fight Hermes from people who fly it. Distilled from the official Wingtips series (#1–#22 by @witcheer), Teknium's July guidance, and the highest-signal community field reports from July 2026 — verified against the real v0.20.x schema before inclusion.*
+*Twenty-five non-obvious mechanics that separate people who fight Hermes from people who fly it — distilled from the official Wingtips series (#1–#22 by @witcheer), Teknium's July guidance, and the highest-signal community field reports from July 2026, verified against the real v0.20.x schema before inclusion. Secrets #26–#31 were added later from our own production incidents — each links to its postmortem.*
 
 ---
 
@@ -226,10 +226,61 @@ Official guidance from Teknium: don't demote Hermes to a shell that launches ano
 
 ---
 
+### Secret #26 — Failover on a transient is the most expensive reflex
+
+A 25ms edge `502` blip is not "out of quota." The expensive pattern: any 5xx
+cools the plan, both plans cool, a synthetic 429 goes upstream, the
+orchestrator evicts a healthy model. Buckets were at 2% while this fired.
+Fix: 5xx = same-plan immediate retry; persisted 5xx = short cooldown +
+bounded attempts; failover only on *proven* exhaustion (real error codes);
+and pass through the REAL upstream status — a synthetic error lies to every
+layer above it. Full postmortem: [failure mode #9](./docs/failure-modes.md).
+
+### Secret #27 — Fan-outs trip per-account concurrency ceilings, not quotas
+
+10 subagents on one subscription account = provider concurrency ceiling,
+whose error text masquerades as quota. Gate concurrent upstream calls
+per-plan (semaphore, queue, fail-open after bounded wait) *before* blaming
+the provider or adding backups. Postmortem: [#10](./docs/failure-modes.md).
+
+### Secret #28 — Never hard-kill a streaming relay
+
+`kill -9` / `taskkill /F` on a relay mid-stream resets every live session at
+once and burns everyone's failover budget. Graceful drain: stop accepting,
+in-flight finishes (bounded), clean error to new requests, wait for zero
+connections, relaunch. Postmortem: [#11](./docs/failure-modes.md).
+
+### Secret #29 — Vision: native beats described for interaction, and plausible ≠ correct
+
+Aux (described) vision on a legible image is often pixel-exact — but
+follow-ups can't reach discarded pixels, and on illegible input a describer
+MUST invent prose while a native model can decline. Verify any vision path
+with a generated image of known text/shape/color, twice. Upscale 3-5× for
+small text. Postmortem: [#12](./docs/failure-modes.md).
+
+### Secret #30 — A test that mirrors the logic it checks cannot catch a regression
+
+If a test reads the same defaults it asserts (`section.get(key,
+[same_default_as_source])`), shipping the slow path still passes. Drive the
+REAL function; assert what crosses the boundary (wire, file, process).
+Then negative-control every fix: revert → test must FAIL → restore
+byte-identical. Postmortems: [#13](./docs/failure-modes.md),
+[#14](./docs/failure-modes.md).
+
+### Secret #31 — No tool result, no number
+
+Never state an exit code, hash, count, PID, or benchmark without a tool
+result behind it — "no tool result available" is the honest answer. Same
+law for handoffs: raw transcripts are authority; we measured a handoff
+summary that preserved 4.6% of its raw record. Postmortem:
+[#15](./docs/failure-modes.md).
+
+---
+
 ## 5. The One-Page Cheat Sheet
 
 <p align="center">
-  <img src="./assets/cheat-sheet.svg" alt="The one-page cheat sheet — all 25 power secrets in a printable 5×5 grid" width="920">
+  <img src="./assets/cheat-sheet.svg" alt="The one-page cheat sheet — all 31 power secrets" width="920">
 </p>
 
 Print this. Tape it somewhere.
@@ -259,6 +310,12 @@ Print this. Tape it somewhere.
 23. **A remote Desktop backend means code runs on the server** — want local files, run local.
 24. **MoA is nearly free per turn** (system prompt dominates) — but save it for genuinely hard calls.
 25. **Watch third-party `AGENTS.md` files** — one stray 22k-char rule file taxes every prompt you send.
+26. **5xx = same-plan retry; failover only on PROVEN exhaustion; always return the real status code.**
+27. **Gate concurrent upstream calls per-plan** — fan-out concurrency ceilings masquerade as quota.
+28. **Graceful-drain a streaming relay, never hard-kill it** — in-flight streams finish, then relaunch.
+29. **Verify vision with a known-target image, twice** — plausible ≠ correct; upscale small text 3-5×.
+30. **Negative-control every fix** — revert → test must FAIL → restore byte-identical.
+31. **No tool result, no number.** Raw transcripts are authority over handoff summaries.
 
 ---
 

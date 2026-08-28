@@ -6,27 +6,30 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Hermes](https://img.shields.io/badge/Hermes-v0.20.5%20%282026.8.19%29-9146FF)](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.8.19)
-[![Last updated](https://img.shields.io/badge/Last%20updated-2026--08--22-brightgreen)](./CHANGELOG.md)
-[![Parts](https://img.shields.io/badge/parts-29-blue)](#table-of-contents)
+[![Last updated](https://img.shields.io/badge/Last%20updated-2026--08--28-brightgreen)](./CHANGELOG.md)
+[![Parts](https://img.shields.io/badge/parts-30-blue)](#table-of-contents)
+[![Postmortems](https://img.shields.io/badge/postmortems-15-red)](./docs/failure-modes.md)
 [![Skills](https://img.shields.io/badge/installable%20skills-13-blue)](./skills/)
 [![Configs](https://img.shields.io/badge/config%20templates-5-blue)](./templates/config/)
 [![CI](https://github.com/OnlyTerp/hermes-optimization-guide/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Synced with upstream tag v2026.8.19 (Hermes v0.20.5) — the "Herald" line.** Version claims in this repo are pinned-tag claims, not rolling "current as of today" claims — the drift-guard CI re-audits the guide against that tag on every push and weekly. · **29 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap** · Now covering **streaming voice (barge-in + wake words)**, **A2A v1.0 agent-to-agent**, **outbound webhooks**, **grounded citations**, a full **desktop platform wave** (Bots, Projects, multi-terminal, memory graph), **computer use** in the background on any model, **egress/iron-proxy credential tokens** for sandboxes, **external secrets managers** (Bitwarden, 1Password), keyless web search, on top of everything in the v0.18 "Judgment" line (MoA as a first-class model, verified `/goal` completion contracts, `/learn` + `/journey`, scale-to-zero, the Power Secrets field manual, and the twelve-build Recipe Book). **Bring any model** — this guide is about the *harness*, not the weights.
+> **Synced with upstream tag v2026.8.19 (Hermes v0.20.5) — the "Herald" line.** Version claims in this repo are pinned-tag claims, not rolling "current as of today" claims — the drift-guard CI re-audits the guide against that tag on every push and weekly. · **30 parts, 13 installable guide skills, 5 opinionated configs, 4 reference architectures, one-command VPS bootstrap, 15 incident postmortems** · Everything in the v0.20 wave (streaming voice, A2A v1.0, desktop platform, background computer use) plus the v0.18 "Judgment" line (MoA, `/goal` contracts, `/learn`). **And the part most guides skip: [Part 29 — Lessons from Production](./part29-lessons-from-production.md), the operational laws extracted from running this thing as a daily-driver — failover discipline, relay restarts without casualties, vision verification, tests that can't lie, evidence discipline.** **Bring any model** — this guide is about the *harness*, not the weights.
 >
 > Other languages: [中文](./README-zh.md) · [日本語](./README-ja.md)
 
-### The End-to-End Hermes Guide — docs + runnable artifacts
-Every part you need to go from fresh install to a production Hermes deployment — driven from the **native desktop app**, the CLI/TUI, a browser admin panel, or **30+ chat platforms** (now including iMessage with no Mac required via Photon, A2A agent networking, and the Raft channel). Orchestrate Claude Code / Codex / Gemini CLI through durable Kanban lanes and **multi-agent swarms**, plug into any MCP server, trace every call in Langfuse, let it curate its own skills, push heavy work onto disposable Modal/Daytona/Vercel sandboxes — or run the whole thing **locally on your own GPU / NVIDIA DGX Spark**. It's all **model-agnostic**: bring whatever weights you want, the guide is about the *harness*.
+### The war-tested Hermes guide — docs, runnable artifacts, and scar tissue
+Every part you need to go from fresh install to a production Hermes deployment — driven from the **native desktop app**, the CLI/TUI, a browser admin panel, or **30+ chat platforms**. Orchestrate Claude Code / Codex / Gemini CLI through durable Kanban lanes and **multi-agent swarms**, plug into any MCP server, trace every call in Langfuse, push heavy work onto disposable sandboxes — or run the whole thing **locally on your own GPU**. Model-agnostic throughout: bring whatever weights you want, the guide is about the *harness*.
 
-Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command.
+Unlike most guides, the prescriptions come with **working files**: [`skills/`](./skills) you can `ln -s` into `~/.hermes/skills/`, [`templates/config/`](./templates/config) you `cp` to `~/.hermes/config.yaml`, [`scripts/vps-bootstrap.sh`](./scripts/vps-bootstrap.sh) that takes a fresh VPS to production in one command. And unlike *every* guide, the claims come with **receipts**: CI re-verifies every command name, config key, and pinned hash against the pinned upstream tag, and the [postmortem index](./docs/failure-modes.md) documents 15 real incidents in the shape that matters: **Symptom → Root cause → Recovery → Permanent fix.**
+
+**Start here if you already run Hermes:** [Part 29 — Lessons from Production](./part29-lessons-from-production.md) is the distilled operational lawbook: never fail over on a transient, gate fan-out concurrency, graceful-drain relays, verify vision with known targets, negative-control every fix, no tool result = no number.
 
 <p align="center">
-  <img src="./assets/runnable-artifacts.svg" alt="Docs plus runnable artifacts — 29 guide parts, 13 installable skills, 5 config templates, 4 reference architectures, one-command VPS bootstrap, 8-question config wizard" width="920">
+  <img src="./assets/runnable-artifacts.svg" alt="Docs plus runnable artifacts — 30 guide parts, 13 installable skills, 5 config templates, 4 reference architectures, one-command VPS bootstrap, 8-question config wizard" width="920">
 </p>
 
-*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **August 22, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
+*By Terp — [Terp AI Labs](https://x.com/OnlyTerp)* · Last updated **August 28, 2026** · [CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) · [ECOSYSTEM](./ECOSYSTEM.md)
 
 ---
 
@@ -137,7 +140,7 @@ check and we're telling you so it can't surprise anyone.)
 
 ## Pick your pain, skip everything else
 
-Don't read 29 parts. Find your symptom, run the fix, done.
+Don't read 30 parts. Find your symptom, run the fix, done.
 
 | Your pain | Do this | Then read |
 |---|---|---|
@@ -149,8 +152,13 @@ Don't read 29 parts. Find your symptom, run the fix, done.
 | "It forgets everything / repeats itself" | Enable memory + profile, tune `memory_char_limit` | [Part 7](./part7-memory-system.md) |
 | "I want it running a job every morning" | Cron job via config or dashboard | [Part 22](./part22-latest-power-moves.md) |
 | "I want it driving Claude Code / Codex / my repo" | Kanban worker lane, not raw chat delegation | [Part 18](./part18-coding-agents.md) |
-| "How do I know it didn't hallucinate that it worked?" | Demand evidence — exit code, log, file. Verify completion | [Part 26](./part26-moa-verification.md) |
+| "How do I know it didn't hallucinate that it worked?" | Demand evidence — exit code, log, file. Verify completion | [Part 26](./part26-moa-verification.md), [Part 29 §6](./part29-lessons-from-production.md#6-evidence-discipline-the-anti-fabrication-stack) |
 | "It broke at 3am / I don't know what state it's in" | Gateway recovery runbook, then the failure-mode index | [Part 11](./part11-gateway-recovery.md), [docs/failure-modes.md](./docs/failure-modes.md) |
+| "My relay said out of quota but the dashboard says 2% used" | 5xx = same-plan retry; failover only on PROVEN exhaustion | [Part 29 §1](./part29-lessons-from-production.md#1-failover-the-most-expensive-reflex-in-your-setup), [postmortem #9](./docs/failure-modes.md) |
+| "My 10-subagent fan-out keeps failing with quota errors" | It's a concurrency ceiling, not quota — gate per-plan | [Part 29 §1](./part29-lessons-from-production.md#1-failover-the-most-expensive-reflex-in-your-setup), [postmortem #10](./docs/failure-modes.md) |
+| "The model can't see the image I attached" | Wire bug until proven otherwise — walk every content part | [Part 29 §3](./part29-lessons-from-production.md#3-vision-the-interaction-difference-and-the-hallucination-trap), [postmortem #12](./docs/failure-modes.md) |
+| "Tests pass but the bug is still there" | The test mirrors the logic — drive the real entry point | [Part 29 §4](./part29-lessons-from-production.md#4-tests-that-cant-lie), [postmortem #13](./docs/failure-modes.md) |
+| "I run Hermes natively on Windows and things quietly break" | The Windows host traps, all in one section | [Part 29 §5](./part29-lessons-from-production.md#5-windows-as-a-first-class-hermes-host) |
 
 Every row is a ≤10-minute win. If you do one thing today, run the scorecard
 and fix your lowest category.
@@ -177,6 +185,17 @@ postmortems with recovery steps: **[docs/failure-modes.md](./docs/failure-modes.
    as the only truth; `require_mention` + explicit allowed channels/users.
 6. **Never trust a model's claim that it ran something** — demand the exit
    code, the log, the file. Evidence over narration, always.
+7. **Never fail over on a transient error** — read the real status codes
+   first; 5xx gets a same-plan retry, exhaustion gets *proven* before the
+   ladder fires ([Part 29 §1](./part29-lessons-from-production.md#1-failover-the-most-expensive-reflex-in-your-setup)).
+8. **Never hard-kill a streaming relay** — graceful drain or you reset every
+   live session at once ([Part 29 §2](./part29-lessons-from-production.md#2-streaming-relays-how-to-restart-without-casualties)).
+9. **Never fire a live call against a metered plan without explicit
+   permission** — "just a quick smoke test" has drained entire weekly
+   allowances ([Part 29 §7](./part29-lessons-from-production.md#7-metered-plans-and-the-burning-reflex)).
+10. **Never state a number without a tool result behind it** — exit code,
+    hash, count, timing. "No tool result available" is the honest answer
+    ([Part 29 §6](./part29-lessons-from-production.md#6-evidence-discipline-the-anti-fabrication-stack)).
 
 ---
 
@@ -187,7 +206,7 @@ postmortems with recovery steps: **[docs/failure-modes.md](./docs/failure-modes.
 | [`scripts/score-your-setup.py`](./scripts/score-your-setup.py) | **The scorecard.** Run it on any Hermes box → 50-point shareable setup grade. |
 | [`scripts/audit-cli-surface.py`](./scripts/audit-cli-surface.py) + [`.github/workflows/drift-guard.yml`](./.github/workflows/drift-guard.yml) | **The drift guard.** CI fails if the guide names a `hermes` command that doesn't exist upstream. Runs on every push + weekly. |
 | [`docs/evidence/`](./docs/evidence) | **Verification receipts.** Version transcript, live `hermes --help`, upstream command list, audit output — dated and machine-reproducible. |
-| [`docs/failure-modes.md`](./docs/failure-modes.md) | **Scar tissue.** 8 real incident postmortems: symptom → root cause → recovery → permanent fix. |
+| [`docs/failure-modes.md`](./docs/failure-modes.md) | **Scar tissue.** 15 real incident postmortems: symptom → root cause → recovery → permanent fix. |
 | [`skills/`](./skills) | **13 installable `SKILL.md`** files. `ln -s` into `~/.hermes/skills/` and they're live. |
 | [`templates/config/`](./templates/config) | **5 opinionated `config.yaml`** — minimum, telegram-bot, production, cost-optimized, security-hardened. |
 | [`templates/compose/`](./templates/compose) | Self-hosted Langfuse v3 stack (ClickHouse + MinIO + Redis). |
@@ -203,7 +222,7 @@ postmortems with recovery steps: **[docs/failure-modes.md](./docs/failure-modes.
 | [`docs/quickstart.md`](./docs/quickstart.md) | 5-minute zero-to-Telegram-bot. |
 | [`ECOSYSTEM.md`](./ECOSYSTEM.md) | Curated directory of MCP servers, coding agents, dashboard plugins. |
 | [`ROADMAP.md`](./ROADMAP.md) · [`CHANGELOG.md`](./CHANGELOG.md) · [`CONTRIBUTING.md`](./CONTRIBUTING.md) | The usual suspects. |
-| README + `part1-*.md` … `part28-*.md` | The 29-part guide itself (now incl. MoA + verification, Desktop App, NVIDIA / local hardware, the Power Secrets field manual, and the Recipe Book). |
+| README + `part1-*.md` … `part29-*.md` | The 30-part guide itself (now incl. MoA + verification, Desktop App, NVIDIA / local hardware, the Power Secrets field manual, the Recipe Book, and Lessons from Production). |
 
 ---
 
@@ -279,8 +298,9 @@ badge here and the drift-guard's `UPSTREAM_TAG` move together.
 25. [Hermes Desktop App](./part24-desktop-app.md) — Native macOS/Windows/Linux GUI, Quick Setup, Cmd+K palette, Projects, multi-terminal, memory graph, remote gateway, multi-profile, voice, self-update
 26. [NVIDIA & Local Hardware](./part25-nvidia-local.md) — Run Hermes on your own GPU: RTX / DGX Spark, OpenShell isolation, NemoClaw, and a model-agnostic local stack
 27. [MoA, Verification & Self-Improvement](./part26-moa-verification.md) — Mixture-of-Agents presets as models, `/moa`, completion contracts for `/goal`, `/learn`, `/journey`, background fan-out, scale-to-zero
-28. [Power Secrets](./part27-power-secrets.md) — 25 verified non-obvious mechanics: memory snapshots, the gateway token tax, cache economics, credential pools, Kanban traps, profiles-as-rooms, and a printable cheat sheet
-29. [The Recipe Book](./part28-recipe-book.md) — twelve production builds: finance loops, staged Gmail, approval offices, overnight Kanban, GPU FIFO, content swarms, job-hunt pipelines, coaches, correlators, Blender rooms, and the secretary office
+28. [Power Secrets](./part27-power-secrets.md) — 31 verified non-obvious mechanics: memory snapshots, the gateway token tax, cache economics, credential pools, Kanban traps, profiles-as-rooms, failover/concurrency laws, and a printable cheat sheet
+29. [Lessons from Production](./part29-lessons-from-production.md) — the laws we learned by running Hermes every day: failover discipline, relay restarts without casualties, vision verification, tests that can't lie, Windows host traps, evidence discipline, metered-plan survival, memory hygiene
+30. [The Recipe Book](./part28-recipe-book.md) — twelve production builds: finance loops, staged Gmail, approval offices, overnight Kanban, GPU FIFO, content swarms, job-hunt pipelines, coaches, correlators, Blender rooms, and the secretary office
 
 ---
 

@@ -2,6 +2,44 @@
 
 Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
 
+## 2026-08-28 — War-tested rewrite: Lessons from Production (Part 29), 7 new postmortems, Power Secrets #26–#31
+
+After six days of running Hermes as a daily-driver — multi-provider relay
+pool, subagent swarms, vision pipelines, live failover ladders — the guide
+now carries the operational laws that only exist after something breaks.
+
+### Added
+- **Part 29: Lessons from Production** (`part29-lessons-from-production.md`) —
+  15 production laws in 8 sections: failover discipline (never on a
+  transient; prove exhaustion; relay must pass through real status codes),
+  per-plan concurrency gates for fan-outs, graceful relay drain (never
+  hard-kill), vision verification (native vs described interaction
+  difference; known-target test images, twice; part-type filters that
+  silently drop images), tests that can't lie (mirror-test law, negative
+  controls, dead-module wiring proof, real-data delivery law), Windows
+  host traps (MSYS path conversion, `/tmp` split-brain, CRLF/LF, false-zero
+  exit codes), evidence discipline (no tool result = no number; raw
+  transcripts over handoffs; verify external state by reading it back),
+  metered-plan survival, and memory hygiene at scale. **Fully sanitized:**
+  no accounts, keys, tokens, ports, or identifying details.
+- **7 new postmortems** in `docs/failure-modes.md` (#9–#15): edge-502-blip
+  misread as exhaustion; fan-out concurrency ceiling masquerading as quota;
+  hard relay restart killing live streams; vision relay dropping every
+  image part; the mirror test (a regression test sharing the bug's
+  default); green suites hiding an unwired subsystem; handoff summary vs
+  raw transcript (4.6% fidelity).
+- **Power Secrets #26–#31** in `part27-power-secrets.md` + cheat-sheet rows
+  26–31, each linking to its postmortem.
+- **README:** new "war-tested" framing, Part 29 surfaced as the
+  already-running-Hermes entry point, 5 new pain-table rows (quota-vs-
+  concurrency, invisible image, lying tests, Windows host), kill list grown
+  to 10, postmortem badge (15), parts badge (30).
+
+### Verified
+- `check_anchors.py`, `validate_skills.py`, and `audit-cli-surface.py` all
+  clean locally before push. No new upstream-surface claims introduced
+  (Part 29 names no new commands, slash commands, or config keys).
+
 ## 2026-08-22 (night) — Third review: wrong hash, pipefail death, execution evidence
 
 Fable's round 3: "claims shipped without execution." Both bugs he found reproduced and fixed, plus a third he missed, plus the machinery he prescribed.

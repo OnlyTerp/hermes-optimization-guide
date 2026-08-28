@@ -185,6 +185,165 @@ bug in the instruction layer, not persistence.
 
 ---
 
+## 9. Edge 502 blips misread as exhaustion killed healthy lanes
+
+**Symptom:** Agents mid-run suddenly report the primary model "out of
+quota" and get failed over to a worse lane. Provider dashboards show
+ utilization near zero. After a relay restart, everything works again —
+until it doesn't.
+
+**Root cause:** The Anthropic-style edge served ~25ms `502` blips between
+healthy responses. The relay's error path cooled *both* plans on any 5xx,
+then reported a synthetic `429` ("quota") upstream. The orchestrator's
+failover logic did exactly what it was told: evict a model whose plans were
+actually at ~2% utilization and route to a dead lane.
+
+**Recovery:** Read the real upstream status codes from the relay logs. Restart
+the relay with the corrected semantics (see permanent fix). Agents recover
+on their next request — no provider action needed, because the provider was
+never the problem.
+
+**Permanent fix:**
+- 5xx = **same-plan immediate retry**; only *persisted* 5xx earns a short
+  cooldown plus a bounded attempt budget.
+- When both plans are stuck, return the **real 502** — never synthesize a
+  429. A synthetic error poisons every layer above the relay.
+- Failover fires only when exhaustion is *proven* (real provider error
+  codes), never on a transient.
+
+---
+
+## 10. Subagent fan-out tripped a per-account concurrency ceiling that looked like quota
+
+**Symptom:** A 10-subagent fan-out, all children on one subscription
+account, starts failing with errors that read like rate limiting / quota.
+Adding a backup provider doesn't help; the failures continue.
+
+**Root cause:** Subscription plans carry a per-account *concurrent request*
+ceiling distinct from the usage quota. Ten simultaneous streams trip it, and
+the error text suggests exhaustion. The relay's own request count is the
+tell — the account is fine; it's just parallel.
+
+**Recovery:** Stop the fan-out; serial or small-batch execution completes
+normally.
+
+**Permanent fix:** Per-plan concurrency gate in the relay — a semaphore that
+admits N concurrent upstream calls per plan, queues beyond that, and fails
+open after a bounded wait. Add the gate *before* adding a twelfth backup
+provider.
+
+---
+
+## 11. A hard relay restart killed every live stream (and got blamed on the provider)
+
+**Symptom:** Mid-session, all agents report connection errors at once. The
+pattern "restarted the relay, then connection errors, then everything
+stopped" repeats across incidents.
+
+**Root cause:** A hard process kill (`taskkill /F` / `Stop-Process -Force`)
+on a streaming relay resets every in-flight stream simultaneously. Agents
+see a burst of connection resets, burn failover budget, and some evict the
+provider entirely. Two overlapping kill windows from different operators (or
+agent and human) make it look like an outage.
+
+**Recovery:** Restart the relay gracefully and let agents retry; streams
+re-establish on their own.
+
+**Permanent fix:** The relay gains a `/shutdown` endpoint: stop accepting,
+drain in-flight streams (bounded), serve clean errors to new requests during
+drain, wait for zero established connections, then relaunch. **Hard kills of
+a streaming relay are forbidden by policy.**
+
+---
+
+## 12. Vision relay dropped every image — model hallucinated confidently about an image it never saw
+
+**Symptom:** An image-routing model "reads" screenshots but invents labels,
+counts, and UI elements that don't exist. Two runs on the same image
+produce two different wrong answers. The model sometimes says "I don't see
+an image attached" — sometimes not even that.
+
+**Root cause:** In the relay's request-conversion path, a loop guarded on
+`if part.get("text")` — silently dropping every `image_url` content part.
+The model received a text-only transcript of a conversation about an image
+and did what strong models do: it filled the gap with plausible detail.
+
+**Recovery:** None at the agent layer — this is invisible from the model's
+side. Diagnose by sending a generated test image with known text/shape/color
+and checking the read exactly.
+
+**Permanent fix:**
+- Convert every content part; map `data:` URLs to inline image parts and
+  `http(s)` URLs to file parts. No part-type filter that can drop silently.
+- **Verify vision with a known-target test image, twice.** A plausible
+  answer proves nothing.
+- Upscale 3–5× before reading small text; digits are the weakest read.
+
+---
+
+## 13. The mirror test: a regression test that shared the bug's default
+
+**Symptom:** A latency fix ships. The suite stays green. Users still see the
+slow path. Nothing catches it — ever.
+
+**Root cause:** The test read `section.get(key, [50, ...])` — the *same
+default* as the source under test. When the fix landed, the test read the
+fixed value; when the fix regressed, the test read the slow default too. It
+mirrored the logic instead of observing it, so it could never fail.
+
+**Recovery:** Rewrite the test to drive the real function/class and assert
+what reaches the boundary (the wire payload, the emitted frames) — not what
+an internal default returns.
+
+**Permanent fix:** For every fix: **negative control** — revert the fix,
+confirm the test FAILS, restore byte-identical (hash-checked). Compare
+failure *sets* across runs, not counts.
+
+---
+
+## 14. Green suites hid an entirely unwired subsystem
+
+**Symptom:** A directory of modules shows 100% passing unit tests. Months
+later, a grep reveals nothing outside `tests/` imports any of it — the
+feature never actually runs in the product.
+
+**Root cause:** Unit tests import the module directly, so green suites prove
+compilation plus internal logic — not wiring. Dead code with healthy tests
+is invisible to every dashboard.
+
+**Recovery:** Find the real entry point (route, task loop, CLI command);
+assert content only the real module can produce; delete or wire the dead
+code.
+
+**Permanent fix:** Wiring proof = drive the *real* entry point end-to-end,
+then a deletion test — replace the call with an empty value; if tests still
+pass, the coverage was theater. Extend to data: a lane wired only to
+fixtures sees nothing; delivery requires the real entry point on real data
+with an assertion that fails when the lane is disconnected.
+
+---
+
+## 15. Handoff summary vs. raw transcript: 4.6% fidelity
+
+**Symptom:** A long autonomous run ends with a tidy summary. The next
+session builds on it and immediately cites IDs, decisions, and file states
+that don't exist.
+
+**Root cause:** The handoff summary preserved 4.6% of the raw session
+record. Summaries compress; compression drops exactly the identifiers and
+caveats the next step needs.
+
+**Recovery:** Re-open the raw transcript/rollout files; resolve every cited
+ID against the raw source before continuing.
+
+**Permanent fix:** Treat the raw archive as authority, never the handoff.
+Any process that produces both must make the raw path *part of* the handoff.
+And in conversation: no number (exit code, hash, count, timing) may be
+stated without a tool result behind it — "no tool result available" is the
+honest answer, an invented number is the unforgivable one.
+
+---
+
 ## Add yours
 
 This page grows by incident, not by release. If a failure mode burned you:
