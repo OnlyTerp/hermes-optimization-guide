@@ -105,6 +105,7 @@ See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.m
 - [Langfuse](https://github.com/langfuse/langfuse) — self-hostable tracing + prompts + evals (Part 20 covers the Langfuse v4 / OpenTelemetry collector path)
 - [Helicone](https://github.com/Helicone/helicone) — gateway-first proxy, auto caching
 - [Arize Phoenix](https://github.com/Arize-ai/phoenix) — OpenTelemetry-native, offline
+- [OrcaReplay](https://github.com/Continuum-AI-Corp/OrcaReplay) — records a Hermes run with no instrumentation (TLS terminated for that run only) and replays it offline with the network off; Apache-2.0
 - [OpenRouter](https://openrouter.ai) — provider aggregator with cost routing
 - [Helicone pricing comparison](https://www.helicone.ai/llm-cost) — current retail prices
 - [Artificial Analysis](https://artificialanalysis.ai) — third-party benchmarks
