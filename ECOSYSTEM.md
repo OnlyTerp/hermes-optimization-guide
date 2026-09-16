@@ -104,6 +104,7 @@ See [Part 18](./part18-coding-agents.md) and [Part 23](./part23-tenacity-stack.m
 
 - [Langfuse](https://github.com/langfuse/langfuse) — self-hostable tracing + prompts + evals (Part 20 covers the Langfuse v4 / OpenTelemetry collector path)
 - [Helicone](https://github.com/Helicone/helicone) — gateway-first proxy, auto caching
+- [Bifrost](https://github.com/maximhq/bifrost) — self-hostable OpenAI-compatible gateway with provider routing, virtual keys, budgets, rate limits, MCP controls, and request logging; Hermes can use it through the generic custom-provider `base_url` path
 - [Arize Phoenix](https://github.com/Arize-ai/phoenix) — OpenTelemetry-native, offline
 - [OpenRouter](https://openrouter.ai) — provider aggregator with cost routing
 - [Helicone pricing comparison](https://www.helicone.ai/llm-cost) — current retail prices
