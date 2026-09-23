@@ -3,8 +3,9 @@
 # Explained in: guide/05-token-budget.md
 #
 # What it does:
-#   * moves every busy side task (compression, vision, titles, approvals,
-#     background review, subagents) off your main model onto a cheap one
+#   * moves every busy side task (compression, approvals, /goal checks,
+#     titles, background review, subagents) off your main model onto a cheap one
+#   * leaves image handling alone: a main model that can see gets real pixels
 #   * keeps your last few instructions verbatim through compression
 #   * stops exact-repeat failure loops in interactive sessions too
 #
@@ -37,10 +38,9 @@ auxiliary:
     provider: openrouter
     model: google/gemini-3-flash-preview
     reasoning_effort: low          # summaries don't need deep thinking
-  vision:
-    provider: openrouter
-    model: google/gemini-3-flash-preview   # must be a vision-capable model
-    reasoning_effort: none
+  # No `vision:` block on purpose. Setting one makes Hermes describe every
+  # image in text through that model, even when your main model can see.
+  # Add it only if your main model is text-only (and `auto` picks badly).
   approval:
     provider: openrouter
     model: google/gemini-3-flash-preview   # classifier used by approvals.mode: smart

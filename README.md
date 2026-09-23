@@ -32,7 +32,7 @@ Hermes does a lot out of the box. The [official docs](https://hermes-agent.nousr
 Each one is a few minutes' work. Together they cover most of the gap between a default install and a well-run one.
 
 1. **Measure what every call costs.** `hermes prompt-size` shows the fixed prefix sent with *every* model call: about 13,000 tokens on a default install, three quarters of it tool schemas. → [05](./guide/05-token-budget.md#measure-before-you-cut)
-2. **Move side tasks off your main model.** Compression, vision, titles, approvals, and the background memory review all run on your *main* model by default (`auxiliary.*: auto`). Point them at a cheap one. → [05](./guide/05-token-budget.md#lever-3-put-side-tasks-on-a-cheap-model)
+2. **Move side tasks off your main model.** Compression, titles, approvals, and the background memory review all run on your *main* model by default (`auxiliary.*: auto`). Point them at a cheap one, but leave vision alone if your main model can see images. → [05](./guide/05-token-budget.md#lever-3-put-side-tasks-on-a-cheap-model)
 3. **Drop toolsets you don't use, per platform.** Disabling `browser` and `tts` alone saves about 2,300 tokens on every call. → [05](./guide/05-token-budget.md#lever-1-send-fewer-tool-schemas)
 4. **Protect the prompt cache.** Switching models mid-session re-reads the whole conversation at full price. Use `/btw`, `/bg`, or a subagent for side work instead. → [05](./guide/05-token-budget.md#lever-2-keep-the-prompt-cache-warm)
 5. **Keep always-on instructions short.** A 32 KB `AGENTS.md` measured **+8,600 tokens per call**. → [06](./guide/06-personality-and-context.md)

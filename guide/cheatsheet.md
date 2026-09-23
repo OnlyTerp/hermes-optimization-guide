@@ -78,7 +78,7 @@
 
 | Key | Default | Why you'd touch it |
 |---|---|---|
-| `auxiliary.<task>.provider` / `.model` | `auto` = **your main model** | Route compression, vision, titles, and approvals to a cheap model ([05](./05-token-budget.md#lever-3-put-side-tasks-on-a-cheap-model)) |
+| `auxiliary.<task>.provider` / `.model` | `auto` = **your main model** | Route compression, titles, approvals, and background review to a cheap model. Leave `vision` alone if your main model can see ([05](./05-token-budget.md#lever-3-put-side-tasks-on-a-cheap-model)) |
 | `auxiliary.background_review.enabled` | `true` | The memory/skill review fork. Route it cheap, cap it, or disable it. |
 | `compression.threshold` | `0.5` (effective **0.75** under 512K windows) | Rarely. See [05](./05-token-budget.md#lever-4-compression-that-fires-when-you-think-it-does). |
 | `compression.threshold_tokens` | `256000` | The cap that decides when 1M-window models compact |

@@ -55,10 +55,8 @@ auxiliary:
     provider: openrouter
     model: google/gemini-3-flash-preview
     reasoning_effort: low
-  vision:
-    provider: openrouter
-    model: google/gemini-3-flash-preview
-    reasoning_effort: none
+  # No `vision:` block: an explicit one makes every photo users send get
+  # described in text instead of seen by the bot's own (vision-capable) model.
   title_generation:
     model_upgrade_enabled: false
   background_review:

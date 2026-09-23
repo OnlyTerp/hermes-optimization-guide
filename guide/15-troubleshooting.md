@@ -57,7 +57,7 @@ Narrower switches for bisecting: `--ignore-user-config` runs on default config (
 | Symptom | Cause | Fix | Source |
 |---|---|---|---|
 | "Every message costs ~13K tokens before I type anything" | The fixed prefix (system prompt and tool schemas) is sent on every call | Measure with `hermes prompt-size`, then disable unused toolsets per platform | [Chapter 05](./05-token-budget.md#lever-1-send-fewer-tool-schemas), [FAQ](https://hermes-agent.nousresearch.com/docs/reference/faq) |
-| The bill is higher than your chat usage explains | Every `auxiliary.*` task (compression, vision, titles, background review) runs on your **main** model by default | Route them to a cheap model | [Chapter 05](./05-token-budget.md#lever-3-put-side-tasks-on-a-cheap-model), [Configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration#auxiliary-models) |
+| The bill is higher than your chat usage explains | Every `auxiliary.*` task (compression, titles, approvals, background review) runs on your **main** model by default | Route them to a cheap model | [Chapter 05](./05-token-budget.md#lever-3-put-side-tasks-on-a-cheap-model), [Configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration#auxiliary-models) |
 | Cost spikes after `/model`, a fallback, or a key rotation | Provider caches are per model and account, so the next call re-reads everything at full price | Start a new session to change models, and keep fallbacks rare | [Tips](https://hermes-agent.nousresearch.com/docs/guides/tips) |
 | Delegation dominates spend | Subagents inherit your frontier model | `delegation.model` / `delegation.provider` set to a cheaper model | [Delegation](https://hermes-agent.nousresearch.com/docs/user-guide/features/delegation) |
 

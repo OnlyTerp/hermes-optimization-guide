@@ -5,7 +5,7 @@
 **TL;DR**
 - **Measure first.** `hermes prompt-size` shows the fixed cost of every call, `/context` shows the live session, and `hermes insights` shows where the money went.
 - **Send fewer tool schemas.** Disable toolsets you don't use, per platform. Turning off `browser` and `tts` alone saves about 2,300 tokens on every call.
-- **Move side tasks to a cheap model.** Compression, vision, titles, approvals and the background review all run on your *main* model unless you say otherwise.
+- **Move side tasks to a cheap model.** Compression, titles, approvals and the background review all run on your *main* model unless you say otherwise. Leave vision alone if your main model can see images.
 - **Protect the cache.** Don't switch models or reload MCP servers mid-session. Use `/btw`, `/bg`, or a subagent for side work.
 - **Know when compression really fires.** On any model with under 512K of context, that's 75%, not the 50% that `hermes config show` prints.
 - **Know the guardrails that are already on**, and add hard ceilings only where a runaway would really hurt.
@@ -140,7 +140,7 @@ That behavior comes straight from `agent/agent_init.py` at v0.21.4. The prose in
 
 ## Lever 3: Put side tasks on a cheap model
 
-This is the most commonly missed setting. By default every `auxiliary.*` task has `provider: auto`, and **`auto` means your main chat model**. The docs say it plainly: on expensive reasoning models, auxiliary tasks "add meaningful cost". If your main model is a top-tier model, your conversation summaries and image descriptions are billed at top-tier prices.
+This is the most commonly missed setting. By default every `auxiliary.*` task has `provider: auto`, and **`auto` means your main chat model**. The docs say it plainly: on expensive reasoning models, auxiliary tasks "add meaningful cost". If your main model is a top-tier model, your conversation summaries and memory reviews are billed at top-tier prices.
 
 The tasks that matter most for cost:
 
@@ -148,7 +148,6 @@ The tasks that matter most for cost:
 |---|---|---|
 | `compression` | Writes the summary when context is compacted | Every compaction |
 | `background_review` | Decides what to save to memory and skills | Every ~10 turns ([below](#the-background-review)) |
-| `vision` | Describes images and browser screenshots | Every image |
 | `title_generation` | Names new sessions | Once per session |
 | `approval` | Classifies risky commands in `smart` approval mode | Every flagged command |
 | `goal_judge` | Checks whether a `/goal` is done | After every goal turn |
@@ -163,10 +162,6 @@ auxiliary:
     provider: openrouter
     model: google/gemini-3-flash-preview
     reasoning_effort: low         # summaries don't need deep thinking
-  vision:
-    provider: openrouter
-    model: google/gemini-3-flash-preview
-    reasoning_effort: none
   title_generation:
     provider: openrouter
     model: google/gemini-3-flash-preview
@@ -177,6 +172,9 @@ auxiliary:
     provider: openrouter
     model: google/gemini-3-flash-preview
 ```
+
+> [!WARNING]
+> **Leave `auxiliary.vision` alone unless your main model is text-only.** Vision isn't a side task the way compression is. When your main model can see, images (attachments, browser screenshots, `vision_analyze`) go to it as real pixels and no auxiliary call happens at all. Setting *any* explicit `auxiliary.vision` provider or model switches every image to the other path: a second model describes it and your main model only gets the text. That's cheaper on the main model but lossy. With a text-only main model, `auto` already finds a vision backend for you. `agent.image_input_mode` (`auto`, `native`, `text`) makes the choice explicit.
 
 Prefer menus? Run `hermes model`, choose **Configure auxiliary models**, and pick per task. Then run `hermes doctor`. It resolves every routed auxiliary block and reports any it can't reach. An unreachable route silently falls back to the main model, which costs money.
 
@@ -318,10 +316,6 @@ auxiliary:
     provider: openrouter
     model: google/gemini-3-flash-preview
     reasoning_effort: low
-  vision:
-    provider: openrouter
-    model: google/gemini-3-flash-preview
-    reasoning_effort: none
   title_generation:
     model_upgrade_enabled: false # keep the free first-line title, skip the model call
   background_review:
@@ -357,6 +351,7 @@ In a session, `/context` should show the tool-definition category shrinking, and
 
 - **"Threshold: 50%" is not when compression fires** on sub-512K models. It fires at 75% (`agent/context_compressor.py`). The docs' worked 200K example predates this floor.
 - **`auxiliary.*: auto` is not "cheap auto-pick".** It is your main model.
+- **Setting `auxiliary.vision` changes how images are handled, not just who pays for them.** An explicit vision backend makes Hermes describe every image in text, even for a main model that could see it ([warning above](#lever-3-put-side-tasks-on-a-cheap-model)).
 - **Disabling deferred tools saves nothing** in the prefix. Check `hermes prompt-size` before and after instead of guessing.
 - **Fast mode costs more**, and only reaches first-party endpoints.
 - **The old "chat platforms cost 2–3× the CLI" rule doesn't hold on defaults.** CLI and Telegram carry identical tool schemas (42,187 bytes) on a fresh install. The difference is whatever *you* enabled per platform, so measure with `--platform`.

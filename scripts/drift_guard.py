@@ -199,6 +199,10 @@ def _documented_keys(upstream: pathlib.Path, known_roots: set) -> set:
         for span in re.findall(r"`([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)+)`", text):
             if span.split(".")[0] in known_roots and not FILE_EXT.search(span):
                 keys.add(span)
+        # keys the docs set on the command line, e.g. `hermes config set model.lmstudio_load_mode jit`
+        for span in re.findall(r"hermes config set ([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)+)", text):
+            if span.split(".")[0] in known_roots:
+                keys.add(span)
     example = upstream / "cli-config.yaml.example"
     if example.exists():
         blocks.append(example.read_text(encoding="utf-8", errors="replace"))

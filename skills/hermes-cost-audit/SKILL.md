@@ -45,7 +45,6 @@ Run every command with the terminal tool. Read, measure, and report. **Do not ch
    ```bash
    hermes config get model
    hermes config get auxiliary.compression.model
-   hermes config get auxiliary.vision.model
    hermes config get auxiliary.title_generation.model
    hermes config get auxiliary.approval.model
    hermes config get auxiliary.background_review.model
@@ -59,7 +58,7 @@ Run every command with the terminal tool. Read, measure, and report. **Do not ch
 
    | Pattern | Proposal |
    |---|---|
-   | Auxiliary tasks on `auto` while the main model is expensive | Route compression, vision, titles, approvals, and background review to a cheap model |
+   | Auxiliary tasks on `auto` while the main model is expensive | Route compression, titles, approvals, and background review to a cheap model. Leave `auxiliary.vision` unset when the main model can see images: an explicit vision backend makes every image go through a text description. |
    | A toolset enabled on a platform that never uses it (for example `browser` or `tts` on a chat bot) | `hermes tools disable --platform <platform> <toolset>` |
    | Heavy delegation with `delegation.model` unset | A cheaper model for subagents |
    | Several cron jobs with `cron.model` unset | A cheap default for unpinned cron jobs |
