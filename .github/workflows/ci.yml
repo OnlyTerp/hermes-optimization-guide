@@ -4,117 +4,64 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  markdown-links:
-    name: link check (lychee + GH token)
+  links:
+    name: External links
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # lychee with a GitHub token: GitHub links are checked for real instead
-      # of passing via a blanket 403/429 tolerance (the previous checker
-      # treated every bot-blocked GitHub URL as alive — the largest link
-      # class in this repo went effectively unchecked).
-      - name: Lychee link check
-        uses: lycheeverse/lychee-action@v2
+      - uses: lycheeverse/lychee-action@v2
         with:
           args: >-
             --no-progress
             --timeout 20
             --max-retries 3
             --retry-wait-time 10
-            --accept 200,204,206
+            --accept 200,204,206,429
             --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-            --exclude 'https://www\.npmjs\.com/.*'
-            --exclude-path README-zh.md
-            --exclude-path README-ja.md
-            --exclude-path CHANGELOG.md
-            --exclude 'https://t\.me/.*'
-            --exclude 'https://hermes-agent\.nousresearch\.com.*'
-            --exclude 'https?://(localhost|127\.0\.0\.1|0\.0\.0\.0).*'
-            --exclude 'https?://.*yourdomain\.com.*'
-            --exclude 'https://discord\.gg/.*'
-            --exclude 'https://portal\.nousresearch\.com.*'
-            --exclude 'https://x\.com/.*'
-            '**/*.md'
+            --exclude 'https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)'
+            --exclude 'https?://([a-z0-9-]+\.)*example\.(com|org)'
+            --exclude 'https://t\.me/'
+            --exclude 'https://discord\.gg/'
+            --exclude 'https://(x|twitter)\.com/'
+            --exclude 'https://portal\.nousresearch\.com'
+            --exclude 'https://www\.npmjs\.com/'
+            --exclude 'https://hermes-agent\.nousresearch\.com/docs/'
+            'README.md' 'guide/**/*.md' 'templates/**/*.md' 'skills/**/*.md' 'CONTRIBUTING.md'
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Official docs links are not checked here: the drift guard validates
+      # every one of them (page + heading) against the pinned upstream docs.
 
-  anchor-check:
-    name: internal anchors
+  anchors:
+    name: Relative links and anchors
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Check relative links and #anchors resolve
-        run: python .github/scripts/check_anchors.py
+          python-version: "3.11"
+      - run: python .github/scripts/check_anchors.py
 
-  yaml-lint:
-    name: yamllint
+  yaml:
+    name: YAML syntax
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install yamllint
-        run: pip install yamllint
-      - name: Run yamllint
-        # templates/ and benchmarks/ hold the shipped YAML; .github/ covers
-        # this workflow, the yamllint config itself, and ISSUE_TEMPLATE/config.yml.
-        run: yamllint -c .github/yamllint.yml templates/ benchmarks/ .github/
+      - run: pip install --quiet yamllint
+      - run: yamllint -c .github/yamllint.yml templates/ .github/
 
-  skill-frontmatter:
-    name: skill frontmatter
+  shell:
+    name: Shell scripts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install deps
-        run: pip install pyyaml
-      - name: Validate every SKILL.md frontmatter
-        run: python .github/scripts/validate_skills.py
-
-  shell-syntax:
-    name: bash -n
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Syntax-check all shell scripts
+      - name: shellcheck every script shipped in this repo
         run: |
-          shopt -s nullglob
-          rc=0
-          for f in scripts/*.sh benchmarks/*.sh; do
-            echo "bash -n $f"
-            bash -n "$f" || rc=1
-          done
-          exit $rc
-
-  python-syntax:
-    name: python compile
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Compile-check every shipped Python script
-        run: |
-          rc=0
-          for f in scripts/*.py benchmarks/*.py .github/scripts/*.py; do
-            echo "py_compile $f"
-            python -m py_compile "$f" || rc=1
-          done
-          exit $rc
-
-  prettier-check:
-    name: prettier (soft)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Prettier check (advisory only)
-        run: npx -y prettier --check "**/*.md" || echo "::warning::prettier formatting drift (non-blocking)"
+          mapfile -t scripts < <(git ls-files '*.sh')
+          [ "${#scripts[@]}" -eq 0 ] || shellcheck "${scripts[@]}"

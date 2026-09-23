@@ -1,27 +1,18 @@
 ---
-name: New skill proposal
-about: Suggest a new installable skill for the skills/ directory
+name: Skill proposal
+about: Suggest an operations skill for the skills/ directory
 title: "[skill] "
 labels: skill
 ---
 
-**Skill name**
-_Kebab-case, e.g. `daily-inbox-triage`_
+**Name and one-line description**
+_kebab-case name; description must fit 60 characters, e.g. `hermes-cost-audit` — "Audit Hermes token spend and propose cuts."_
 
-**Category**
-_security / ops / dev / other_
+**When to use it**
+_On demand, on a schedule, or on an event?_
 
-**What it does**
-_One sentence._
+**What it reads and what it may change**
+_Skills in this repo read and report first; any change needs the user's approval._
 
-**When it should run**
-_Scheduled? On-demand? Event-driven?_
-
-**Toolsets needed**
-_terminal, file, github, delegate_task, …_
-
-**Untrusted-input risk**
-_Does this skill read message bodies / email / scraped content?_
-
-**Draft SKILL.md (optional)**
-_Paste below. We'll refine together._
+**Commands it relies on**
+_Every `hermes …` command must exist in the pinned release._

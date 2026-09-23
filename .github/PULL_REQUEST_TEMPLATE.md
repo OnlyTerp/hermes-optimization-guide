@@ -1,21 +1,16 @@
 ## Summary
-<!-- What this PR changes, in 2–5 sentences. -->
+<!-- What this changes and why, in 2–5 sentences. -->
 
 ## Type
-- [ ] Docs / content update
-- [ ] New skill (`skills/`)
-- [ ] New config template (`templates/config/`)
-- [ ] Benchmark addition
-- [ ] Ecosystem entry
-- [ ] Infra template (compose / caddy / systemd / script)
-- [ ] Fix / typo / link
+- [ ] Correction (something was wrong or stale)
+- [ ] New or expanded content
+- [ ] Skill or config template
+- [ ] Pin bump to a new Hermes release
+- [ ] CI / tooling
 
 ## Checklist
-- [ ] Cross-links are relative (`./partN-foo.md`) and resolve
-- [ ] No secrets in any example — `${VAR}` placeholders only
-- [ ] Dates / prices / PR numbers are current (or marked with the date)
-- [ ] For skills: security notes included; untrusted-input handling and `approvals:` posture documented (see part19-security-playbook.md)
-- [ ] For templates: every non-obvious field is commented
-- [ ] CHANGELOG.md updated if user-facing
-
-## Screenshots / diffs (optional)
+- [ ] `scripts/drift_guard.py check` passes against the pinned release (and `lint-skills` if skills changed)
+- [ ] `python3 .github/scripts/check_anchors.py` passes
+- [ ] Numbers are measured (with how) or cited; fixes cite a docs page, merged PR, closed issue, or release notes
+- [ ] No secrets in examples (placeholders only)
+- [ ] CHANGELOG.md updated if readers would notice the change

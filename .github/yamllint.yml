@@ -1,28 +1,14 @@
 extends: default
 
-# Goal: catch real syntax errors in template YAMLs, not formatting nits.
-# Templates often align values / use flow-mapping shorthand for cron/approval rules;
-# those are legit, so we relax those rules.
-#
-# CI runs: yamllint -c .github/yamllint.yml templates/ benchmarks/ .github/
+# Goal: catch real YAML syntax errors in shipped templates and workflows,
+# not formatting nits. CI runs: yamllint -c .github/yamllint.yml templates/ .github/
 
 rules:
   line-length: disable
   document-start: disable
   comments: disable
   comments-indentation: disable
-  colons: disable
-  commas: disable
   indentation: disable
   truthy:
-    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+    allowed-values: ['true', 'false', 'on', 'off']
     check-keys: false
-  braces:
-    max-spaces-inside: 2
-  brackets:
-    max-spaces-inside: 2
-
-ignore: |
-  node_modules/
-  .venv/
-  templates/compose/.env.langfuse.example

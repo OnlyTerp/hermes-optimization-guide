@@ -1,5 +1,2 @@
-# Shell scripts MUST ship as LF — a CRLF vps-bootstrap.sh is a broken
-# vps-bootstrap.sh (bash dies on `\r`), and the published sha256 must match
-# the bytes raw.githubusercontent.com serves, which are the blob's bytes.
-# Forcing eol=lf makes the blob, the checkout, and the served file agree.
+# Shell scripts must ship with LF line endings; a CRLF script is broken bash.
 *.sh text eol=lf
