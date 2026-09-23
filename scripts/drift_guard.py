@@ -636,15 +636,39 @@ def check_skill(path: pathlib.Path, errors: list):
         errors.append(f"{rel}:1: description longer than 1024 chars")
 
 
+def _user_defined_commands(md_files) -> set:
+    """Slash names the guide itself creates: bundles, example skills, quick commands."""
+    import yaml  # type: ignore
+    names: set = set()
+    for f in md_files:
+        if not f.exists():
+            continue
+        text = f.read_text(encoding="utf-8")
+        names |= set(re.findall(r"hermes bundles create ([a-z][a-z0-9_-]*)", text))
+        # example SKILL.md files shown in fences: frontmatter `name: <skill>`
+        for front in re.findall(r"^```[a-z]*\n---\n(.*?)\n---", text, re.S | re.M):
+            m = re.search(r"^name:\s*([a-z][a-z0-9_-]*)\s*$", front, re.M)
+            if m:
+                names.add(m.group(1))
+        for body in re.findall(r"^```ya?ml[^\n]*\n(.*?)^```", text, re.S | re.M):
+            try:
+                data = yaml.safe_load(body)
+            except yaml.YAMLError:
+                continue
+            if isinstance(data, dict) and isinstance(data.get("quick_commands"), dict):
+                names |= {str(k) for k in data["quick_commands"]}
+    return names
+
+
 def cmd_check(args):
     data = json.loads(pathlib.Path(args.surface).read_text())
     local_skills = {p.parent.name for p in (REPO / "skills").rglob("SKILL.md")}
-    surf = Surface(data, local_skills)
-    errors: list = []
-
     md_files = [REPO / "README.md", *sorted((REPO / "guide").rglob("*.md")),
                 *sorted((REPO / "templates").rglob("*.md")),
                 *sorted((REPO / "skills").rglob("*.md"))]
+    surf = Surface(data, local_skills | _user_defined_commands(md_files))
+    errors: list = []
+
     for f in md_files:
         if f.exists():
             check_file(f, surf, errors)

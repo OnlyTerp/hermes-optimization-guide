@@ -124,7 +124,7 @@ hermes profile use work         # make it the sticky default
 hermes profile list             # see them all
 ```
 
-Use profiles to keep a work agent from learning your personal life, or to give a team bot a different model and tighter permissions than your own. The one hard rule, straight from the docs: **never point two running agents at the same profile.** Both write memory automatically, and each loads the other's writes at session start. Agents that need shared knowledge should share an [external memory provider](./07-memory.md), not a home directory.
+Use profiles to keep a work agent from learning your personal life, or to give a team bot a different model and tighter permissions than your own. A profile separates *state*, not the filesystem: on the default `local` terminal backend, every profile can reach everything your user account can. Isolation comes from a sandboxed terminal backend or a separate OS user ([chapter 13](./13-security.md)). The one hard rule, straight from the docs: **never point two running agents at the same profile.** Both write memory automatically, and each loads the other's writes at session start. Agents that need shared knowledge should share an [external memory provider](./07-memory.md), not a home directory.
 
 One gateway process serves every profile on the host. Since v0.21.4 that's the only supported layout, and `gateway.multiplex_profiles: false` is ignored. If a boot-time safety check finds a conflict, such as two profiles sharing one bot token, the gateway logs the blocker and serves only the default profile until you run `hermes gateway migrate --multiplex`. A second profile doesn't mean a second always-on process. [Chapter 12](./12-multi-agent.md) covers profiles as a multi-agent tool, and [chapter 14](./14-production.md) covers running several on one server.
 
@@ -176,6 +176,7 @@ If `hermes config path` doesn't print the file you've been editing, you're in a 
 - **Only one project context file loads.** `.hermes.md` beats `AGENTS.md`, which beats `CLAUDE.md`, which beats `.cursorrules`. Hermes doesn't warn when one shadows another.
 - **Memory edits don't apply mid-session.** That's by design, for caching. Start a new session (`/new`) to pick them up.
 - **Two agents on one profile corrupt each other's memory.** Use one profile per running agent.
+- **A profile is not a sandbox.** It gets its own config, keys and memory, but its shell sees the same files you do.
 
 ## Go deeper
 
