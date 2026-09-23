@@ -173,6 +173,8 @@ auxiliary:
     model: google/gemini-3-flash-preview
 ```
 
+**Give the summarizer at least your main model's window.** The whole middle of the conversation goes to the compression model in one call. If its context window is smaller than your main model's, Hermes lowers the compression trigger to fit it, so you compact earlier and more often ([docs](https://hermes-agent.nousresearch.com/docs/developer-guide/context-compression-and-caching#auxiliary-feasibility-and-tail-retention)). Gemini Flash models have a 1M-token window, which covers almost any main model.
+
 > [!WARNING]
 > **Leave `auxiliary.vision` alone unless your main model is text-only.** Vision isn't a side task the way compression is. When your main model can see, images (attachments, browser screenshots, `vision_analyze`) go to it as real pixels and no auxiliary call happens at all. Setting *any* explicit `auxiliary.vision` provider or model switches every image to the other path: a second model describes it and your main model only gets the text. That's cheaper on the main model but lossy. With a text-only main model, `auto` already finds a vision backend for you. `agent.image_input_mode` (`auto`, `native`, `text`) makes the choice explicit.
 

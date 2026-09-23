@@ -22,7 +22,7 @@ Every fix below is confirmed by the official docs, a merged upstream fix, or rel
 | 5 | `/status`, `/context all`, `/usage` (in a session) | The model and provider really in use, what fills the context, and rate-limit state |
 | 6 | `hermes config check` · `hermes config get <key>` | Missing or outdated options, and the value Hermes actually resolves |
 | 7 | `hermes --safe-mode` | Runs with **no** customizations: user config, AGENTS/memory injection, plugins, and MCP are all off. If the problem disappears, it's in your setup. |
-| 8 | `hermes dump` · `hermes debug share` | A pasteable setup summary. `debug share` uploads redacted logs; use `--local` to keep them on your machine. |
+| 8 | `hermes dump` · `hermes debug share` | A pasteable setup summary. `debug share` uploads logs publicly with only secrets redacted; use `--local` to keep them on your machine. |
 
 Narrower switches for bisecting: `--ignore-user-config` runs on default config (keys in `.env` still load), and `--ignore-rules` skips AGENTS.md, SOUL.md, memory, and preloaded skills.
 
@@ -170,7 +170,7 @@ These are real, reported, and **unresolved** at v0.21.4. The guide won't pretend
 1. Search [existing issues](https://github.com/NousResearch/hermes-agent/issues) first. Many problems are already fixed on a newer release.
 2. Update and retry: `hermes update --check`.
 3. Reproduce with `hermes --safe-mode`. If the problem vanishes, bisect your config, plugins, and MCP servers.
-4. Attach context. `hermes dump` gives a compact setup summary. `hermes debug share` uploads **redacted** logs to a public paste service that expires; `hermes debug share --nous` uploads privately to Nous staff instead, and `--local` prints the report without uploading. Read the report before posting it anywhere.
+4. Attach context. `hermes dump` gives a compact setup summary. `hermes debug share` uploads logs to a **public** paste service. Only secrets (API keys, tokens, passwords) are redacted. Your display name, platform user ID, recent message text and file paths are not. Pastes delete themselves after about 6 hours; the dpaste fallback keeps them for `--expire` days (default 1) and can't be deleted early. `hermes debug share --nous` uploads privately to Nous staff instead, and `--local` prints the report without uploading. Read the report before posting it anywhere.
 5. Include your version (`hermes --version`), OS, install method, the exact command or message, and what you expected.
 
 ## Go deeper
