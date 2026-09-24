@@ -39,8 +39,14 @@ memory:
   user_profile_enabled: false  # USER.md is one file per profile, not per person: what the bot
                                # learned about Alice would sit in Bob's prompt too
 
-unauthorized_dm_behavior: pair   # unknown DMs get a one-time code an admin approves
-                                 # (`hermes pairing approve <platform> <code>`); or: decline / ignore
+# Strangers: with no allowlist, an unknown DM gets a one-time pairing code an admin
+# approves (`hermes pairing approve <platform> <code>`). That's the default, so there
+# is nothing to set. Add an allowlist and strangers are ignored instead. A global
+# `unauthorized_dm_behavior: pair` does NOT change that (gateway/authz_mixin.py);
+# to keep pairing alongside an allowlist, set it per platform:
+#   platforms:
+#     telegram:
+#       unauthorized_dm_behavior: pair
 
 group_sessions_per_user: true    # default, kept explicit: each person in a group gets their own session
 

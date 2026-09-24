@@ -140,7 +140,7 @@ Two cheaper variants: `hermes webhook subscribe <name> --deliver-only …` forwa
    hermes -p team gateway setup    # Telegram bot token from @BotFather
    ```
 
-2. **Control who can talk to it.** Prefer DM pairing for teams: a new user DMs the bot, gets a one-time code, and you approve it:
+2. **Control who can talk to it.** Prefer DM pairing for teams: a new user DMs the bot, gets a one-time code, and you approve it. Pairing is what strangers get while the platform has **no allowlist**, so leave the allowed-users prompt empty in `gateway setup`. Once any allowlist is set, strangers are ignored instead ([what strangers see](./10-messaging.md#what-strangers-see)).
 
    ```bash
    hermes pairing list
