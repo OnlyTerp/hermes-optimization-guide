@@ -97,7 +97,7 @@
 | `approvals.mode` | `smart` | `manual` for shared agents. `off` only in disposable sandboxes. |
 | `approvals.cron_mode` · `unattended_mode` | `deny` · `deny` | Dangerous commands in unattended runs are refused |
 | `security.redact_secrets` | `true` | Keep it on |
-| `security.protected_instruction_files` | `true` | Agent edits to SOUL/AGENTS need your approval |
+| `security.protected_instruction_files` | `true` | Agent edits to project `AGENTS.md`/`CLAUDE.md`/`SOUL.md` need your approval. Your own `~/.hermes` files are exempt. |
 | `gateway.allow_all_users` | `false` | Never `true` on a bot with a shell |
 | `terminal.backend` | `local` | `docker` for untrusted work |
 | `checkpoints.enabled` | `false` | `true` for coding: `/rollback` safety net |

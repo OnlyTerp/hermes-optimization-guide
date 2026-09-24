@@ -32,7 +32,7 @@ Hermes seeds a starter `SOUL.md` (667 bytes) on first run and never overwrites y
 - It **replaces** the built-in identity rather than adding to it. An empty file falls back to the built-in default, which is a sensible "be direct, no filler" paragraph.
 - It's scanned for prompt-injection patterns. Unlike project files, your own `SOUL.md` is warned about, not blocked, and `/context` flags it.
 - Delegated subagents don't load it. They use the built-in identity.
-- **The agent can't quietly rewrite it.** With `security.protected_instruction_files: true` (the default), any agent write to `SOUL.md`, `AGENTS.md`, `CLAUDE.md` and similar files asks for your approval, even under `--yolo`, and is refused when nobody is there to answer.
+- **The agent *can* rewrite it without asking.** `security.protected_instruction_files` (on by default) makes agent writes to *project* instruction files (`AGENTS.md`, `CLAUDE.md`, a `SOUL.md` in a repo, `.cursorrules`) ask for your approval, even under `--yolo`. Your own Hermes home is exempt by design (`tools/file_tools_write_guards.py` at v0.21.4), so a write to `~/.hermes/SOUL.md` goes through with no prompt, whatever the upstream SOUL guide says. Keep it in version control or back it up, and check it after any session that read untrusted text ([chapter 13](./13-security.md#layer-6-instruction-integrity)).
 
 ### What makes a SOUL.md good
 
@@ -63,7 +63,7 @@ You're a sharp, practical operator. You work for me, not for politeness.
 
 ### The Molty prompt
 
-Want to skip writing it yourself? This prompt is from [OpenClaw's SOUL.md guide](https://docs.openclaw.ai/concepts/soul#the-molty-prompt), credited and reproduced as published. Paste it into a chat and let the agent rewrite its own `SOUL.md`. You'll get an approval prompt for the write, which is the protected-files gate doing its job:
+Want to skip writing it yourself? This prompt is from [OpenClaw's SOUL.md guide](https://docs.openclaw.ai/concepts/soul#the-molty-prompt), credited and reproduced as published. Paste it into a chat and let the agent rewrite its own `SOUL.md`. There's no approval prompt for that file, so save a copy first (`cp ~/.hermes/SOUL.md ~/.hermes/SOUL.md.bak`) and read the result:
 
 ```text
 Read your `SOUL.md`. Now rewrite it with these changes:

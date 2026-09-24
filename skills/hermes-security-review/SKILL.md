@@ -33,6 +33,9 @@ Run commands with the terminal tool. **Never print secret values.** Read key *na
    hermes config get approvals.unattended_mode
    hermes config get security.redact_secrets
    hermes config get security.protected_instruction_files
+   hermes config get security.protected_instruction_extra_patterns
+   hermes config get memory.write_approval
+   hermes config get skills.write_approval
    hermes config get security.allow_private_urls
    hermes config get gateway.allow_all_users
    hermes config get terminal.backend
@@ -72,7 +75,7 @@ Run commands with the terminal tool. **Never print secret values.** Read key *na
    | Critical | `gateway.allow_all_users: true` or any `*_ALLOW_ALL_USERS=true` on a profile with terminal access. `approvals.mode: off` on a profile reachable from messaging. |
    | High | Secrets file readable by other users (not `600`). A platform running with no allowlist and no pairing. `security.redact_secrets: false`. Known vulnerabilities from `hermes security audit`. |
    | Medium | `approvals.cron_mode` or `approvals.unattended_mode` not `deny`. `security.protected_instruction_files: false`. MCP servers from unknown publishers with broad tool access and no include filter. |
-   | Low | `security.allow_private_urls: true` on a machine with sensitive internal services. `auth.adopt_external_logins: true` where Codex CLI or Claude Code logins should stay separate. |
+   | Low | `security.allow_private_urls: true` on a machine with sensitive internal services. `auth.adopt_external_logins: true` where Codex CLI or Claude Code logins should stay separate. `security.protected_instruction_extra_patterns` missing `.hermes.md`, `agents.override.md` or `*.mdc` on a profile that works in repos other people wrote. `memory.write_approval` or `skills.write_approval` off on a profile other people can message. |
 
 6. **Report** findings by severity with the exact fix for each: `hermes config set …`, `chmod 600 …`, an allowlist line, or `hermes pairing revoke …`. Ask which to apply.
 
@@ -84,5 +87,6 @@ Run commands with the terminal tool. **Never print secret values.** Read key *na
 ## Pitfalls
 
 - Container terminal backends (for example Docker) skip dangerous-command approval checks by design, because the container is the boundary. That is only safe if the container really is locked down.
+- The protected-file gate covers project files only. The Hermes home is exempt, so the agent can rewrite `~/.hermes/SOUL.md` without a prompt, and memory and skills are gated only by their own `write_approval` settings.
 - Never paste the contents of `.env`, `auth.json`, or any key into the chat or a report.
 - `hermes security audit` queries OSV.dev over the network. Tell the user before running it on an air-gapped host.
