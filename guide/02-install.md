@@ -100,6 +100,8 @@ On a fresh install the wizard offers three modes:
 
 `hermes setup --portal` jumps straight to the Nous Portal flow. On an existing install, `hermes setup --quick` prompts only for what's missing. You can also skip the wizard entirely: run `hermes model` to pick a provider and model, then `hermes` to chat.
 
+Quick and Full Setup finish by installing and starting the messaging gateway as a background **user** service, even if you skip messaging, because scheduled jobs only run while a gateway does. That's expected, not a stray process: `hermes gateway status` shows it. In a container, or on a host with no service manager, setup prints how to run it yourself instead.
+
 > [!IMPORTANT]
 > Hermes refuses models with less than **64K tokens** of context. The system prompt and tool schemas alone are about 13K tokens. Hosted frontier models clear this easily. For local models, see [chapter 04](./04-local-models.md).
 

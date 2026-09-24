@@ -19,7 +19,7 @@ Every surface below drives the same `AIAgent` loop with the same configuration. 
 | TUI | `hermes --tui` | Same agent in a richer full-screen terminal UI. |
 | Desktop app | Desktop installer, or `hermes desktop` | A native window with projects, a session sidebar, voice, and Bot Mode. |
 | Web dashboard | `hermes dashboard` | Configuration, keys, sessions, logs, analytics, and cron in a browser. |
-| Messaging gateway | `hermes gateway run` (foreground) or `hermes gateway install` (service) | Telegram, Discord, Slack, WhatsApp, Signal, email, Matrix, Teams, and two dozen more. |
+| Messaging gateway | A background service that `hermes setup` installs (`hermes gateway install` to redo it), or `hermes gateway run` in the foreground | Telegram, Discord, Slack, WhatsApp, Signal, email, Matrix, Teams, and two dozen more. |
 | One-shot | `hermes -z "prompt"` | Scripts, pipes, CI. It prints only the final answer. |
 | IDE agent (ACP) | `hermes acp` | VS Code, Zed, and JetBrains over the Agent Client Protocol. |
 | Backend server | `hermes serve` | Headless backend for the desktop app and remote connections. |
