@@ -47,7 +47,7 @@ Prompt-size breakdown (platform=cli, model=unset)
     ...
 ```
 
-That's about 13,000 tokens per call before any conversation (see [chapter 01](./01-how-hermes-works.md#whats-in-every-request) for the token counts). Every lever below attacks one part of it.
+That's about 13,000 tokens per call before any conversation (see [chapter 01](./01-how-hermes-works.md#whats-in-every-request) for the token counts). Every lever below attacks one part of it. Your numbers will differ by a few bytes, because a few tool descriptions include your install path. That's why other chapters, measured on other scratch installs, show 42,199 bytes for the same default set.
 
 ## Where the money goes
 
