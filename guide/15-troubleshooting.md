@@ -146,6 +146,7 @@ These are real, reported, and **unresolved** at v0.21.4. The guide won't pretend
 | WhatsApp pairing behind an HTTP(S) proxy loops on `408` with no QR code | [#43603](https://github.com/NousResearch/hermes-agent/issues/43603) |
 | Desktop on WSL2: gateway exits every ~2 minutes (reported on v0.17, still open) | [#95189](https://github.com/NousResearch/hermes-agent/issues/95189) |
 | macOS Full Disk Access revoked after desktop updates (`--setup-tcc-identity` mitigates) | [#52010](https://github.com/NousResearch/hermes-agent/issues/52010) |
+| Nous Portal OAuth login to a self-hosted dashboard fails with `403`/`429`: the Portal's Vercel security checkpoint blocks the token and JWKS endpoints (opened 2026-09-23, server-side). Meanwhile, reach the dashboard over an SSH tunnel, where loopback needs no login ([chapter 14](./14-production.md#the-dashboard-safely)). | [#120602](https://github.com/NousResearch/hermes-agent/issues/120602) |
 
 ## Myths that cost people time
 
