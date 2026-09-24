@@ -3,7 +3,7 @@
 > Turn Hermes into a service people can depend on: the right host, a supervised gateway, backups you've actually restored, updates that don't wake you at night, and monitoring that tells you before your users do.
 
 **TL;DR**
-- **Run the gateway under the service Hermes installs** (`hermes gateway install`), not tmux or a hand-written unit. Cron only fires while the gateway runs, and the native unit carries restart and drain behavior that hand-written units get wrong.
+- **Run the gateway under the service Hermes installs** (`hermes setup` does it for you), not tmux or a hand-written unit. Cron only fires while the gateway runs, and the native unit carries restart and drain behavior that hand-written units get wrong.
 - **A small Linux box and a dedicated, unprivileged user** is the default production setup. Bots on Telegram, Discord, or Slack need no open inbound ports.
 - **Back up nightly with `hermes backup`, keep copies off the box and encrypted, and test a restore.** Never copy a live `state.db` by hand.
 - **Updates follow `main`.** Preview them with `hermes update --plan`, and pin a release tag if you run Docker.
@@ -33,33 +33,34 @@ Local models are a different sizing exercise ([chapter 04](./04-local-models.md)
 
 ## A VPS, end to end
 
-A Debian or Ubuntu box, from nothing to a gateway that survives reboots. Steps 1 and 4 need an admin account with sudo. Everything else runs as a dedicated `hermes` user that has none.
+A Debian or Ubuntu box, from nothing to a gateway that survives reboots. Step 1 needs an admin account with sudo. Everything else runs as a dedicated `hermes` user that has none.
 
 1. **Prepare the box** (as the admin):
 
    ```bash
    sudo apt update && sudo apt install -y git curl xz-utils
    sudo useradd --create-home --shell /bin/bash hermes
-   sudo ufw allow OpenSSH          # keep SSH reachable (use your port if sshd isn't on 22)
-   sudo ufw enable                 # nothing else inbound for Telegram/Discord/Slack bots
+   sudo loginctl enable-linger hermes   # its user services start at boot and survive logout
+   sudo ufw allow OpenSSH               # keep SSH reachable (use your port if sshd isn't on 22)
+   sudo ufw enable                      # nothing else inbound for Telegram/Discord/Slack bots
    sudo apt install -y unattended-upgrades
    sudo dpkg-reconfigure --priority=low unattended-upgrades   # automatic OS security updates
    ```
 
-   Want browser tools? Chromium's system libraries are the one install step that needs root: `sudo npx playwright install-deps chromium` (the admin needs Node.js for `npx`). Otherwise install with `--skip-browser` in the next step ([official split](https://hermes-agent.nousresearch.com/docs/getting-started/installation#non-sudo--system-service-user-installs)).
+   Want browser tools? Chromium's system libraries are the one install step that needs root: `sudo npx playwright install-deps chromium` (the admin needs Node.js for `npx`). If you don't, pass `--skip-browser` to the installer in the next step ([official split](https://hermes-agent.nousresearch.com/docs/getting-started/installation#non-sudo--system-service-user-installs)).
 
-2. **Install and prove it works** (as `hermes`):
+2. **Install and set up** (as `hermes`):
 
    ```bash
    sudo -iu hermes
-   curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash -s -- --skip-browser
+   curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash   # no browser: ... | bash -s -- --skip-browser
    source ~/.bashrc
-   hermes setup                      # provider, model, then a messaging platform
+   hermes setup                      # provider, model, messaging, then the gateway service
    hermes doctor
    hermes -z "Reply with exactly: OK"
    ```
 
-   The installer notices there's no sudo and skips the system-library step. It prints the exact command an admin would need.
+   When it installs the browser, the installer notices there's no sudo, puts Chromium in the `hermes` user's own cache, skips the system-library step, and prints the command an admin would need. `hermes setup` always ends by installing and starting the gateway as a **user service**, even with no messaging platform configured, because cron needs a running gateway. Linger from step 1 is what starts it at boot.
 
 3. **Configure it for unattended use** (still as `hermes`):
 
@@ -68,35 +69,32 @@ A Debian or Ubuntu box, from nothing to a gateway that survives reboots. Steps 1
    hermes config set terminal.cwd /home/hermes/work     # where gateway and cron commands start
    hermes config set timezone Europe/Berlin             # so "every day at 9" means your 9
    hermes config set updates.pre_update_backup full     # zip the whole home before each update
+   hermes gateway restart                               # make sure the running gateway uses them
    ```
 
    Then lock down who can talk to it and what it may run: allowlists or pairing, approvals, and ideally a container backend ([chapter 13](./13-security.md)). Messaging setup is in [chapter 10](./10-messaging.md#set-it-up).
 
-4. **Install the service** (as the admin). The symlink makes the `hermes` user's install callable through `sudo`, as the install docs suggest for service accounts:
+4. **Prove it survives a reboot.** As the admin, `sudo reboot`. Reconnect, run `sudo -iu hermes`, then `hermes gateway status` (service running, "Systemd linger is enabled") and `hermes cron status`. Cron jobs only fire while a gateway runs.
 
-   ```bash
-   sudo ln -s /home/hermes/.hermes/hermes-agent/venv/bin/hermes /usr/local/bin/hermes
-   sudo hermes gateway install --system --run-as-user hermes
-   sudo hermes gateway start --system
-   sudo hermes gateway status --system
-   ```
+### Or run it as a system service
 
-   This writes `/etc/systemd/system/hermes-gateway.service`, which starts at boot and runs as `hermes`. The alternative is a **user** service plus lingering, which needs no root after setup:
+A system unit suits a box an admin owns, and it's the one you can sandbox with a drop-in ([below](#optional-harden-the-unit-with-a-drop-in)). Remove the user service that `hermes setup` installed first. Both units would compete for the same bot tokens, and Hermes' commands keep picking the user unit while its file exists.
 
-   ```bash
-   sudo loginctl enable-linger hermes      # admin, once: start at boot, survive logout
-   sudo -iu hermes
-   hermes gateway install                  # user service
-   ```
+```bash
+hermes gateway uninstall                # as hermes: remove the user service
+exit                                    # back to the admin account
+sudo ln -s /home/hermes/.hermes/hermes-agent/venv/bin/hermes /usr/local/bin/hermes
+sudo hermes gateway install --system --run-as-user hermes
+sudo hermes gateway start --system
+sudo hermes gateway status --system     # "Configured to run as: hermes"
+```
 
-   | Scope | Pick it when | Tradeoff |
-   |---|---|---|
-   | System (`--system --run-as-user`) | An admin owns the box. You want it up at boot regardless of logins, and you may harden the unit ([below](#optional-harden-the-unit-with-a-drop-in)). | Manual restarts need root. `hermes update` still drain-restarts it without root: it signals the gateway, and systemd relaunches it. |
-   | User plus linger | The service account manages itself | Fewer sandboxing options in the unit |
+The symlink makes the `hermes` user's install callable through `sudo`, as the install docs suggest for service accounts. The unit lands in `/etc/systemd/system/hermes-gateway.service` and runs as `hermes`.
 
-   Don't install both, because start, stop, and status become ambiguous. Hermes warns if it finds both.
-
-5. **Prove it survives a reboot:** `sudo reboot`, reconnect, then `sudo hermes gateway status --system` and, as `hermes`, `hermes cron status`. Cron jobs only fire while a gateway runs.
+| Scope | Pick it when | Tradeoff |
+|---|---|---|
+| User service plus linger (what `hermes setup` installs) | The service account manages itself | No root needed after setup. Fewer sandboxing options in the unit. |
+| System (`--system --run-as-user`) | An admin owns the box, or you want to harden the unit | Manual restarts need root. `hermes update` still drain-restarts it without root: it signals the gateway, and systemd relaunches it. |
 
 ## What the native service gives you
 
@@ -108,7 +106,7 @@ A Debian or Ubuntu box, from nothing to a gateway that survives reboots. Steps 1
 - **The right environment.** The venv's `PATH`, Node, `VIRTUAL_ENV`, `HERMES_HOME`, and `HERMES_SUPERVISED_CHILD=1`, which stops the agent from killing or restarting its own gateway from the terminal tool.
 - **Correct ordering.** It waits for `network-online.target`. The system unit also starts the user's systemd manager, so restart-safe cron workers can run in their own scopes.
 - **It keeps itself current.** `start` and `restart` rewrite the installed unit when Hermes would now generate a different one, and `status` warns when it's outdated.
-- **An optional systemd watchdog.** Set `gateway.systemd_watchdog_seconds: 120` and run `hermes gateway install --force`, and the unit switches to `Type=notify` with `WatchdogSec`, so systemd restarts a process whose event loop stops making progress.
+- **An optional systemd watchdog.** Set `gateway.systemd_watchdog_seconds: 120` and reinstall the unit with `--force` (`hermes gateway install --force` for the user service). The unit switches to `Type=notify` with `WatchdogSec`, so systemd restarts a process whose event loop stops making progress.
 
 Inside the process, these guards are on by default:
 
@@ -120,24 +118,24 @@ Inside the process, these guards are on by default:
 | `gateway.respawn_storm` | A crash loop (5 starts in 120 s) | Exponential backoff before booting |
 | `gateway.restart_loop_guard` | A resumed turn that keeps killing the gateway | Skips auto-resume after 3 quick restarts. Inbound messages are still served. |
 
-A hand-written unit misses parts of this contract and never gets regenerated when Hermes changes it. Keep your own units for things Hermes doesn't install, like [`hermes serve`](#the-desktop-app-on-your-server).
+A hand-written unit misses parts of this contract and never gets regenerated when Hermes changes it. Keep your own units for things Hermes doesn't install, like [`hermes serve`](#the-desktop-app-on-your-server). If another process manager must own the gateway (supervisord, runit, a wrapper script), run `hermes gateway run --external-supervisor` under it and have it relaunch after any non-zero exit. Restarts and updates then exit with code 75 and leave the relaunch to it ([CLI reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands#hermes-gateway)).
 
-**Operating it:**
+**Operating it** (as `hermes`):
 
 ```bash
-sudo hermes gateway restart --system   # drains in-flight turns, then waits for the new process
-sudo systemctl reload hermes-gateway   # the same drain and relaunch, without waiting
-journalctl -u hermes-gateway -f        # service output (the unit logs to the journal)
+hermes gateway restart          # drains in-flight turns, then waits for the new process
+hermes gateway status --deep    # unit state, warnings, recent journal lines
+hermes logs gateway -f          # Hermes' own gateway.log
 ```
 
-As the `hermes` user, `hermes logs gateway -f` follows Hermes' own `gateway.log`. For a gateway that looks alive but does nothing, `kill -USR2 <pid>` appends every thread's stack to `logs/gateway_faulthandler.log` without stopping it.
+`systemctl --user reload hermes-gateway` runs the same drain and relaunch without waiting. Plain `systemctl --user` and `journalctl --user` need `XDG_RUNTIME_DIR`, which a `sudo -iu hermes` shell may not set. If they can't reach the bus, add `export XDG_RUNTIME_DIR=/run/user/$(id -u)` to the `hermes` user's `~/.profile` ([#43748](https://github.com/NousResearch/hermes-agent/issues/43748)). Hermes' own commands set it themselves. For the system service, use `sudo hermes gateway restart --system`, `sudo systemctl reload hermes-gateway`, and `journalctl -u hermes-gateway -f`. For a gateway that looks alive but does nothing, `kill -USR2 <pid>` appends every thread's stack to `logs/gateway_faulthandler.log` without stopping it.
 
 > [!WARNING]
-> Never add `ExecStopPost=/bin/kill -9 $MAINPID` or similar. It fires on every stop, including clean restarts, and kills the replacement, which causes an endless restart loop ([messaging docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging#service-management)).
+> Never add `ExecStopPost=/bin/kill -9 $MAINPID` or similar. It fires on every stop, including clean restarts, and kills the replacement, which causes an endless restart loop ([messaging docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging#service-management)). The unit's own `ExecStopPost` line is different: it runs after the gateway has exited and only kills helper processes left behind in the service's cgroup.
 
 ## Optional: harden the unit with a drop-in
 
-systemd can sandbox the gateway. Use a drop-in, not an edit to the unit file itself: Hermes rewrites `hermes-gateway.service` whenever it's stale, but it leaves drop-in files alone.
+systemd can sandbox the gateway. This section assumes the [system service](#or-run-it-as-a-system-service), because user units get fewer sandboxing options. Use a drop-in, not an edit to the unit file itself: Hermes rewrites `hermes-gateway.service` on start or restart when it's outdated, but it leaves drop-in files alone.
 
 ```bash
 sudo systemctl edit hermes-gateway     # opens an override file; paste the block below
@@ -221,7 +219,7 @@ hermes gateway migrate --multiplex --dry-run # left over per-profile units from 
 
 - Each profile needs **its own bot token**. A second profile reusing a token is parked with a `duplicate_credential` error instead of starting a second poller.
 - Starting or installing a gateway for a served profile is refused (exit 78). `gateway.multiplex_profiles: false` is ignored, and the migration has no rollback. The multi-profile docs page still describes the old per-profile setup and a rollback; the v0.21.4 code no longer supports either.
-- **Profiles share one OS user.** For separate tenants, use separate containers, or separate OS users with their own installs. Give each of those a user service with linger: a system unit for the default home is always named `hermes-gateway`, so two of them would collide.
+- **Profiles share one OS user.** For separate tenants, use separate containers, or separate OS users with their own installs. Give each of those a user service with linger: the standard system-scope install names its unit `hermes-gateway` whichever user it runs as, so a second one would collide with the first.
 
 ## The desktop app on your server
 
@@ -231,7 +229,7 @@ The desktop app talks to a `hermes serve` backend, the headless twin of the dash
 2. **Tailscale.** Bind the backend to the machine's tailnet address and protect it with a password. Run `hermes dashboard --host <tailscale-ip> --no-open` once in a terminal: with no auth provider configured, it offers to create a username and password and saves them under `dashboard.basic_auth` (hashed, with a signing secret so sessions survive restarts). In the app, the remote URL is `http://<tailscale-ip>:9119`.
 3. **The public internet.** Use Nous Portal OAuth (`hermes dashboard register`) behind TLS, as in [the next section](#the-dashboard-safely). A username and password alone isn't suitable here.
 
-Hermes has no installer for `hermes serve`, so this is one unit worth writing yourself. Name it `hermes-serve.service`, because `hermes update` restarts active `hermes-serve*` units along with the gateway (`hermes_cli/update_cmd_fleet.py`). A backend with any other name keeps running old code until you restart it.
+Hermes has no installer for `hermes serve`, so this is one unit worth writing yourself. Call it `hermes-serve.service`: `hermes update` restarts active `hermes-serve*` units in the same pass as the gateway (`hermes_cli/update_cmd_fleet.py`). A unit with another name is only restarted by a later cleanup step, which is skipped when the update's Node.js refresh fails (`hermes_cli/update_cmd_maint.py`).
 
 <!-- drift-guard: ignore -->
 ```ini
@@ -271,9 +269,11 @@ The dashboard can read and write your keys and run the agent. Pick the least exp
   hermes dashboard --host 127.0.0.1 --no-open
   ```
 
-  The dashboard stays on loopback. The public `public_url` engages the auth gate, and a proxy connecting from loopback is trusted automatically. A proxy on another host or container must be listed in `dashboard.trusted_proxies` ([public URL override](https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard#public-url-override)). To keep it running, reuse the unit from the previous section with `hermes dashboard --host 127.0.0.1 --no-open` as the command (`hermes serve` skips the web UI). Keep the `hermes-serve.service` name so updates restart it. The desktop app can connect to this server too.
+  The dashboard stays on loopback. The public `public_url` engages the auth gate, and a proxy connecting from loopback is trusted automatically. A proxy on another host or container must be listed in `dashboard.trusted_proxies` ([public URL override](https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard#public-url-override)). To keep it running, reuse the unit from the previous section as `hermes-dashboard.service`, with `hermes dashboard --host 127.0.0.1 --no-open` as the command (`hermes serve` has no web UI). That's the unit name Hermes looks for when it restarts a managed dashboard after an update. The desktop app can connect to this server too.
 
-Check the gate with `curl -s https://hermes.example.com/api/status | jq '.auth_required, .auth_providers'`. On a system-scope install, the dashboard's **Restart gateway** button runs `sudo -n`, so it only works if you've granted passwordless sudo for that one command. The [service docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging#service-management) show a sudoers line scoped to `systemctl` for `hermes-gateway`.
+Check the gate with `curl -s https://hermes.example.com/api/status | jq '.auth_required, .auth_providers'`.
+
+With a system service, the dashboard's **Restart gateway** button re-runs the Hermes CLI as root through `sudo -n` (`hermes_cli/web_server_gateway.py`), so it fails unless the dashboard's user has passwordless sudo for that command. Don't grant it: the `hermes` user owns the code that command runs, so the grant hands root to anything running as `hermes`, the agent included. Restart from a shell instead, or use the user service, which the button restarts without sudo.
 
 ## Backups
 
@@ -297,7 +297,7 @@ Schedule it outside Hermes, so it runs even when the gateway is down ([system cr
 
 Then get a copy **off the box** with whatever you trust (rsync to another machine, restic, object storage), and **encrypt it**: the archive is as sensitive as your API keys. In Docker, run `docker exec hermes hermes backup -o /opt/data/backups -k 7` from the host's crontab. That folder already exists (Hermes keeps config backups there), and later backups skip it, so archives don't nest.
 
-**Restore** with `hermes import <zip>` on a fresh install. It restores into the current Hermes home, re-applies owner-only permissions to `.env`, `auth.json`, and `state.db`, keeps this machine's runtime files (PIDs, gateway state), warns you if older session data replaces newer, and reinstalls the gateway service. Then run `hermes doctor` and `hermes gateway status`.
+**Restore** with `hermes import <zip>` on a fresh install. It restores into the current Hermes home, re-applies owner-only permissions to `.env`, `auth.json`, and `state.db`, keeps this machine's runtime files (PIDs, gateway state), and warns you if older session data replaces newer. If no gateway is running, it installs and starts one as a user service. Then run `hermes doctor` and `hermes gateway status`.
 
 **Test a restore** without touching the live install. Import into a scratch home:
 
@@ -324,7 +324,7 @@ Hermes leaves the gateway service alone when you restore into a non-default home
 `state.db` is SQLite in WAL mode. The gateway, dashboard, desktop app, cron, and CLI can all write to it at once safely. The one unsafe thing is **rewriting the store while another process writes to it**, and every maintenance command now refuses to do that.
 
 - **Automatic upkeep.** Ended sessions inactive for 90 days are pruned (`sessions.auto_prune: true`, `sessions.retention_days`), and the file is VACUUMed only when enough of it is free space. Pin anything you'll need later with `hermes sessions pin <id>`.
-- **Manual upkeep.** Stop the writers first (`sudo hermes gateway stop --system`, quit the desktop app, `hermes dashboard --stop`):
+- **Manual upkeep.** Stop every writer first: the gateway (`hermes gateway stop`, with `sudo` and `--system` for a system service), any dashboard or `hermes serve` backend (`hermes dashboard --stop` stops both), and the desktop app:
 
   ```bash
   hermes sessions stats                  # sessions, messages, database size
@@ -334,7 +334,7 @@ Hermes leaves the gateway service alone when you restore into a non-default home
   ```
 
 - **Network and cross-VM filesystems.** On NFS, SMB, and similar mounts, set `database.journal_mode: delete`, then convert the existing file once with everything stopped: `hermes sessions set-journal-mode delete`. Hermes never switches a live WAL database on its own.
-- **`hermes doctor` warns about a SQLite library with the WAL-reset bug.** The fix it prints is `hermes update`.
+- **`hermes doctor` warns about a SQLite library with the WAL-reset bug.** It prints the fix for your install type (`hermes update` on a git install, a new image on Docker).
 - **When it breaks:** stop every process, run `hermes doctor` until it names no holder, and never delete `state.db-wal`. The full runbook is in [chapter 15](./15-troubleshooting.md#the-session-database-statedb) and the [recovery guide](https://hermes-agent.nousresearch.com/docs/user-guide/session-storage-recovery).
 
 ## Updating a server
@@ -362,7 +362,7 @@ hermes logs errors --since 1h    # anything that went wrong recently
 hermes status                    # every component at a glance
 ```
 
-**Alerts need something outside the gateway.** A job running inside Hermes can't report that Hermes is down. The built-in health export pushes gateway state to any OpenTelemetry receiver (an OTel Collector, Datadog, Grafana, and so on). It's content-free by design: no prompts, messages, tool arguments, or job names ([gateway monitoring](https://hermes-agent.nousresearch.com/docs/developer-guide/gateway-monitoring)).
+**Alerts need something outside the gateway.** A job running inside Hermes can't report that Hermes is down. The built-in health export pushes gateway state to an OpenTelemetry Collector, Datadog, or any other OTLP receiver. It's content-free by design: no prompts, messages, tool arguments, or job names ([gateway monitoring](https://hermes-agent.nousresearch.com/docs/developer-guide/gateway-monitoring)).
 
 ```yaml
 monitoring:
@@ -388,13 +388,13 @@ hermes_cron_jobs_overdue > 0                          # jobs past their grace wi
 
 No collector? A [zero-token watchdog](./16-recipes.md#2-zero-token-watchdogs) can check disk space and backup age from inside Hermes, as long as you remember it dies with the gateway.
 
-**Tracing turns and cost:** the bundled Langfuse plugin sends turns, LLM calls, and tool calls to Langfuse. Enable it with `hermes plugins enable observability/langfuse` and `HERMES_LANGFUSE_*` keys in `.env` ([built-in plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/built-in-plugins#observabilitylangfuse)). Unlike the health export, it ships conversation content (redacted for secrets) off the box, unless you set `HERMES_LANGFUSE_CAPTURE=metadata`. Other tracing vendors aren't built in at v0.21.4.
+**Tracing turns and cost:** the bundled Langfuse plugin sends turns, LLM calls, and tool calls to Langfuse. Set it up from `hermes tools` (**Langfuse Observability**), which installs the SDK, saves the `HERMES_LANGFUSE_*` keys, and enables `observability/langfuse` ([built-in plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/built-in-plugins#observabilitylangfuse)). Without the SDK the plugin silently does nothing. Unlike the health export, it ships conversation content (redacted for secrets) off the box, unless you set `HERMES_LANGFUSE_CAPTURE=metadata`. Other tracing vendors aren't built in at v0.21.4.
 
 **When something is wrong,** use the diagnostic ladder in [chapter 15](./15-troubleshooting.md#the-diagnostic-ladder). `hermes dump` gives a pasteable setup summary. Run `hermes debug share --local` and read the report before you upload anything: uploads go to a public paste site, and only credentials are redacted.
 
 ## Production checklist
 
-1. The gateway runs under the native service (system scope, or user scope with linger), and a reboot test passed.
+1. The gateway runs under the native service (a user service with linger, or a system service), and a reboot test passed.
 2. Hermes runs as a dedicated user without sudo. The firewall allows SSH and nothing else the platforms don't need.
 3. OS security updates install automatically.
 4. `terminal.cwd` and `timezone` are set, and the security basics from [chapter 13](./13-security.md#security-checklist) are done.
@@ -405,23 +405,26 @@ No collector? A [zero-token watchdog](./16-recipes.md#2-zero-token-watchdogs) ca
 9. Docker installs pin a release tag rather than `:latest`, and use a named volume on Docker Desktop.
 10. Every profile has its own bot token, and `hermes gateway list` shows one gateway serving them all.
 11. The dashboard and `hermes serve` are loopback-only, on a tailnet with a password, or behind TLS with OAuth.
-12. A custom `hermes serve` unit is named `hermes-serve.service`, so updates restart it.
+12. Your own backend units are named `hermes-serve.service` or `hermes-dashboard.service`, the names updates look for.
 13. Health export or another outside check alerts you when the gateway disappears.
 14. Maintenance commands (`hermes sessions optimize`, `set-journal-mode`) run only with every writer stopped.
 15. Updates go to one machine first, and you read `hermes update --plan` before touching a busy one.
 
 ## Verify it
 
+As `hermes`:
+
 ```bash
-sudo hermes gateway status --system          # "Configured to run as: hermes", service running
-systemctl show hermes-gateway -p Restart     # Restart=always
-hermes gateway status --deep                 # as hermes: no degraded or heartbeat warnings
-hermes cron status                           # the scheduler is ticking
-ls -l ~/backups                              # last night's zip exists
-hermes monitoring status                     # export enabled and endpoint set, if you use it
+hermes gateway status --deep                      # running, linger on, no degraded or heartbeat warnings
+systemctl --user show hermes-gateway -p Restart   # Restart=always
+hermes cron status                                # the scheduler is ticking
+ls -l ~/backups                                   # last night's zip exists
+hermes monitoring status                          # export enabled and endpoint set, if you use it
 ```
 
-Then pull the plug on purpose: `sudo systemctl kill -s KILL hermes-gateway` should bring a new gateway back within seconds, and your alert should fire if the host goes away.
+For a system service, check with `sudo hermes gateway status --system` and drop `--user` from the `systemctl` line.
+
+Then pull the plug on purpose: `systemctl --user kill -s KILL hermes-gateway` (system service: `sudo systemctl kill -s KILL hermes-gateway`) should bring a new gateway back within seconds. Separately, confirm your alert fires when the host stops reporting.
 
 ## Gotchas
 

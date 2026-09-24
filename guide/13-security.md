@@ -253,7 +253,7 @@ Injection wants to outlive the conversation. The places that steer every future 
 
 - **Context files are scanned** before they enter the prompt. A project file that matches an injection pattern becomes `[BLOCKED: …]` ([chapter 06](./06-personality-and-context.md#project-context-files)).
 - **Protected instruction files.** With `security.protected_instruction_files: true` (the default), any agent write to a file named `AGENTS.md`, `CLAUDE.md`, `SOUL.md`, or `.cursorrules` in any project directory, or to a file inside a project's `.hermes/` directory, asks you every time. That holds even under `--yolo`, and the write is refused when nobody can answer.
-- **Close the gaps.** The built-in list misses `.hermes.md`/`HERMES.md` (the highest-priority context file), `AGENTS.override.md`, and Cursor's `.cursor/rules/*.mdc`. Add them. Patterns match the file name case-insensitively; this was verified against `tools/file_tools_write_guards.py`:
+- **Close the gaps.** The built-in list misses `.hermes.md`/`HERMES.md` (the highest-priority context file), `AGENTS.override.md`, and Cursor's `.cursor/rules/*.mdc`. Add them. Patterns match the file name case-insensitively (`tools/file_tools_write_guards.py`):
 
   ```yaml
   security:
@@ -267,7 +267,7 @@ Injection wants to outlive the conversation. The places that steer every future 
 
 ## Exposing the dashboard, backend, and API server
 
-The web dashboard and `hermes serve` (the headless backend the desktop app connects to) are the same server. It reads and writes `.env` and runs agent commands, so treat it like SSH access.
+`hermes serve` (the headless backend the desktop app connects to) is the web dashboard's server without the web UI, behind the same auth gate. Either one reads and writes `.env` and runs agent commands, so treat it like SSH access.
 
 - **Bound to `127.0.0.1` (the default),** it needs no login.
 - **Bound to anything else,** an auth gate engages, and the server refuses to start if no auth provider is configured. `--insecure` and `HERMES_DASHBOARD_INSECURE` are accepted but do nothing.
@@ -374,6 +374,8 @@ delegation:
 privacy:
   redact_pii: true              # hash user and chat IDs in the prompt (Telegram, WhatsApp, Signal)
 ```
+
+The same file, ready to copy, is [`templates/config/hardened.yaml`](../templates/config/hardened.yaml).
 
 What it costs you:
 
