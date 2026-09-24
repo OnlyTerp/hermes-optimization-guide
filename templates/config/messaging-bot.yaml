@@ -18,8 +18,8 @@
 # still wants to do that's risky waits for an admin.
 #
 # Measured on v0.21.4 (`hermes prompt-size --platform telegram`): tool schemas drop
-# from 42,187 bytes (24 tools) to 17,162 bytes (11 tools), about 5,900 fewer
-# tokens on every message the bot handles.
+# from about 42 KB (24 tools) to about 17 KB (11 tools), roughly 5,800 fewer
+# tokens on every message the bot handles (o200k tokenizer).
 
 agent:
   disabled_toolsets:
@@ -36,6 +36,8 @@ approvals:
 
 memory:
   write_approval: true  # users can't quietly rewrite what the bot "knows"; review with /memory pending
+  user_profile_enabled: false  # USER.md is one file per profile, not per person: what the bot
+                               # learned about Alice would sit in Bob's prompt too
 
 unauthorized_dm_behavior: pair   # unknown DMs get a one-time code an admin approves
                                  # (`hermes pairing approve <platform> <code>`); or: decline / ignore

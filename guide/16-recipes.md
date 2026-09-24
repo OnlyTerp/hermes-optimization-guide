@@ -159,7 +159,7 @@ Two cheaper variants: `hermes webhook subscribe <name> --deliver-only …` forwa
 
 5. **Restart the host gateway**: `hermes gateway restart`. One gateway serves every profile ([chapter 10](./10-messaging.md)).
 
-Or merge [`templates/config/messaging-bot.yaml`](../templates/config/messaging-bot.yaml) into the profile's `config.yaml`. It also removes file access and delegation, stages memory writes for review, and caps turns.
+Or merge [`templates/config/messaging-bot.yaml`](../templates/config/messaging-bot.yaml) into the profile's `config.yaml`. It also removes file access and delegation, stages memory writes for review, turns off the single shared `USER.md` (one file would mix every user together), and caps turns.
 
 **Verify:** `hermes -p team prompt-size --platform telegram` shows the trimmed tool list. With the template it's 11 tools and 17 KB of schemas, down from 24 tools and 42 KB, measured on v0.21.4. A non-paired account gets a pairing code, not an answer. `/whoami` in the chat shows each user's access level.
 

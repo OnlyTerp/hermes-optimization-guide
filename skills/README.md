@@ -15,7 +15,14 @@ Four operations skills that turn this guide's advice into things Hermes does for
 
 ## Install
 
-Skills are folders. Copy the ones you want into your Hermes skills directory (the profile's `skills/` folder):
+Install one straight from GitHub. It goes through the same security scan as any community skill and is recorded in the hub lock file, so `hermes skills check` and `hermes skills update` track it:
+
+```bash
+hermes skills inspect OnlyTerp/hermes-optimization-guide/skills/hermes-cost-audit   # read it first
+hermes skills install OnlyTerp/hermes-optimization-guide/skills/hermes-cost-audit
+```
+
+Or copy the folder into your Hermes skills directory (the profile's `skills/` folder):
 
 ```bash
 git clone https://github.com/OnlyTerp/hermes-optimization-guide.git
