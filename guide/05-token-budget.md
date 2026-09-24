@@ -277,7 +277,7 @@ The defaults are sane for 128K+ models. On small local models, halve them ([chap
 | Faster first token | Lower reasoning effort, and a faster model for the step at hand |
 | Faster long sessions | Keep the cache warm (cached prefixes are also faster), and compress before the context gets huge |
 | Priority processing | `/fast auto`. It sends the provider's fast/priority tier only during the first 60 seconds of each turn (`agent.fast_auto_seconds`). It costs a premium, so use `normal` to stay cheapest. It only reaches first-party endpoints (OpenAI/Codex, Anthropic, xAI), never OpenRouter or custom URLs. |
-| See progress as it happens | `display.streaming: true` in the CLI. Telegram streams by default (`display.platforms.telegram.streaming`). |
+| See progress as it happens | `display.streaming: true` in the CLI. On chat platforms nothing streams until you set `streaming.enabled: true`, which turns it on for every platform that can edit messages. Pin one off with `display.platforms.<platform>.streaming: false` ([chapter 10](./10-messaging.md#6-make-it-feel-native)). |
 | Fail over faster | With [fallback providers](./03-models.md) configured, `agent.api_max_retries: 0` hands off on the first transient error instead of retrying three times |
 | No stalls on side tasks | A fast auxiliary model ([lever 3](#lever-3-put-side-tasks-on-a-cheap-model)). A slow compression model stalls the turn that triggers compaction. |
 

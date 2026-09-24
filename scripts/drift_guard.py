@@ -177,6 +177,13 @@ def _flatten(d, prefix, out):
             _flatten(v, p, out)
 
 
+def _yaml_fences(text: str) -> list:
+    """Bodies of ```yaml fences at any indentation (docs nest them in list items), dedented."""
+    import textwrap
+    return [textwrap.dedent(m.group(2)) for m in
+            re.finditer(r"^([ \t]*)```ya?ml[^\n]*\n(.*?)^\1```", text, re.S | re.M)]
+
+
 def _documented_keys(upstream: pathlib.Path, known_roots: set) -> set:
     """Config key paths shown in official docs YAML examples + cli-config.yaml.example.
 
@@ -195,7 +202,7 @@ def _documented_keys(upstream: pathlib.Path, known_roots: set) -> set:
     keys: set = set()
     for f in (upstream / "website" / "docs").rglob("*.md"):
         text = f.read_text(encoding="utf-8", errors="replace")
-        blocks += re.findall(r"^```ya?ml[^\n]*\n(.*?)^```", text, re.S | re.M)
+        blocks += _yaml_fences(text)
         # dotted keys the docs name in prose, e.g. `skills.creation_nudge_interval`
         for span in re.findall(r"`([a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)+)`", text):
             if span.split(".")[0] in known_roots and not FILE_EXT.search(span):
@@ -734,7 +741,7 @@ def _user_defined_mcp_servers(md_files) -> set:
             continue
         text = f.read_text(encoding="utf-8")
         names |= set(re.findall(r"hermes mcp (?:add|install) ([a-z0-9][a-z0-9_-]*)", text))
-        for body in re.findall(r"^```ya?ml[^\n]*\n(.*?)^```", text, re.S | re.M):
+        for body in _yaml_fences(text):
             try:
                 data = yaml.safe_load(body)
             except yaml.YAMLError:
@@ -758,7 +765,7 @@ def _user_defined_commands(md_files) -> set:
             m = re.search(r"^name:\s*([a-z][a-z0-9_-]*)\s*$", front, re.M)
             if m:
                 names.add(m.group(1))
-        for body in re.findall(r"^```ya?ml[^\n]*\n(.*?)^```", text, re.S | re.M):
+        for body in _yaml_fences(text):
             try:
                 data = yaml.safe_load(body)
             except yaml.YAMLError:
