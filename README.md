@@ -98,7 +98,7 @@ Each one is a few minutes' work. Together they cover most of the gap between a d
 
 Hermes ships several releases a month, and guides rot. This one is pinned to a single upstream release and checked against it mechanically:
 
-- [`scripts/drift_guard.py`](./scripts/drift_guard.py) installs the pinned Hermes release, captures its real command tree, slash commands, config schema, and docs pages, and fails CI if the guide mentions anything that doesn't exist, from a `hermes` subcommand or flag to a config key or a docs link and its `#anchor`.
+- [`scripts/drift_guard.py`](./scripts/drift_guard.py) installs the pinned Hermes release, captures its real command tree, slash commands, config schema, and docs pages, and fails CI if the guide mentions anything that doesn't exist, from a `hermes` subcommand or flag to a config key, a toolset name, or a docs link and its `#anchor`.
 - Numbers such as token counts and prompt sizes were measured on a real v0.21.4 install. The chapters say how, so you can reproduce them on yours.
 - Fixes in [troubleshooting](./guide/15-troubleshooting.md) come from the official docs, merged upstream fixes, or release notes, each linked. Known-unsolved problems are listed as unsolved.
 - A weekly job opens an issue when Hermes releases a version newer than the pin.

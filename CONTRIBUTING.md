@@ -4,7 +4,7 @@ Corrections are the most valuable thing you can send. Hermes ships several relea
 
 ## The three rules
 
-1. **Verify against the pinned release.** The guide is pinned to one Hermes release (see the badge in the [README](./README.md)). Any `hermes` command or flag, slash command, config key, or env var you add must exist in that release. Run the drift guard before opening a PR (commands below). It catches most mistakes.
+1. **Verify against the pinned release.** The guide is pinned to one Hermes release (see the badge in the [README](./README.md)). Any `hermes` command or flag, slash command, config key, toolset name, or env var you add must exist in that release. Run the drift guard before opening a PR (commands below). It catches most mistakes.
 2. **Measure, don't guess.** Numbers (tokens, bytes, latencies, costs) must be measured on a real install and say how (`hermes prompt-size`, `/context`, `hermes insights`), or come from a cited source. No invented benchmarks, and no prices quoted from memory.
 3. **Cite fixes.** Troubleshooting fixes need a source: an official docs page, a merged upstream PR or closed issue, or release notes. Anecdotes go in an issue for discussion, not in the guide. Problems with no confirmed fix belong under "known open problems", labeled as such.
 
