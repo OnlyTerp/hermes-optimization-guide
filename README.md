@@ -16,6 +16,8 @@ Hermes does a lot out of the box. The [official docs](https://hermes-agent.nousr
 
 > **Verified against Hermes Agent v0.21.4** (tag `v2026.9.21`, released 2026-09-21). Every command, flag, slash command, config key, and official-docs link in this repo is checked against that release by CI. Hermes ships fast; when it moves, the [drift guard](#how-this-guide-stays-accurate) opens an issue.
 
+> **Coming from the 30-part v1 guide?** It has been rebuilt from scratch. The [CHANGELOG](./CHANGELOG.md#where-the-v1-parts-went) maps every old part to its new chapter, and the old files remain in git history.
+
 ---
 
 ## Start here
