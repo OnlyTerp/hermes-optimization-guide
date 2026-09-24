@@ -41,7 +41,7 @@
 | Command | Does |
 |---|---|
 | `hermes gateway setup` | Configure platforms (bot tokens, allowlists) |
-| `hermes gateway run` · `hermes gateway install` | Foreground · install as a service (`--system --run-as-user <user>` for boot-time Linux) |
+| `hermes gateway install` · `hermes gateway run` | Install as a service (`hermes setup` already did) · foreground, for debugging with the service stopped |
 | `hermes gateway status --deep` · `hermes gateway restart` | Health check · drain-first restart |
 | `hermes pairing list` · `hermes pairing approve telegram <CODE>` | Approve new users by DM pairing |
 | `hermes send` | Send a message to a platform from scripts |

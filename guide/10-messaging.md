@@ -35,14 +35,15 @@ Five facts shape everything else in this chapter:
 ## Set it up
 
 ```bash
-hermes gateway setup     # pick platforms, paste tokens, set allowlists
-hermes gateway run       # foreground: watch adapters connect, send a test message, Ctrl+C
-hermes gateway install   # background service: systemd (Linux), launchd (macOS), Scheduled Task (Windows)
+hermes gateway setup     # pick platforms, paste tokens, set allowlists; then it offers to start
+                         # the gateway and install it as a service (both default to yes)
 hermes gateway status    # running? which platforms connected?
+hermes logs gateway -f   # watch the adapters connect while you send a test message
 ```
 
-- `hermes gateway run` refuses to start while a service already supervises the profile, because two dispatchers would corrupt shared state. Once it's installed, use `hermes gateway restart`, which lets in-flight replies finish first.
-- On Linux, `hermes gateway install` creates a user service and tries to enable lingering so it survives logout. On a VPS, prefer a boot-time system unit: `sudo hermes gateway install --system --run-as-user <user>`. [Chapter 14](./14-production.md) covers the server side.
+- **The service is the normal path.** `hermes gateway setup` ends by offering to start the gateway and install it as a service: systemd on Linux, launchd on macOS, a Scheduled Task on Windows. The first-run `hermes setup` does both without asking, because cron needs a running gateway. After a config change, `hermes gateway restart` lets in-flight replies finish first.
+- **Foreground only for debugging.** `hermes gateway run` refuses to start while a service supervises the profile, because two dispatchers would corrupt shared state. To watch it in a terminal, stop the service first (`hermes gateway stop`), or answer no to both service questions and run `hermes gateway install` when you're done.
+- **On Linux it's a user service** with lingering, so it survives logout. Want a boot-time system unit instead? Remove the user service first (`hermes gateway uninstall`), or the two will fight over the same bot tokens. [Chapter 14](./14-production.md#or-run-it-as-a-system-service) has the steps.
 - The dashboard (`hermes dashboard`) and desktop app have a Messaging page per profile. "Saved" there means the credentials are stored, not that the gateway is running.
 
 ## Telegram, end to end
@@ -67,7 +68,7 @@ TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrSTUvwxYZ
 TELEGRAM_ALLOWED_USERS=123456789     # numeric IDs, comma-separated
 ```
 
-Or run `hermes gateway setup` and pick Telegram, which asks for both. Then `hermes gateway run`, message the bot, and confirm it answers. `/whoami` shows what you're allowed to run, and `/commands` pages through everything available.
+Or run `hermes gateway setup` and pick Telegram, which asks for both. Then start or restart the gateway (`hermes gateway restart`), message the bot, and confirm it answers. `/whoami` shows what you're allowed to run, and `/commands` pages through everything available.
 
 ### 3. Groups: privacy mode, mentions, allowlists
 

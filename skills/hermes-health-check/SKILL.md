@@ -60,7 +60,8 @@ Run every command with the terminal tool. This skill only reads. See the pitfall
 
    | Finding | Fix |
    |---|---|
-   | No gateway running, so cron won't fire | `hermes gateway install`, or `sudo hermes gateway install --system --run-as-user <user>` on a server |
+   | No gateway running, so cron won't fire | `hermes gateway start`, or `hermes gateway install` if no service exists. Never add a system unit next to an existing user service: remove one first (`hermes gateway uninstall`). |
+   | Both a user and a system gateway service installed | Two services fight over the same bot tokens. Keep one and uninstall the other. |
    | Gateway on stale code after an update | `hermes gateway restart` |
    | Missing or outdated options | `hermes config check`, then `hermes config migrate` |
    | "not a recognized config key" | Check the key name for a typo. v0.21.4 also prints this for some real keys (`agent.reasoning_effort`, `model_aliases.*`, `skills.creation_nudge_interval`), and for those it's harmless. |
