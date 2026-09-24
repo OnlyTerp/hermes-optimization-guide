@@ -47,7 +47,7 @@
 
 3. **Make every unpinned job cheap:** `hermes config set cron.model <cheap-model>` (plus `cron.model_provider` if needed). Your chat model stays untouched ([chapter 05](./05-token-budget.md#lever-6-cheaper-models-for-work-that-doesnt-need-the-best)).
 
-**Verify:** `hermes cron list` shows the job as active, `hermes cron run morning-brief` fires it on the next scheduler tick, and `hermes cron runs morning-brief` shows the attempt. If nothing arrives, see the [cron table in chapter 15](./15-troubleshooting.md#cron).
+**Verify:** `hermes cron list` shows the job as active along with its ID, `hermes cron run morning-brief` fires it on the next scheduler tick, and `hermes cron runs <job-id>` shows the attempt (`runs` takes the ID, not the name). If nothing arrives, see the [cron table in chapter 15](./15-troubleshooting.md#cron).
 
 ## 2. Zero-token watchdogs
 

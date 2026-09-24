@@ -56,7 +56,7 @@
 | `… --no-agent --script check.sh` | Script-only job: zero model calls, stdout delivered, empty = silent |
 | `… --monitor-url <url>` | Agent runs only when the fetched content changes |
 | `… --continuity` · `--pin` · `--reasoning-effort low` | Remember last output · lock the current model · cheap thinking |
-| `hermes cron list` · `cron status` · `cron runs <job>` · `cron doctor` | Inspect jobs, scheduler, history, health |
+| `hermes cron list` · `cron status` · `cron runs <job-id>` · `cron doctor` | Inspect jobs, scheduler, history (by ID), health |
 | `hermes webhook subscribe <name> --prompt "…" --deliver telegram` | Event-driven runs (`--deliver-only` = no LLM) |
 | `/goal <text>` · `/goal gate add <cmd>` · `/subgoal <text>` | Standing goal · a shell check that must pass · extra criteria |
 | `/loop 30m <prompt>` · `/heartbeat every 1h <prompt>` · `/queue` · `/steer` | In-session repetition and redirection |
