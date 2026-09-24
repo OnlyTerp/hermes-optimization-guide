@@ -62,7 +62,8 @@ Run every command with the terminal tool. This skill only reads. See the pitfall
    |---|---|
    | No gateway running, so cron won't fire | `hermes gateway install`, or `sudo hermes gateway install --system --run-as-user <user>` on a server |
    | Gateway on stale code after an update | `hermes gateway restart` |
-   | "not a recognized config key" or missing options | `hermes config check`, then `hermes config migrate` |
+   | Missing or outdated options | `hermes config check`, then `hermes config migrate` |
+   | "not a recognized config key" | Check the key name for a typo. v0.21.4 also prints this for some real keys (`agent.reasoning_effort`, `model_aliases.*`, `skills.creation_nudge_interval`), and for those it's harmless. |
    | A platform's bot doesn't answer | Check that platform's allowlist or run `hermes pairing list`. Discord needs the Message Content intent. |
    | "another Hermes process still holds an old copy of the session database's write-ahead log" | Stop every Hermes process, run `hermes doctor` until no holder is listed, then start one process |
    | Version older than 0.21.2 | Update. That release fixed a class of session-database corruption. |
