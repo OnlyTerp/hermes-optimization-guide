@@ -41,7 +41,7 @@ If the drift guard flags something you're sure is real, show where it lives in t
 ## Skills and templates
 
 - **Skills** go in `skills/<name>/SKILL.md`. The name must match the folder, the description must fit 60 characters, and there must be a `## When to Use` section. `lint-skills` must report zero findings. Skills should read and report first and change nothing without approval. Scripts must pass `shellcheck`.
-- **Config templates** go in `templates/config/`. Every key must pass the drift guard, every non-obvious line gets a comment, and the header says what the template is for and which chapter explains it.
+- **Config templates** go in `templates/config/`. Every key must pass the drift guard, every non-obvious line gets a comment, and the header says what the template is for and which chapter explains it. `hardened.yaml` is the YAML block under "A hardened profile" in chapter 13, so change both together.
 
 ## Scope
 
