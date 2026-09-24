@@ -185,7 +185,7 @@ Then, in the session:
 - **`/rollback`** lists checkpoints and restores one. `/diff session` shows everything Hermes changed.
 - **`/review`** before you merge spawns an independent reviewer subagent. Pin it to a different model with `auxiliary.review.*` for a genuine second opinion.
 
-Optionally, `agent.verify_on_stop: true` refuses a final answer on any turn that edited code without fresh evidence (a test, build, or lint run).
+Optionally, `agent.verify_on_stop: true` refuses a final answer on any turn that edited code without fresh evidence (a test, build, or lint run). It works better once Hermes knows how your project runs. `hermes verify --detect-only` prints the build, test and start recipe it detects, and `hermes verify --save` pins it in `.hermes/environment.json`. From then on, the stop check steers the agent to prove its work with `hermes verify --json`, a full build → test → start → readiness pass.
 
 **Verify:** `/goal gate list` shows the gates, and `/goal status` shows progress. Break a test on purpose and watch the goal refuse to finish.
 

@@ -64,6 +64,7 @@ DYNAMIC_PREFIXES = (
     "dashboard.oauth", "onboarding.seen", "auxiliary",  # auxiliary.<task>.* is open-ended
     "model_aliases", "model.aliases",  # documented in user-guide/configuring-models.md
     "agent.personalities",            # user-defined names (features/personality.md)
+    "provider_routing.models",        # per-model pins keyed by model ID (features/provider-routing.md)
 )
 
 # ``model:`` is a scalar in DEFAULT_CONFIG but a mapping in every real config.
