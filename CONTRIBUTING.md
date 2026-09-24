@@ -1,83 +1,50 @@
 # Contributing
 
-This guide is built in public. PRs welcome.
+Corrections are the most valuable thing you can send. Hermes ships several releases a month, and every one of them can make a sentence in this guide wrong.
 
-## What's in scope
+## The three rules
 
-- ✅ Corrections (docs drift fast — features, prices, PR numbers)
-- ✅ New skills under `skills/` (runnable `SKILL.md` files)
-- ✅ New config templates under `templates/config/`
-- ✅ New MCP / dashboard / tool entries in `ECOSYSTEM.md` (community-maintained entries carry an explicit "audit before installing" note — see the radar section)
-- ✅ Benchmark contributions under `benchmarks/` (with methodology notes)
-- ✅ New diagrams in `diagrams/` (Mermaid preferred)
-- ✅ Typo fixes, cross-link fixes, formatting
+1. **Verify against the pinned release.** The guide is pinned to one Hermes release (see the badge in the [README](./README.md)). Any `hermes` command or flag, slash command, config key, toolset name, or env var you add must exist in that release. Run the drift guard before opening a PR (commands below). It catches most mistakes.
+2. **Measure, don't guess.** Numbers (tokens, bytes, latencies, costs) must be measured on a real install and say how (`hermes prompt-size`, `/context`, `hermes insights`), or come from a cited source. No invented benchmarks, and no prices quoted from memory.
+3. **Cite fixes.** Troubleshooting fixes need a source: an official docs page, a merged upstream PR or closed issue, or release notes. Anecdotes go in an issue for discussion, not in the guide. Problems with no confirmed fix belong under "known open problems", labeled as such.
 
-## What's out of scope
+## Style
 
-- ❌ Marketing content for specific commercial products (ecosystem entries should be *descriptive*, not promotional)
-- ❌ Anything relying on private/undocumented Hermes APIs — wait for the public release
-- ❌ Code or configs that embed secrets directly
+Match the existing chapters: direct, second person, opinionated. Each chapter opens with a one-line promise and a TL;DR, and ends with "Verify it", "Gotchas" (confirmed traps only), and "Go deeper" (official docs links). Prefer tables for comparisons and short verified snippets for config. Link to the official docs for exhaustive reference instead of copying them. Avoid hype words ("supercharge", "seamless", "robust", "game-changer").
 
-## PR checklist
-
-- [ ] Clear title (`docs:`, `skill:`, `template:`, `bench:`, `fix:` prefixes welcome)
-- [ ] **No command ships without a transcript.** Any `hermes …`, `/…`, or
-      `config.yaml` key you add must be pasted from a real session or verified
-      against the live CLI — not from release notes or memory. Drop the
-      evidence (command + output) into `docs/evidence/` and reference it in
-      the PR. The drift-guard CI enforces this on every push; this rule exists
-      because four fabricated commands survived three review rounds before it
-      did (see CHANGELOG 2026-08-22).
-- [ ] For skills: follow the `skills/README.md` structure (frontmatter, procedure, security notes, cron example if applicable)
-- [ ] For templates: comment every non-obvious field; include a header explaining what the template is *for*
-- [ ] For benchmark entries: include a reproduction command and date of measurement
-- [ ] No secrets, even in examples — use `${VAR}` placeholders
-- [ ] Cross-links use relative paths (`./partN-foo.md`) so they work in GitHub, VSCode, and future static-site renders
-
-## Repo layout reference
-
-The [README Repo Map](./README.md#repo-map) is the canonical, row-by-row description of every folder. The short version:
-
-```
-.
-├── README.md (+ README-zh.md, README-ja.md)
-├── CHANGELOG.md · ROADMAP.md · ECOSYSTEM.md · CODE_OF_CONDUCT.md · LICENSE
-├── CONTRIBUTING.md                  ← you are here
-├── part1-setup.md … part28-recipe-book.md        # the 29-part guide (README + 28 part files)
-├── skills/                          # 13 installable SKILL.md files under dev/, ops/, security/
-├── templates/
-│   ├── config/{minimum,telegram-bot,production,cost-optimized,security-hardened}.yaml
-│   ├── compose/langfuse-stack.yml (+ .env example)
-│   ├── caddy/Caddyfile
-│   ├── systemd/hermes.service + hermes-dashboard.service
-│   └── cron/production-crons.yaml
-├── scripts/vps-bootstrap.sh
-├── benchmarks/                      # reproducible 13-model × 5-task matrix
-├── diagrams/architecture.md         # 6 Mermaid diagrams
-├── assets/ · screenshots/
-└── docs/
-    ├── quickstart.md
-    ├── wizard/                      # interactive config wizard
-    ├── reference-architectures/     # 4 blueprints
-    └── outreach/
-```
-
-## Style notes
-
-- **Plain English over jargon.** Explain *why*, not just *what*.
-- **Runnable over explained.** If you can ship a working template or skill alongside a doc section, do.
-- **Receipts.** Link PRs, release notes, advisories. Date anything that drifts (prices, version numbers, benchmarks).
-- **Opinionated where it matters.** Saying "Sonnet for coding" beats "here are 7 models, pick one."
-
-## Local preview
-
-Any markdown renderer will do. We test against GitHub's renderer as the source of truth.
+## Run the checks locally
 
 ```bash
-npx -y prettier --check "**/*.md"          # optional, soft style check
-npx -y markdown-link-check README.md       # cross-link validation
+# once: install the pinned Hermes release into a throwaway venv
+git clone --depth 1 --branch v2026.9.21 https://github.com/NousResearch/hermes-agent.git /tmp/hermes-agent
+python3 -m venv /tmp/venv && /tmp/venv/bin/pip install -e /tmp/hermes-agent pyyaml
+
+# every change
+/tmp/venv/bin/python scripts/drift_guard.py extract --upstream /tmp/hermes-agent --out /tmp/surface.json
+/tmp/venv/bin/python scripts/drift_guard.py check --surface /tmp/surface.json
+/tmp/venv/bin/python scripts/drift_guard.py lint-skills --upstream /tmp/hermes-agent
+python3 .github/scripts/check_anchors.py
 ```
 
-## Code of Conduct
+If the drift guard flags something you're sure is real, show where it lives in the upstream source or docs in your PR, and we'll teach the guard about it. Please don't rephrase just to get past the check. Escape hatches exist for legitimate non-Hermes content:
 
-See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md). TL;DR: be kind, assume good faith, focus on the work.
+- `<!-- drift-guard: ignore -->` on the line before a fenced block, for non-Hermes YAML such as compose files;
+- `<!-- drift-guard: ignore-line -->` on a line that deliberately shows something invalid (for example the myths table).
+
+## Bumping the pin to a new Hermes release
+
+1. Read the release notes for every tag between the pin and the target.
+2. Change `HERMES_TAG` in [`.github/workflows/drift-guard.yml`](./.github/workflows/drift-guard.yml), the "Verified against" badge and line in the README, and the tag in the commands above, all in one commit.
+3. Fix everything the drift guard reports, then re-measure any numbers in the chapters the release touched.
+4. Add a CHANGELOG entry.
+
+## Skills and templates
+
+- **Skills** go in `skills/<name>/SKILL.md`. The name must match the folder, the description must fit 60 characters, and there must be a `## When to Use` section. `lint-skills` must report zero findings. Skills should read and report first and change nothing without approval. Scripts must pass `shellcheck`.
+- **Config templates** go in `templates/config/`. Every key must pass the drift guard, every non-obvious line gets a comment, and the header says what the template is for and which chapter explains it. `hardened.yaml` is the YAML block under "A hardened profile" in chapter 13, so change both together.
+
+## Scope
+
+In scope: corrections, new confirmed fixes, better measurements, clearer explanations, new recipes built from verified features, and translations of the current guide.
+
+Out of scope: promotion of commercial products, anything that relies on undocumented internals, and secrets in any example (use placeholders).

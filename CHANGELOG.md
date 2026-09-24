@@ -1,387 +1,76 @@
 # Changelog
 
-Dated list of meaningful guide updates. Roughly [Keep a Changelog](https://keepachangelog.com) flavored.
-
-## 2026-08-28 — War-tested rewrite: Lessons from Production (Part 29), 7 new postmortems, Power Secrets #26–#31
-
-After six days of running Hermes as a daily-driver — multi-provider relay
-pool, subagent swarms, vision pipelines, live failover ladders — the guide
-now carries the operational laws that only exist after something breaks.
-
-### Added
-- **Part 29: Lessons from Production** (`part29-lessons-from-production.md`) —
-  15 production laws in 8 sections: failover discipline (never on a
-  transient; prove exhaustion; relay must pass through real status codes),
-  per-plan concurrency gates for fan-outs, graceful relay drain (never
-  hard-kill), vision verification (native vs described interaction
-  difference; known-target test images, twice; part-type filters that
-  silently drop images), tests that can't lie (mirror-test law, negative
-  controls, dead-module wiring proof, real-data delivery law), Windows
-  host traps (MSYS path conversion, `/tmp` split-brain, CRLF/LF, false-zero
-  exit codes), evidence discipline (no tool result = no number; raw
-  transcripts over handoffs; verify external state by reading it back),
-  metered-plan survival, and memory hygiene at scale. **Fully sanitized:**
-  no accounts, keys, tokens, ports, or identifying details.
-- **7 new postmortems** in `docs/failure-modes.md` (#9–#15): edge-502-blip
-  misread as exhaustion; fan-out concurrency ceiling masquerading as quota;
-  hard relay restart killing live streams; vision relay dropping every
-  image part; the mirror test (a regression test sharing the bug's
-  default); green suites hiding an unwired subsystem; handoff summary vs
-  raw transcript (4.6% fidelity).
-- **Power Secrets #26–#31** in `part27-power-secrets.md` + cheat-sheet rows
-  26–31, each linking to its postmortem.
-- **README:** new "war-tested" framing, Part 29 surfaced as the
-  already-running-Hermes entry point, 5 new pain-table rows (quota-vs-
-  concurrency, invisible image, lying tests, Windows host), kill list grown
-  to 10, postmortem badge (15), parts badge (30).
-
-### Verified
-- `check_anchors.py`, `validate_skills.py`, and `audit-cli-surface.py` all
-  clean locally before push. No new upstream-surface claims introduced
-  (Part 29 names no new commands, slash commands, or config keys).
-
-## 2026-08-22 (night) — Third review: wrong hash, pipefail death, execution evidence
-
-Fable's round 3: "claims shipped without execution." Both bugs he found reproduced and fixed, plus a third he missed, plus the machinery he prescribed.
-
-### Fixed
-- **The published bootstrap hash was wrong.** README advertised `7ac51fec…` while tag `v1.3` served `b0c050cd…` — the file was touched after the hash was hand-typed, so the hardened install path was guaranteed to fail for everyone. Root cause: a hand-typed hash. Fix: release publisher CI computes `SHA256SUMS` from the tag's actual bytes and attaches it to the GitHub Release; `release-hash-check` CI fails every push where README's pin row disagrees with the bytes the tag serves (bare 64-hex hash required in the row). v1.4 ships with the hash computed from its own bytes.
-- **The SSH-port parse died on every stock Debian box.** Under `set -euo pipefail`, `grep` matching nothing (stock boxes have only `#Port 22` commented out) exits 1, the pipeline exits 1, and the assignment aborts the script before the `-z` fallback can run. Reproduced locally (exit 2, silent death). Fixed with `|| true` on the pipeline — the fallback now actually runs, and the fix is comment-documented as load-bearing.
-- **Scorecard's `strict` approval mode was fabricated.** Upstream `VALID_APPROVAL_MODES = ("manual", "smart", "off")` — `strict` never existed. Fixed, and security posture now scores the VALUE (`manual` 6/6, `smart` 4, `off` 0, unset 3 with "not written down" label), not mere presence.
-- **README "non-destructive" → "idempotent"** (it enables a firewall and writes config files — "non-destructive" was a lie). **Hetzner CX22 → "2 vCPU / 4 GB RAM-class"** in README + bootstrap header.
-
-### Added
-- **`.github/workflows/bootstrap-smoke.yml`** — runs `vps-bootstrap.sh` inside `debian:12` with system commands stubbed, two scenarios asserted end-to-end: (1) stock Debian commented-out Port → fallback to 22, UFW enabled, banner reached; (2) `Port 2222` in `sshd_config.d` → 2222 allowed. Both scenarios also verified standalone before push. This is the answer to "neither version was ever run."
-- **`.github/workflows/release-publisher.yml`** — tag push → SHA256SUMS from tag bytes → Release asset.
-- **`.github/workflows/release-hash-check.yml`** — README hash vs. served bytes on every push.
-- Bootstrap gains `HERMES_SKIP_INSTALL=1` (smoke-test mode) and `HERMES_GUIDE_DIR` override (checkout-under-test).
-
-## 2026-08-22 (evening) — Second review: lockout guard, pinned-tag drift guard, three-surface audit, README surgery
-
-Direct response to a second external review ("Fable"): "fix #1 (SSH lockout), #2 (pin story), #6 (README navigation) and this is a repo I'd point people at." All three fixed, plus the rest of the list.
-
-### Fixed
-- **SSH lockout (the dangerous one).** `vps-bootstrap.sh` now parses every `Port` directive from `/etc/ssh/sshd_config` and `/etc/ssh/sshd_config.d/*`, allows each, and **refuses to enable UFW** if it cannot determine the SSH port. Never assumes 22.
-- **`HERMES_ALLOW_UNPINNED=1` override** for operators who inspected a rotated installer, with a loud warning.
-- **fail2ban** gets a working `jail.local` (`backend = systemd`) before the sshd jail is enabled; systemd units are installed always but **enabled only if the Hermes install actually succeeded**; header comment matches README (`sudo bash`, not `| bash`).
-- **4 fabricated slash commands** caught by the extended drift guard and fixed against upstream `COMMAND_REGISTRY`: `/unbind` + `/runtime` (part18 — the ACP story rewritten honestly: `hermes acp` runs the other direction), `/switch` → `/sessions` (part7), `/mouse` → `HERMES_TUI_DISABLE_MOUSE=1` (part22), `/billing` → `/topup` + `/subscription` (part26).
-- **2 config-key drifts**: `gateway.platforms.irc.extra` → `platforms.irc.extra` (part15), `prompt_caching.enabled` → `prompt_caching.cache_ttl` (README).
-- **Platform count standardized to "30+"** everywhere (upstream docs catalog 34 adapter pages at the pinned tag; "35+" was an overcount, "25+" was stale).
-
-### Changed
-- **Drift guard now audits three surfaces, pinned to a tag.** `scripts/extract-upstream-surface.py` extracts CLI commands + slash commands + config-key paths (incl. `_EXTRA_KNOWN_ROOT_KEYS`) from upstream at `v2026.8.19` (v0.20.5). CI checks the guide against that tag — no more "one patch stale on update day" (`UPSTREAM_TAG` in the workflow moves with the badge).
-- **Version framing is pinned-tag**: badge + sync note say v0.20.5 (2026.8.19), and the README states version claims move with the drift-guard pin, not "current as of today."
-- **README surgery (558 → 427 lines):** deleted Pick Your Path (pain table replaces it), The Problem / What This Fixes, How the Pieces Fit Together, and the giant What's New section (collapsed to three lines pointing at the CHANGELOG). The pain table is the front door; `docs/outreach/` removed from the Repo Map.
-- **Scorecard rework:** scores only what's verifiable on disk (50 pts, 8 categories). Removed surface-area rewards (platform count, cron count, "current wave") and the gamified verdicts. Maintainer's machine: 42/50, one honest gap (plaintext key).
-- **Link checker:** swapped `github-action-markdown-link-check` (tolerated 403/429 = effectively unchecked GitHub links) for **lychee with a GitHub token**.
-- **Bootstrap pin hardened:** the README publishes `vps-bootstrap.sh`'s sha256 at a tagged release (`v1.3`) so the pin can't be edited by an attacker who controls `main`; NodeSource setup script pinned inside the bootstrap (`575583bb…`).
-
-### Added
-- **`.github/workflows/pin-watch.yml`** — daily job that fetches the live upstream installer, compares against the pinned sha256, and opens an issue on rotation (so fresh installs never silently sit on a stale pin).
-- **`scripts/extract-upstream-surface.py`** — replaces `extract-upstream-commands.py` (kept for the old receipt); AST/regex extraction of all three surfaces.
-- **CONTRIBUTING rule:** no command ships without a transcript in `docs/evidence/` — the proactive half of the lesson the ten fabrications taught.
-
-## 2026-08-22 — Receipts, drift guard, and honesty hardening
-
-Direct response to an external review that called the Herald refresh "a competent version chase, not a hardened upgrade." This pass publishes the receipts and removes every overclaim.
-
-### Added
-- **`scripts/score-your-setup.py`** — runnable 50-point self-audit (10 categories incl. a plaintext-key hygiene scanner). Ends in a shareable verdict: `hermes score 43/50 (WAR-DESK GRADE)`.
-- **`docs/failure-modes.md`** — 8 real incident postmortems, each shaped Symptom → Root cause → Recovery → Permanent fix (update wedge, gateway wedge, secret scrubbing, truncate-before-read zeroing, zombie browser locks, 400-vs-quota payload ladder, cache cost explosion, retry-loop trap).
-- **`docs/evidence/`** — dated, machine-reproducible verification receipts: version transcript, live `hermes --help`, upstream command list, and the audit output. README states what the audit does and does not prove.
-- **`.github/workflows/drift-guard.yml`** — CI job that clones upstream Hermes, extracts the real CLI surface (`_BUILTIN_SUBCOMMANDS` + plugin commands), and **fails the build if the guide references a command that doesn't exist**. Runs on push + weekly cron.
-- **`benchmarks/run.py`** — canonical cross-platform harness (Python stdlib + PyYAML); `run.sh` gains matrix/output overrides.
-- **`benchmarks/results/2026-08-22-local.csv`** — a real, fresh, dated measurement: RTX 5090 llama.cpp, `local-qwen38-27b`, 5 tasks × 5 repeats, **25/25 ok**, with the exact reproduce command in `matrix-local.yaml`.
-- README front door: **scorecard hook**, **"pick your pain" decision table** (every row a ≤10-minute win), and a **"never do this" kill list**.
-
-### Changed
-- **Installer path pinned**: `scripts/vps-bootstrap.sh` no longer pipes the upstream installer to bash — it downloads, sha256-verifies against a pinned value, and refuses to run on mismatch. README leads with the verify-then-run one-liner.
-- **Benchmark honesty**: `render.py` prints a dollar cost only when the matrix entry is `verified: true`; every stale/estimated price renders as `—`. README states the 2026-04-17 tables are historical and the Wafer 402 run is logged (not hidden).
-- `README-zh.md` / `README-ja.md` now carry explicit "entry-level summary only — translations queued" banners.
-
-### Fixed (drift the new audit caught)
-- `hermes bind-thread` — **not a real subcommand**; replaced with the honest profile-routing mechanism (Part 18).
-- `hermes background "..."` — replaced with the real `/background` slash primitive + nohup/systemd paths (Part 3).
-- `hermes platforms` — no such CLI command; corrected to the live `/platforms` view (Parts 22, 23).
-- `hermes api-server` — corrected to the real `hermes serve` backend / `api_server` gateway platform (Part 9).
-
-## 2026-08-22 — Herald refresh (v0.20.4)
-
-### Added
-- **v0.19 + v0.20 "Herald" wave coverage**: streaming voice (barge-in, wake words), A2A v1.0 agent-to-agent (both directions, Linux Foundation protocol), outbound webhooks with payload filters, grounded citations, computer use (background desktop control, `hermes computer-use`), egress / iron-proxy sandbox credentials, external secret managers (Bitwarden / 1Password / command helper), Bot Mode (desktop "Bots" tab, profiles-as-bots, routines), keyless five-vendor web tier and OpenCode Free provider. Additions across Parts 13, 14, 15, 19, 21, 24, 25, 26 and the README.
-- **Windows native promoted to first-class**: PowerShell one-liner install, `%LOCALAPPDATA%\hermes`, removal of "beta" framing in Part 1 and README prerequisites.
-- **Platform count updated**: from 22+/25+ to **35+ messaging adapters** — A2A, BlueBubbles, Buzz (Nostr), DingTalk, Discord, Email, Feishu, Google Chat, iMessage (Photon), IRC, LINE, Matrix, Mattermost, ntfy, Open-WebUI, QQBot, Raft, Relay, Signal, SimpleX, Slack, SMS, Teams, Telegram, Webhooks, WeCom, Weixin, WhatsApp, WhatsApp Business Cloud, Yuanbao, and more.
-
-### Changed
-- Every part re-verified against the **installed v0.20.4 (2026.8.18) docs tree**: CLI commands, config keys, platform surface, and model-landscape recommendations aligned to the live model catalog.
-- README badges re-based: v0.18.2 → **v0.20.4 (v2026.8.18)**, last updated **2026-08-22**, and a full v0.20 "Herald" What's New section (v0.19 also now covered as landed, not "main-line preview").
-- Mid-July "what's coming" framing rewritten — Hermes Cloud, computer use, scale-to-zero, and managed scope are no longer experimental.
-- Artifact pass: config templates, skills, and the bootstrap script checked against current schema; TODO comments mark anything not verifiable.
-- Note: `README-zh.md` / `README-ja.md` stay entry-level summaries; a translation sync remains queued.
-
-## 2026-07-17 — The Power Secrets modernization (v0.18.2 era)
-
-### Added
-- **Part 28 — The Recipe Book**: twelve end-to-end community builds mapped onto real primitives — the morning finance loop (read-only), staged Gmail (drafts-only scopes), the SMB approval office, the overnight Kanban shift, the GPU FIFO board, the content swarm, the carousel factory, the job-hunt pipeline, the accountability coach, the health correlator (local backend), the Blender room, and the secretary office — each with its primitives, its approval posture, and the trap that bit its builders first.
-- **New house-style SVG artwork**: Part 27 hero, the one-page cheat-sheet poster, the seven-layer security stack (Part 19), the seven-rung agent ladder (Part 8), the gateway token tax (Part 20), and the Recipe Book map (Part 28); release timeline refreshed to v0.18.2.
-- Part 3: "Scaling LightRAG: the July 2026 playbook" — role-specific LLMs, structural chunking, multimodal ingestion, production stores (OpenSearch), RAGAS-style evals via Langfuse, multi-agent retrieval.
-- Part 5: ≤60-char skill-description hygiene, built-ins-before-skills, and `/skills` + `/memory` approval gating.
-- **Part 27 — Power Secrets**: a new field manual distilling the official Wingtips series (#1–#22) and the highest-signal July community research into 25 verified non-obvious mechanics — memory/USER snapshot semantics, compression internals (`protect_last_n`, cheap auxiliary compression, compaction's structured brief), the messaging-gateway token tax, credential pools vs fallbacks and their cache-miss cost, model-switch cache resets, profiles-as-rooms (and the filesystem-isolation caveat), Kanban's `toolsets` and workspace traps, `state.db`/disk hygiene, session export with `--redact`, `/steer`//`/queue`//`/busy` timing semantics, supervised self-improvement gates, and a printable one-page cheat sheet.
-- Part 17: **MCP Security — July 2026 state of play**: CVE table (LiteLLM CVE-2026-30623, Windsurf CVE-2026-30615, Cursor MCPoison CVE-2025-54136, MCP Inspector CVE-2025-49596, LibreChat CVE-2026-22252), npm-impersonator warning, and a 7-point hardening checklist.
-- Part 19: the **seven-layer security mental model** mapped onto real Hermes primitives, the **action-ontology** containment pattern (host = brain, credential-less container = hands, typed action API), and **external spend kernels** for money-touching agents (Custodian / `CommercePolicy` / Latch / payguard patterns).
-- Part 20: **the gateway token tax** (CLI ~6–8k vs messaging ~15–20k tokens/turn), **benchmark-the-stack-not-the-model** (WolfBench Codex-vs-Hermes data, Terra-vs-Sol economics, busywork anti-pattern, free-tier warning), and a **Langfuse v4 / OTEL Collector** section (local model pricing, double-counted spans, root-observation default change).
-- Part 8: the **seven-rung agent ladder** (basic tools → MCP → pipelines → parallel → routed specialists → human-in-the-loop → dynamic spawning) and a one-agent-vs-profiles decision guide.
-- Part 9: **mid-July model landscape** (Kimi K3 day-one support incl. the Kimi-Direct update requirement, GPT Sol/Terra/Luna routing posture, Anthropic-subscription limitation, local reference points) and **credential pools**.
-- Part 14: `/steer` / `/queue` / `/busy` timing semantics and the **segmented tool batch dispatch** (safe-tool parallelism) behavior.
-- Part 24: **Hermes Cloud** third connection mode (labelled preview) and the remote-backend "code runs on the server" gotcha.
-- Part 25: background **computer use** on macOS (`hermes computer-use install`), current local model reference points, and a local KV-cache note.
-- Parts 6/7: compression levers and compaction internals; the memory **snapshot rule**, `/memory` + `/skills` approval gates, and a memory-stack comparison table (native vs LightRAG vs Mem0 vs skills).
-- Part 21: 10-second sandbox decision guide (Daytona / Modal / E2B / Vercel / OpenShell).
-- ECOSYSTEM: "Community projects on the radar" (Scarf, zhc-fabric, Sibyl, Latch, payguard, hermes-sonus, OpenKnowledge, HOODRADAR, Hermes Pong, Camofox + its context-tax warning).
-
-### Changed
-- Version currency: badges, intro, and "What's New" now target **v0.18.2 (v2026.7.7.2)** with the v0.18.1 patch-rollup note, the WhatsApp/Baileys fix (Part 15 Docker-tag guidance), and an explicit "main → v0.19.0, untagged = experimental" framing.
-- Part 18 agent-lane updates: Claude Code 2.1.20x, Codex 0.144.x stable pin (avoid 0.145 alpha unattended), OpenCode MCP resources + provider change, the Hermes Pong subscription workaround, and Teknium's "keep Hermes in the loop" guidance.
-- Parts 11/16/23 operational updates: `loginctl enable-linger` for headless gateways, real disk-growth hot spots (`state-snapshots/`, cron output, piped stdout), `hermes sessions prune`/`export --redact`, Kanban toolset opt-in + absolute `dir:` workspaces, and overnight/GPU-FIFO board shapes.
-- README: 29-part navigation, new "power secrets" and "recipe book" reading paths, mid-July status section.
-- Community claims are labelled as such throughout; all new config snippets stay within the real v0.18 schema (no invented keys).
-- Note: `README-zh.md` / `README-ja.md` remain synced to the 2026-07-03 state; a translation sync is queued.
-
-## 2026-07-03 — Accuracy & consistency maintenance pass
-
-### Fixed
-- **Real-schema alignment sweep**: config examples across the guide now match the actual Hermes v0.18 schema documented in [Part 19](./part19-security-playbook.md) (`tools.include/exclude`, `approvals:`, `command_allowlist:`, real `compression:` keys) — the remaining fictional keys (`security.approval.*`, per-MCP `trust:`, `routing:` blocks, `telemetry.alerts`) were replaced or rewritten as prose pointing at Part 19.
-- Benchmark claims corrected to the actual **13-model** × 5-task matrix, and the benchmarks docs now ship a real reproduction path instead of the nonexistent `hermes evals` subcommand.
-- Canonical install URL (`https://hermes-agent.nousresearch.com/install.sh`) everywhere; stray `install.hermes.nous.ai` references removed.
-- Platform count standardized on **25+** (README architecture diagram said 22+).
-- Infra template fixes (systemd / compose / Caddy / bootstrap script consistency pass).
-- Dead anchor in `ECOSYSTEM.md` → Part 12 dashboard-plugins section; archived reference MCP servers flagged as legacy and `server-github` swapped for GitHub's official `github/github-mcp-server`.
-- `CODE_OF_CONDUCT.md` enforcement contact moved from a personal email to GitHub's private-report mechanism.
-
-### Changed
-- **README slimmed**: Parts 1–5 no longer live inline — each is a short summary linking to its `partN-*.md` file (the SOUL.md personality section stays in the README). The two divergences were reconciled into the part files (fallback model `openrouter/anthropic/claude-sonnet-5`, config key `compression.enabled`).
-- **Translations synced**: `README-zh.md` and `README-ja.md` brought current to v0.18.0 / 27 parts with condensed v0.17 + v0.18 highlights and a "last synced" date.
-- CI cross-link checking now also validates heading anchors (see [ROADMAP](./ROADMAP.md)).
-
-## 2026-07-01 — Hermes v0.17.0 "Reach" + v0.18.0 "Judgment" Refresh
-
-### Added
-- **Part 26 — MoA, Verification & Self-Improvement**: the v0.18 "Judgment" stack. Mixture-of-Agents presets as first-class selectable models (`moa` provider, visible per-reference reasoning, streaming aggregator, `/moa` one-shots, trace persistence), evidence-based coding verification (`agent.coding_context`, `pre_verify`, verify-on-stop), **completion contracts** for `/goal` + `/goal wait <pid>`, `/learn` + `/journey` self-improvement, background subagent fan-out, everyday commands (`/prompt`, `/reasoning full`, `/timestamps`, in-place compaction, Blank Slate setup), and the team/fleet layer (scale-to-zero + drain coordination, managed scope from `/etc/hermes`, multiplexed gateway, Automation Blueprints, cron continuations). New `assets/moa-judgment.png` banner.
-- Part 15: **iMessage via Photon Spectrum** (`hermes photon login`, no Mac required) as the recommended iMessage path, plus the official **WhatsApp Business Cloud API** adapter, the **Raft** agent-network channel, and Telegram rich messages (Bot API 10.1).
-- Part 24: v0.17/v0.18 desktop coverage — first-class **Projects** (coding rail, review pane, worktrees), multi-terminal panel, memory graph, subagent watch-windows, VS Code Marketplace themes, native notifications, remote media relay.
-- Part 9: **Google Vertex AI** provider, MoA-as-provider note, and Cursor **Composer** via xAI Grok OAuth.
-- Part 8: `delegate_task(background=true)` and background fan-out patterns.
-- Part 7: `memory` atomic batch operations, `/journey`, and the desktop memory graph.
-- Part 22 section 9 "Newer Power Moves (v0.17 → v0.18)".
-
-### Changed
-- README badges, intro, "Pick Your Path," "What's New," TOC, and repo map now target Hermes **v0.18.0 (v2026.7.1)**; platform count updated to 25+; guide is now 27 parts.
-- Part 23: `/goal` guidance updated for completion contracts; Curator notes updated for the opt-in LLM consolidation pass (Part 22).
-
-### Removed
-- **Gemini OAuth as a recommended provider** — the Gemini-CLI OAuth providers were removed in Hermes v0.18. Routing tables and Part 9/21/22 references now point to Gemini API keys or the new Vertex AI provider.
-- BlueBubbles-as-the-only-iMessage-path framing (kept as the self-hosted/legacy alternative).
-- v0.16-as-current framing and the expanded v0.15 "What's New" section (condensed into Earlier Milestones).
-
-## 2026-06-17 — Hermes v0.16.0 "Surface" Refresh
-
-### Added
-- **Part 24 — Hermes Desktop App**: the native macOS/Windows/Linux GUI introduced in v0.16. Covers `hermes desktop`, `--include-desktop`, the Cmd+K/Ctrl+K command palette, drag-and-drop + clipboard image paste, the composer model picker, per-session YOLO toggle, voice, management panes, background self-update, uninstall flags, and connecting to a remote Hermes gateway over secure WebSocket (OAuth or username/password, multi-profile, cross-profile `@session`).
-- **Part 25 — NVIDIA & Local Hardware**: the run-it-on-your-own-GPU story from the Nous × NVIDIA work. RTX PC / RTX PRO / DGX Spark tiers, a model-agnostic local stack (Ollama / LM Studio / llama.cpp), the DGX Spark playbook, OpenShell kernel-level isolation, NemoClaw + the "Build It Yourself" series, and the built-in NVIDIA Skills Hub tap (CUDA-X, AIQ, cuOpt).
-- New hero, desktop, and local-hardware banner graphics under `assets/`.
-- Part 22 section 8 "Newer Power Moves (v0.15 → v0.16)": `/undo [N]`, default-interface choice (`cli`/`tui`, `--cli`), the everywhere fuzzy model picker, leaner default skills, free instant `session_search`, `hermes kanban swarm`, and Brainworm/promptware defenses.
-
-### Changed
-- README badges, hero, intro, install section, architecture diagram, "Pick Your Path," "What's New," TOC, and repo map now target Hermes **v0.16.0 (v2026.6.5)** and surface the Desktop + local-hardware paths.
-- Collapsed the per-version model cheat-sheet tables in the README and `part1-setup.md` into a light, model-agnostic "bring any model" section — the harness is the durable part; the fuzzy picker + hourly catalog replace memorized leaderboards.
-- Canonical install commands updated to `https://hermes-agent.nousresearch.com/install.sh` and the native Windows `iex (irm https://hermes-agent.nousresearch.com/install.ps1)`, plus `hermes portal` Quick Setup and the web System page check-before-update / Debug Share flow.
-
-### Removed
-- v0.14-as-current framing from top-level guidance ("native Windows beta," PyPI-as-new, "Android new in v0.9," 24-part counts).
-- Stale per-version model recommendation tables that go out of date every release.
-
-## 2026-06-03 — Part 19 security schema fixes
-
-### Fixed
-- **Part 19 — Security Playbook**: rewrote the configuration examples to match
-  the real Hermes Agent schema. The previous rev documented a top-level
-  `security:` block with `provenance` trust-labeling, `approval.require_approval`
-  regex + `denylist`, `approval_channels`, `bypass_subagents`, `secrets.scope` /
-  `secrets.env_access`, and a `security.network.egress_allowlist` — **none of
-  which exist in Hermes**. Replaced with the actual primitives: top-level
-  `approvals:` (`mode: manual|smart|off`, `timeout`, `cron_mode`,
-  `mcp_reload_confirm`, `destructive_slash_confirm`), the native
-  `tools/approval.py` dangerous-command detector, the always-on
-  `UNRECOVERABLE_BLOCKLIST`, `command_allowlist:` (human-readable pattern
-  descriptions), `.env` user allowlists (`TELEGRAM_ALLOWED_USERS`,
-  `GATEWAY_ALLOWED_USERS`, …) + DM pairing, `security.redact_secrets`, optional
-  `security.tirith_*` scanning, automatic credential scoping for subprocesses,
-  `terminal.backend` isolation, and `mcp_servers.<name>.tools.include/exclude`.
-  Added the SECURITY.md framing that OS-level isolation (terminal-backend or
-  whole-process wrapping via Docker/Compose or NVIDIA OpenShell — where real
-  network egress control lives) is the only boundary; in-process controls are
-  heuristics. Resolves [#19](https://github.com/OnlyTerp/hermes-optimization-guide/issues/19).
-
-## 2026-05-27 — LightRAG model setup refresh
-
-### Changed
-- Updated the LightRAG setup examples in `part3-lightrag-setup.md` and the
-  combined `README.md` to use current model endpoints: Kimi K2.6 via the
-  international Moonshot API (`https://api.moonshot.ai/v1`) for quality,
-  Cerebras `gpt-oss-120b` for speed, Fireworks Qwen3-Embedding-8B for
-  embeddings, and local Ollama as the free/private option. This replaces the
-  stale PR #1 examples that referenced `kimi-2.5`, the China-only
-  `api.moonshot.cn` endpoint, and deprecated Cerebras `qwen-3-32b`.
-
-## 2026-05-27 — Ecosystem Directory Update
-
-### Added
-- Hermes Tweet native plugin entry in `ECOSYSTEM.md`, applied onto current
-  `main` without reverting newer MCP / coding-agent ecosystem entries.
-
-## 2026-05-27 — Part 20 routing schema fixes
-
-### Fixed
-- **Part 20 — Cost Routing Playbook**: rewrote Rules 1, 2, 2B, 3, 4, 5 and the
-  Langfuse / OTel / eval sections to match real Hermes config keys. The
-  previous rev described an `intent`/`complexity`/`match`-based
-  `model_routing:` DSL, a `prompt_caching:` allow-list, a `telemetry: spans:`
-  block, a `fast_mode:` config block, `compression.auto.*` keys, an `alerts:`
-  block, an `observability: langfuse:` block, an `observability: otel:`
-  block, and a `hermes evals` subcommand — none of which exist in Hermes.
-  Replaced with the actual primitives: `auxiliary:` per-task models,
-  `provider_routing:` for OpenRouter, `hermes fallback` for failover, real
-  `prompt_caching: cache_ttl:`, real `compression:` keys
-  (`enabled`/`threshold`/`target_ratio`/`protect_last_n`), the `/fast` slash
-  command, `HERMES_LANGFUSE_*` env vars, and standard `OTEL_*` env vars.
-  Resolves [#13](https://github.com/OnlyTerp/hermes-optimization-guide/issues/13).
-  Also notes that `smart_model_routing` was removed upstream in commit
-  `424e9f36b` (#12732) so readers don't try to bring it back.
-
-## 2026-05-25 — Hermes v0.14.0 Foundation Refresh
-
-### Added
-- v0.14 Foundation coverage: PyPI install path, lighter lazy-dependency installs, `hermes proxy`, `x_search`, `/handoff`, SuperGrok OAuth, Grok 4.3 1M context, and native Windows beta
-- Part 13 sections for the OpenAI-compatible local proxy and first-class X search
-- Part 15 coverage for Teams end-to-end, LINE, and SimpleX Chat, bringing gateway guidance to 22+ platforms
-- Part 18 May 25 coding-agent update notes for Claude Code Week 20+, Codex v0.133+, Gemini CLI v0.43, Zed ACP Registry, and proxy-backed Aider/Cline/Continue
-
-### Changed
-- README badges, “What's New,” quickstart/setup copy, platform counts, localized README summaries, roadmap, and outreach drafts now target Hermes v0.14.0 (v2026.5.16)
-- Part 9 model/provider guidance refreshed for May 25 SOTA: Grok 4.3, SuperGrok OAuth, OpenRouter/Nous live catalogs, Claude Sonnet 5 / Opus 4.7, GPT-5.5, Gemini 3.1, Kimi K2.6, GLM-5, DeepSeek V4, Qwen3.6, and current routing defaults
-- Config templates, wizard defaults, benchmark matrix, and reference architectures use current model identifiers and Cerebras Qwen 3 instead of older Llama/GPT-4.1/Gemini 2.5 framing
-- Part 23 reframed from v0.13-only Tenacity guidance to the current Foundation + Tenacity operating stack
-
-### Removed
-- v0.13-as-current framing from top-level guidance
-- Stale “Native Windows unsupported,” “20+ platforms,” Cerebras Llama 70B, GPT-4.1, and Gemini 2.5 recommendations where v0.14/May 25 defaults supersede them
-
-## 2026-05-14 — Hermes v0.13.0 Tenacity Refresh
-
-### Added
-- **Part 23 — Tenacity Stack** covering durable Kanban boards, worker lanes, `/goal`, Checkpoints v2, no-agent cron, provider plugins, and the v0.13 upgrade checklist
-- Google Chat coverage in Part 15 as the 20th messaging platform
-- Kanban worker-lane guidance in Part 18 for Codex/Claude/Gemini/OpenCode orchestration
-- v0.13 security-default guidance in Part 19: redaction on by default, guild-scoped Discord role allowlists, WhatsApp stranger rejection, and OAuth/auth.json TOCTOU fixes
-
-### Changed
-- README badges, "What's New", table of contents, architecture copy, and model tables now target Hermes v0.13.0 (v2026.5.7)
-- Part 9 model/provider guidance updated for May 2026 SOTA: Claude Sonnet 5 / Opus 4.7, GPT-5.5, Gemini 3.1, Kimi K2.6, DeepSeek V4, Qwen3.6, provider plugins, and media routing
-- Part 12 updated for dashboard Kanban/profile coverage
-- Part 14 updated for `/goal`
-- Part 16 updated for v0.13 debug/redaction language
-- Part 20 updated for Kanban-aware observability
-- Config templates, cron templates, benchmarks, localized READMEs, roadmap, outreach copy, and wizard defaults refreshed for the 24-part guide
-
-### Removed
-- v0.12-as-current framing from top-level guidance
-- Stale April 2026 model recommendations where May 2026 replacements are now the better default
-
-## 2026-04-30 — Hermes v0.11/v0.12 Refresh
-
-### Added
-- **Part 22 — Latest Power Moves** covering Curator, TUI steering habits, context-file hygiene, plugins, auxiliary models, cron chaining, and the v0.12 upgrade checklist
-- Curator guidance in Part 5, including dry-run, scheduling, pin/archive behavior, and how it differs from skills/memory/context files
-- v0.12 platform coverage for QQBot, Tencent Yuanbao, and Microsoft Teams as a plugin-shipped gateway
-- AWS Bedrock, Azure AI Foundry, LM Studio, GMI Cloud, Tencent TokenHub, MiniMax OAuth, Gemini OAuth, and remote model catalog notes in Part 9
-- Vercel Sandbox coverage in Part 21
-
-### Changed
-- README "What's New" now reflects landed v0.11.0 and v0.12.0 releases instead of speculative post-v0.10 PR tracking
-- Part 12 updated for dashboard Chat, Models tab, plugins, Curator controls, and `web,pty` install requirements
-- Part 14 updated for `/steer`, `/queue`, `/background`, `/busy`, and current Fast Mode language
-- Part 18 updated for orchestrator-role subagents and file coordination
-- Part 19 updated with MCP/plugin/dashboard threat surfaces and v0.12 hardline block guidance
-- Part 20 updated to prefer the bundled Langfuse observability plugin and auxiliary routing
-
-### Removed
-- Stale "Cooking on main" framing and example.com disclosure placeholder
-- Old Gemini CLI install requirement for Gemini OAuth
-
-## 2026-04-17 — Wizard + Reference Architectures + CI
-
-### Added
-- **`docs/wizard/index.html`** — interactive static config wizard; 8 questions → ready-to-drop `config.yaml`, runs entirely in the browser (GitHub Pages friendly)
-- **`docs/reference-architectures/`** — 4 full blueprints: Homelab, Solo Developer, Small Agency, Road Warrior
-- **`docs/outreach/`** — launch-ready drafts: launch tweet thread, Hacker News post, r/LocalLLaMA post, upstream PR body to `NousResearch/hermes-agent`, long-form blog post
-- **4 new skills**: `ops/daily-inbox-triage`, `ops/hermes-weekly`, `security/spam-trap`, `dev/meeting-prep` (total skills: 13)
-- **CI** — `.github/workflows/ci.yml`: markdown-link-check, yamllint, skill-frontmatter validator (`validate_skills.py`), prettier advisory
-- **Localized READMEs** — [`README-zh.md`](./README-zh.md), [`README-ja.md`](./README-ja.md) (entry-level summaries)
-
-### Changed
-- README: skills badge 9→13, language links, repo map rows for wizard + reference architectures + outreach, CI badge
-- `templates/config/*.yaml` — quoted `${VAR}` env-var substitutions inside flow mappings so every template is valid YAML
-
-## 2026-04-17 — Installable Artifacts
-
-### Added
-- **`skills/`** — 9 runnable `SKILL.md` files (audit-mcp, rotate-secrets, audit-approval-bypass, nightly-backup, weekly-dep-audit, cost-report, telegram-triage, pr-review, release-notes)
-- **`templates/config/`** — 5 opinionated configs (minimum, telegram-bot, production, cost-optimized, security-hardened)
-- **`templates/compose/langfuse-stack.yml`** — self-hosted Langfuse v3 with ClickHouse + MinIO + Redis
-- **`templates/caddy/Caddyfile`** — reverse-proxy + auto TLS reference
-- **`templates/systemd/`** — hardened `hermes.service` + `hermes-dashboard.service`
-- **`templates/cron/production-crons.yaml`** — all recommended scheduled tasks
-- **`scripts/vps-bootstrap.sh`** — fresh Hetzner CX22 → production Hermes in ~10 minutes
-- **`diagrams/architecture.md`** — 6 Mermaid diagrams (top-level, MCP, delegation, sandbox sync, observability, security)
-- **`benchmarks/README.md` + `matrix.yaml`** — reproducible cost/latency table across the model × task matrix (13 models × 5 tasks as of 2026-07)
-- **`ECOSYSTEM.md`** — canonical directory of MCP servers, coding agents, dashboard plugins, observability tools
-- **`ROADMAP.md`** — what's coming next; invites contribution
-- **`CONTRIBUTING.md`**, **`CHANGELOG.md`**, **`CODE_OF_CONDUCT.md`** — standard repo hygiene
-- **GitHub issue + PR templates**
-- **`docs/quickstart.md`** — 5-minute copy-paste from zero to working Telegram bot
-
-### Changed
-- README gained badges, "Install everything" section, architecture diagram embed, ecosystem/benchmarks cross-links
-
-## 2026-04-17 — 72h Research Sweep (PR #6, merged)
-
-### Added
-- Part 17 — MCP Servers
-- Part 18 — Delegating to Coding Agents (Claude Code, Codex, Gemini CLI, OpenCode, Aider)
-- Part 19 — Security Playbook (defenses against the April 15 "Comment and Control" prompt injection)
-- Part 20 — Observability & Cost Control (Langfuse, Helicone, Phoenix)
-- Part 21 — Remote Sandboxes & Bulk File Sync (#8018)
-- README "Pick Your Path" decision tree
-- README "Cooking on `main`" section (post-v0.10 PRs)
-
-### Changed
-- Part 9 — Flagship Model Cheat Sheet, Task Routing cheat sheet, Gemini CLI OAuth, Gemini TTS
-- Cross-links added in parts 3, 5, 8
-
-## 2026-04-16 — Hermes v0.9 + v0.10 refresh (PR #5, merged)
-
-### Added
-- Part 12 — Web Dashboard (`hermes dashboard`)
-- Part 13 — Nous Tool Gateway
-- Part 14 — Fast Mode + Background Watchers + pluggable context engine
-- Part 15 — New platforms (iMessage, WeChat, Android/Termux) — 16-platform total
-- Part 16 — Backup / Import / `/debug` bundler
-
-### Changed
-- README TOC bumped from 11 → 17
-- Part 4 Telegram reframed as "flagship of 16 gateways"
-- Part 9 native-adapter matrix added
-
-## Earlier
-
-- Initial 11-part guide covering setup, OpenClaw migration, LightRAG, Telegram, skills, context compression, memory, subagents, custom models, SOUL anti-patterns, gateway recovery.
+## 2026-09-23 — v2: the guide, rebuilt (Hermes v0.21.4)
+
+The guide was rewritten from scratch and re-pinned from Hermes v0.20.5 (`v2026.8.19`) to **v0.21.4 (`v2026.9.21`)**.
+
+**Why.** The v1 guide grew one release refresh at a time: 30 "parts" with overlapping scope ("Latest Power Moves", "Tenacity Stack", "Power Secrets"), a README that duplicated part content, and a lot of meta-material. It also fell five releases behind and had accumulated claims that were stale or wrong at the current release.
+
+**What's new**
+
+- **16 topic-organized chapters plus a cheat sheet** in [`guide/`](./guide), grouped as foundations, cost and smarts, capabilities, operations, and recipes. One topic lives in one place.
+- **Measured, not quoted.** Token and byte figures come from a real v0.21.4 install (`hermes prompt-size` and the same prompt builder counted with a real tokenizer). The defaults: about 13K tokens of fixed prefix per call, 77% of it tool schemas. Disabling `browser` and `tts` saves 2,311 tokens per call. A 32 KB `AGENTS.md` adds 8,609 per call.
+- **Findings from the upstream source** that the docs get wrong or leave out: compression effectively fires at **75%** for models under 512K context (not the 50% `hermes config show` prints); auxiliary tasks default to the **main** model; prompt-cache TTL defaults to `5m` and can be turned off; Hermes rejects models under **64K** context; `image_gen` and `computer_use` are already deferred behind tool search.
+- **A troubleshooting chapter built from confirmed fixes only.** Each fix is sourced from the official docs, merged PRs, or release notes. Known-unsolved problems are listed as unsolved.
+- **A new drift guard** ([`scripts/drift_guard.py`](./scripts/drift_guard.py)). It installs the pinned release and checks every `hermes` subcommand **and flag**, slash command, config key, toolset name, Hermes env var, and official-docs link **and anchor** in the guide. It also runs upstream's own skill linter over [`skills/`](./skills). A weekly job opens an issue when upstream releases something newer than the pin.
+- **Templates and skills rebuilt against v0.21.4.** Config fragments are validated key by key against the schema. Four new operations skills (cost audit, health check, security review, encrypted off-machine backup) have zero findings under the upstream linter. The backup script is shellchecked and tested end to end.
+
+**Corrected from v1** (non-exhaustive)
+
+- `pip install hermes-agent` recommended as an install path. PyPI installs are **unsupported** upstream, and the package is stale (0.19.0).
+- The claim that messaging platforms cost "2–3× the CLI" in tool definitions. On defaults, the CLI and Telegram carry identical tool schemas.
+- "Compression keeps the first 3 and last 20 turns at an 80% threshold." The real behavior is a lean tail, a 75% floor under 512K, and a 256K cap above.
+- `/background`, gateway session auto-reset, per-profile gateways, `sessions.auto_prune` off, `auxiliary.web_extract`, `delegation.max_concurrent_children: 3`, `/usage 7d`, and `hermes approval-check`. All are stale or never existed at v0.21.4.
+- Config templates with invented keys and model IDs, and skills calling nonexistent commands (`hermes secrets get`, `security.approval.bypass_subagents`, `telegram.bots`).
+
+**Removed**, all still in git history:
+
+- `part1-*.md` … `part29-*.md` (replaced by [`guide/`](./guide); see the map below)
+- `README-zh.md`, `README-ja.md` (they described the v1 structure; translations of v2 are welcome)
+- `docs/outreach/` (promotional drafts), `docs/evidence/` (v1 receipts), `docs/wizard/` (config generator for the v0.20 schema), `docs/reference-architectures/` and `docs/quickstart.md` (folded into chapters 02, 14 and 16), `docs/failure-modes.md` (confirmed items folded into chapter 15)
+- `benchmarks/` (the harness had one dated run and model IDs from May 2026; no numbers from it are quoted anywhere)
+- `scripts/vps-bootstrap.sh` and its release/pin workflows. Upstream now does the risky parts itself (`hermes gateway install --system --run-as-user`). Chapter 14 walks through a VPS with official commands only.
+- `scripts/score-your-setup.py` (replaced by the `hermes-cost-audit` and `hermes-security-review` skills, which read the live install through Hermes' own commands)
+- `ECOSYSTEM.md`, `ROADMAP.md`, `diagrams/`, `screenshots/` (LightRAG), and the SVG infographics and banners tied to the v1 part structure
+- The v1 config templates (`minimum`, `telegram-bot`, `production`, `cost-optimized`, `security-hardened`), replaced by `lean`, `local`, `messaging-bot` and `hardened`. Three of the five set the dead `auxiliary.web_extract`, and several set an explicit `auxiliary.vision`, which silently turns off native vision.
+- `templates/systemd/` (the hand-written `hermes.service` matches upstream's legacy-unit detector, and its `kill -HUP` reload stopped the gateway without a drain or restart; use `hermes gateway install`), `templates/caddy/` (a dashboard behind a proxy also needs `dashboard.public_url` and an auth provider; see chapter 14), `templates/compose/` (a third-party Langfuse stack), and `templates/cron/` (folded into chapters 11 and 16)
+
+### Where the v1 parts went
+
+| v1 part | Now in |
+|---|---|
+| Part 1 Setup · docs/quickstart | [02 Install & First Run](./guide/02-install.md) |
+| SOUL.md section · Part 10 SOUL anti-patterns | [06 Personality & Context Files](./guide/06-personality-and-context.md) |
+| Part 2 OpenClaw migration | [02 Install](./guide/02-install.md#coming-from-another-agent) |
+| Part 7 Memory | [07 Memory](./guide/07-memory.md) |
+| Part 3 LightRAG | Dropped: Hermes has no LightRAG integration. [07](./guide/07-memory.md#knowledge-bases) covers the knowledge-base options that do ship. |
+| Part 4 Telegram · Part 15 New platforms | [10 Messaging](./guide/10-messaging.md) |
+| Part 5 Skills | [08 Skills](./guide/08-skills.md) |
+| Part 6 Context compression · Part 20 cost sections · Part 27 cost/cache secrets | [05 Cost & Speed](./guide/05-token-budget.md) |
+| Part 8 Subagents · Part 18 Coding agents | [12 Delegation & Multi-Agent](./guide/12-multi-agent.md) |
+| Part 9 Custom models · Part 26 MoA | [03 Models & Providers](./guide/03-models.md) |
+| Part 25 NVIDIA & local | [04 Local Models](./guide/04-local-models.md) |
+| Part 11 Gateway recovery · Part 16 Backup & debug · docs/failure-modes | [14 Running 24/7](./guide/14-production.md), [15 Troubleshooting](./guide/15-troubleshooting.md) |
+| Part 12 Dashboard · Part 24 Desktop app | [01 How Hermes Works](./guide/01-how-hermes-works.md), [14 Running 24/7](./guide/14-production.md) |
+| Part 13 Tool gateway · Part 17 MCP · Part 21 Remote sandboxes | [09 Tools, MCP & Plugins](./guide/09-tools-mcp-plugins.md) |
+| Part 14 Fast mode & watchers · Part 22/23 cron, goals, Kanban | [11 Automation](./guide/11-automation.md), [12 Delegation & Multi-Agent](./guide/12-multi-agent.md) |
+| Part 19 Security playbook | [13 Security](./guide/13-security.md) |
+| Part 28 Recipe Book · docs/reference-architectures | [16 Recipes](./guide/16-recipes.md) |
+| Part 29 Lessons from Production | Confirmed, general lessons folded into [05](./guide/05-token-budget.md), [14](./guide/14-production.md) and [15](./guide/15-troubleshooting.md) |
+
+---
+
+## Before v2 (v1 history, condensed)
+
+- **2026-08-28**: Part 29 "Lessons from Production", seven postmortems, Power Secrets #26–31.
+- **2026-08-22**: Refresh to Hermes v0.20.4 "Herald". Receipts, a pinned-tag drift guard, installer hash pinning, three review rounds.
+- **2026-07-17**: Part 27 "Power Secrets", Part 28 "Recipe Book", six infographics (v0.18.2 era).
+- **2026-07-03**: Accuracy and cross-link pass, anchor checking in CI.
+- **2026-07-01**: Hermes v0.17 "Reach" and v0.18 "Judgment" refresh (MoA, `/goal`, `/learn`, iMessage).
+- **2026-06-17**: Hermes v0.16 "Surface" refresh (desktop app, NVIDIA/local hardware).
+- **2026-06-03 / 05-27**: Security-playbook and routing schema fixes, LightRAG model refresh, ecosystem update.
+- **2026-05-25**: Hermes v0.14 refresh (PyPI install, Grok OAuth, `hermes proxy`, Teams, `/handoff`).
+- **2026-05-14**: Hermes v0.13 refresh (Kanban, `/goal`, checkpoints v2, no-agent cron).
+- **2026-04-30**: Hermes v0.11/v0.12 refresh (Curator, TUI, plugins).
+- **2026-04-17**: Config wizard, reference architectures, CI, installable skills and templates, parts 17–21.
+- **2026-04-16 and earlier**: The original guide: setup, OpenClaw migration, LightRAG, Telegram, skills (v0.9/v0.10 era).

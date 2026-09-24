@@ -1,0 +1,90 @@
+# Hermes Agent — hardened profile (an agent that reads input you don't control)
+# Verified against Hermes Agent v0.21.4 (tag v2026.9.21).
+# Explained in: guide/13-security.md ("A hardened profile", with what each line costs you)
+#
+# For a profile that reads group chats, email, webhooks or web pages written by
+# other people. Prompt injection can't be filtered out of that text, so this file
+# limits what a fooled agent can do: commands run in a throwaway container with no
+# network and no host files, risky actions wait for you, and the agent can't
+# rewrite its own instructions, memory or skills without review.
+#
+# Needs Docker (or Podman) for terminal.backend: docker.
+# Merge into the profile's config.yaml (`hermes -p <name> config edit`), then run
+# `hermes config check` and `hermes doctor`. Replace the example blocklist domain.
+
+approvals:
+  mode: manual                  # you see every flagged command ("smart" lets an aux model auto-approve)
+  timeout: 300                  # unanswered prompts are denied
+  cron_mode: deny               # headless runs never auto-approve (these three are the defaults)
+  single_query_mode: deny
+  unattended_mode: deny
+  deny:                         # blocked everywhere: under /yolo, mode off, and in container backends
+    - 'sudo *'
+    - '*authorized_keys*'
+    - '*curl*|*sh*'
+    - '*wget*|*sh*'
+    - 'git push --force*'
+    - 'git push -f*'
+    - 'dd if=* of=/dev/*'
+command_allowlist: []           # nothing pre-approved; grow it with `hermes approvals suggest`
+
+security:
+  redact_secrets: true
+  allow_private_urls: false     # web, vision and media fetches can't reach LAN or cloud metadata
+  protected_instruction_files: true
+  protected_instruction_extra_patterns:   # context files the built-in gate doesn't cover
+    - '.hermes.md'
+    - 'hermes.md'
+    - 'agents.override.md'
+    - '*.mdc'
+  tirith_enabled: true
+  tirith_fail_open: false       # host backends: if the scanner can't run, ask/deny instead of allow
+  website_blocklist:
+    enabled: true
+    domains:
+      - '*.internal.example.com'  # replace with hosts the agent must never open
+    shared_files: []
+  allow_lazy_installs: false    # no pip installs at runtime; install optional extras yourself
+  allow_data_training_tiers_noninteractive: false
+
+auth:
+  adopt_external_logins: false  # don't borrow Codex CLI / Claude Code logins
+
+gateway:
+  allow_all_users: false        # allowlists or pairing only
+  strict: true                  # attach only files from the Hermes cache, allowed dirs, or made in the last 10 min
+unauthorized_dm_behavior: ignore  # strangers get silence, not a pairing code
+group_sessions_per_user: true   # one session per person in group chats (default)
+discord:
+  require_mention: true
+slack:
+  require_mention: true
+
+terminal:
+  backend: docker               # commands and file tools run in a hardened container (needs Docker)
+  docker_forward_env: []        # no host secrets inside the sandbox
+  docker_volumes: []            # no host mounts; a host mount also turns approval prompts back on
+  docker_mount_cwd_to_workspace: false
+  container_persistent: false   # a fresh sandbox per conversation
+  docker_network: false         # no network from the sandbox (web tools still work); true if tasks install packages
+  env_passthrough: []
+
+browser:
+  auto_local_for_private_urls: false  # cloud browser: don't open LAN URLs in a local sidecar
+  restrict_evaluate: true       # block cookie/storage/network JS (also blocks harmless code that names them)
+  use_real_profile: false       # never browse with your own logged-in profile
+
+memory:
+  write_approval: true          # memory writes wait for /memory approve
+skills:
+  write_approval: true          # agent-written skills wait for review
+  guard_agent_created: true     # scan agent-written skills for injection and exfiltration patterns
+  inline_shell: false           # never run !`cmd` snippets from SKILL.md files
+
+hooks_auto_accept: false        # new shell hooks need your approval
+cron:
+  allow_agent_scheduling: false # scheduled agents can't create or edit cron jobs
+delegation:
+  subagent_auto_approve: false  # subagents auto-deny flagged commands
+privacy:
+  redact_pii: true              # hash user and chat IDs in the prompt (Telegram, WhatsApp, Signal)

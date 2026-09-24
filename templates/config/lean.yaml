@@ -1,0 +1,72 @@
+# Hermes Agent — lean config (cost-optimized, quality-preserving)
+# Verified against Hermes Agent v0.21.4 (tag v2026.9.21).
+# Explained in: guide/05-token-budget.md
+#
+# What it does:
+#   * moves every busy side task (compression, approvals, /goal checks,
+#     titles, background review, subagents) off your main model onto a cheap one
+#   * leaves image handling alone: a main model that can see gets real pixels
+#   * keeps your last few instructions verbatim through compression
+#   * stops exact-repeat failure loops in interactive sessions too
+#
+# What it does NOT do: pick your main model. Run `hermes model` for that.
+#
+# Needs OPENROUTER_API_KEY in ~/.hermes/.env for the cheap routes below.
+# No OpenRouter? Point `provider`/`model` at any inexpensive model your
+# credentials reach (for example your provider's "flash"/"mini" tier), or at
+# a local server (see local.yaml). Then run `hermes doctor`: it reports any
+# auxiliary route that can't resolve, because an unresolved route silently
+# falls back to your (expensive) main model.
+#
+# Merge the sections you want into ~/.hermes/config.yaml (or apply single
+# values with `hermes config set section.key value`). Using this file as your
+# whole config.yaml? Run `hermes config migrate` once afterwards; it stamps the
+# schema version and keeps every key below.
+
+agent:
+  # Speech output is rarely needed; drop its tool schemas everywhere.
+  # Trim more per platform with: hermes tools disable --platform telegram browser
+  disabled_toolsets:
+    - tts
+  # agent.max_turns is deliberately unlimited upstream (caps used to cut real
+  # work off mid-task), and unattended runs already hard-stop runaway loops.
+  # Only cap it for agents other people can drive, e.g.:
+  # max_turns: 150
+
+auxiliary:
+  compression:
+    provider: openrouter
+    model: google/gemini-3-flash-preview
+    reasoning_effort: low          # summaries don't need deep thinking
+  # No `vision:` block on purpose. Setting one makes Hermes describe every
+  # image in text through that model, even when your main model can see.
+  # Add it only if your main model is text-only (and `auto` picks badly).
+  approval:
+    provider: openrouter
+    model: google/gemini-3-flash-preview   # classifier used by approvals.mode: smart
+  goal_judge:
+    provider: openrouter
+    model: google/gemini-3-flash-preview   # checks whether a /goal is done
+  title_generation:
+    model_upgrade_enabled: false   # keep the free first-line title, skip the model call
+  background_review:
+    # The memory/skill review fork. On a different model it replays a digest
+    # instead of the full transcript (roughly 3-5x cheaper per upstream docs).
+    provider: openrouter
+    model: google/gemini-3-flash-preview
+    max_input_tokens: 48000        # hard cap per review
+
+delegation:
+  # delegate_task children: research and file-reading rarely need your top model.
+  provider: openrouter
+  model: google/gemini-3-flash-preview
+  max_concurrent_children: 5       # default 10
+
+compression:
+  min_tail_user_messages: 3        # keep your last 3 real instructions verbatim
+
+prompt_caching:
+  cache_ttl: 5m                    # "1h" only if you routinely pause >5 min between turns
+
+tool_loop_guardrails:
+  hard_stop_enabled: true          # stop exact-repeat failure loops interactively too

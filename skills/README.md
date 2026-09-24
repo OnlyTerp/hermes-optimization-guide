@@ -1,50 +1,51 @@
-# Installable Skills
+# Skills
 
-These are the skills referenced throughout the guide — each one is a drop-in `SKILL.md` you can point Hermes at.
+Four operations skills that turn this guide's advice into things Hermes does for you. Each one:
 
-## Install one
+- follows the current `SKILL.md` format and passes Hermes' own skill linter (`tools/skill_linter.py` at v0.21.4) with zero findings, which CI re-checks;
+- uses only commands that exist in the pinned release (checked by the [drift guard](../scripts/drift_guard.py));
+- reads and reports first, and changes nothing without your approval.
+
+| Skill | What it does | Good as a cron job? |
+|---|---|---|
+| [`hermes-cost-audit`](./hermes-cost-audit/SKILL.md) | Measures the fixed prompt per platform, reads real spend, finds the settings that cost the most, and proposes cuts with estimated savings | Weekly |
+| [`hermes-health-check`](./hermes-health-check/SKILL.md) | Runs Hermes' read-only diagnostics (doctor, status, gateway, cron, logs) and maps each finding to its confirmed fix | Daily, on always-on hosts |
+| [`hermes-security-review`](./hermes-security-review/SKILL.md) | Checks approvals, allowlists, secret-file permissions, redaction, and supply chain (`hermes security audit`), rated by severity | Monthly |
+| [`hermes-offsite-backup`](./hermes-offsite-backup/SKILL.md) | Sets up nightly `hermes backup` → `age` encryption → off-machine copy, as a **zero-token** cron job that only messages you on failure | It installs its own |
+
+## Install
+
+Install one straight from GitHub. It goes through the same security scan as any community skill and is recorded in the hub lock file, so `hermes skills check` and `hermes skills update` track it:
 
 ```bash
-# Clone or update this repo
-git clone https://github.com/OnlyTerp/hermes-optimization-guide ~/repos/hermes-optimization-guide
-
-# Symlink a skill into your Hermes skills directory
-ln -s ~/repos/hermes-optimization-guide/skills/security/audit-mcp ~/.hermes/skills/audit-mcp
-
-# Verify — skills are loaded by new sessions
-hermes skills list    # should show the symlinked skill as installed
+hermes skills inspect OnlyTerp/hermes-optimization-guide/skills/hermes-cost-audit   # read it first
+hermes skills install OnlyTerp/hermes-optimization-guide/skills/hermes-cost-audit
 ```
 
-## Install them all
+Or copy the folder into your Hermes skills directory (the profile's `skills/` folder):
 
 ```bash
-for skill in ~/repos/hermes-optimization-guide/skills/*/*/SKILL.md; do
-  name=$(basename $(dirname "$skill"))
-  ln -sfn "$(dirname "$skill")" "$HOME/.hermes/skills/$name"
-done
-hermes skills list    # pick up happens at next session start
+git clone https://github.com/OnlyTerp/hermes-optimization-guide.git
+cp -r hermes-optimization-guide/skills/hermes-cost-audit ~/.hermes/skills/
 ```
 
-## Catalog
+Then start a new session, or run `/reload-skills` in a running one, and use it:
 
-| Category | Skill | What it does |
-|----------|-------|--------------|
-| **security** | `audit-mcp` | Audits every configured MCP server — tool filtering, credential scope, last-update — and flags stale/risky ones |
-| **security** | `rotate-secrets` | Rotates webhook HMACs, API keys, and OAuth tokens; updates `.env` and restarts gateways |
-| **security** | `audit-approval-bypass` | Audits every path that bypasses dangerous-command approval — approvals mode, `command_allowlist` entries, cron mode, container backends |
-| **ops** | `nightly-backup` | `hermes backup`, uploads encrypted copy to configured storage, prunes old backups |
-| **ops** | `weekly-dep-audit` | Uses a Gemini 3.1 Pro-class model + GitHub MCP to audit dependencies across configured repos |
-| **ops** | `cost-report` | Generates a weekly LLM-cost breakdown by provider / gateway / skill, posts to your private DM |
-| **ops** | `telegram-triage` | Classifies inbound Telegram DMs, autoreplies low-stakes, escalates high-stakes to you |
-| **dev** | `pr-review` | Delegates a PR review to Claude Code with a scoped read-only GitHub PAT |
-| **dev** | `release-notes` | Builds a human-readable release note from a range of commits or merged PRs |
-| **dev** | `meeting-prep` | Pulls context for an upcoming meeting (calendar + notes + recent threads) into a briefing |
-| **ops** | `daily-inbox-triage` | Morning pass across Telegram/email/Slack DMs — classifies, autoreplies, escalates |
-| **ops** | `hermes-weekly` | Weekly digest of your Hermes activity (skills run, cost, errors, upcoming crons) |
-| **security** | `spam-trap` | Sinks confirmed spam into a quarantine profile with no memory write / no MCP access |
+```text
+/hermes-cost-audit
+```
 
-13 skills total, across security / ops / dev.
+For another profile, copy into `~/.hermes/profiles/<name>/skills/` instead.
 
-## Contributing
+## Use one on a schedule
 
-New skills welcome. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the structure and review process.
+```bash
+hermes cron create "0 9 * * 1" "Run a cost audit and report the top three savings." \
+  --skill hermes-cost-audit --name weekly-cost-audit --deliver telegram
+```
+
+A cron job starts with no memory of past chats, so the prompt says what to do and the skill says how. [Chapter 11](../guide/11-automation.md) covers scheduling in depth.
+
+## Writing your own
+
+[Chapter 08](../guide/08-skills.md) covers the `SKILL.md` format, the 60-character description budget for the always-on skill index, and how to keep skills lean.

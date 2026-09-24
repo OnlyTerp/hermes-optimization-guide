@@ -1,21 +1,18 @@
 ---
-name: Hermes feature to document
-about: A Hermes feature (released or on main) that should be covered
-title: "[feature] "
-labels: docs, enhancement
+name: Hermes feature or fix to cover
+about: A Hermes feature, release change, or confirmed fix the guide should include
+title: "[cover] "
+labels: docs
 ---
 
-**Feature**
-_Short name / what it does_
+**What**
+_The feature, default change, or fix, in one or two sentences._
 
-**Where it lives**
-_PR link, release notes, or issue in `NousResearch/hermes-agent`_
+**Source**
+_Release notes, docs page, merged PR, or closed issue in `NousResearch/hermes-agent`._
 
-**Why it's worth documenting**
-_e.g. "Users will miss this because it's buried in the release notes"_
+**Which chapter should cover it**
+_e.g. 05 Cost & Speed, 10 Messaging, 15 Troubleshooting_
 
-**Where in this guide**
-_Existing part to extend, or propose a new part_
-
-**First draft (optional)**
-_Even 2 paragraphs help_
+**Why readers need it**
+_What goes wrong or costs more without it._

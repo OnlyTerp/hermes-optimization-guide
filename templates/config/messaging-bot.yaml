@@ -1,0 +1,73 @@
+# Hermes Agent — shared messaging bot (a bot other people talk to)
+# Verified against Hermes Agent v0.21.4 (tag v2026.9.21).
+# Explained in: guide/10-messaging.md, guide/13-security.md, guide/16-recipes.md (recipe 5)
+#
+# For a team, family, or community bot. Run it as its OWN profile so it never
+# shares memory, keys, or tools with your personal agent:
+#
+#   hermes profile create team --no-skills
+#   hermes -p team setup            # pick a cheap, reliable model
+#   hermes -p team gateway setup    # bot token + allowlist land in this profile's .env
+#
+# Then merge this file into ~/.hermes/profiles/team/config.yaml and restart the
+# gateway (one gateway serves every profile): hermes gateway restart
+#
+# The idea: a question-answering bot that can search, look at images, remember,
+# and use skills, but has NO shell, no code execution, no file access, no
+# browser or desktop control, and can't fan out subagents. Anything it
+# still wants to do that's risky waits for an admin.
+#
+# Measured on v0.21.4 (`hermes prompt-size --platform telegram`): tool schemas drop
+# from about 42 KB (24 tools) to about 17 KB (11 tools), roughly 5,800 fewer
+# tokens on every message the bot handles (o200k tokenizer).
+
+agent:
+  disabled_toolsets:
+    - terminal          # no shell for strangers, and no prompt-injected commands
+    - code_execution
+    - file              # can't read or write files on this host (e.g. the .env)
+    - browser
+    - computer_use
+    - delegation        # no subagent fan-out on other people's messages
+  max_turns: 60         # other people can drive this agent; cap one turn's model calls
+
+approvals:
+  mode: manual          # whatever risky action remains asks an admin
+
+memory:
+  write_approval: true  # users can't quietly rewrite what the bot "knows"; review with /memory pending
+  user_profile_enabled: false  # USER.md is one file per profile, not per person: what the bot
+                               # learned about Alice would sit in Bob's prompt too
+
+# Strangers: with no allowlist, an unknown DM gets a one-time pairing code an admin
+# approves (`hermes pairing approve <platform> <code>`). That's the default, so there
+# is nothing to set. Add an allowlist and strangers are ignored instead. A global
+# `unauthorized_dm_behavior: pair` does NOT change that (gateway/authz_mixin.py);
+# to keep pairing alongside an allowlist, set it per platform:
+#   platforms:
+#     telegram:
+#       unauthorized_dm_behavior: pair
+
+group_sessions_per_user: true    # default, kept explicit: each person in a group gets their own session
+
+privacy:
+  redact_pii: true      # hash user and chat IDs in the prompt (Telegram, WhatsApp, Signal)
+
+display:
+  tool_progress: 'off'  # no tool-call chatter in the chat
+
+auxiliary:
+  # Side tasks on a cheap model (see guide/05). Needs OPENROUTER_API_KEY in this
+  # profile's .env, or point these at any inexpensive model you have access to.
+  compression:
+    provider: openrouter
+    model: google/gemini-3-flash-preview
+    reasoning_effort: low
+  # No `vision:` block: an explicit one makes every photo users send get
+  # described in text instead of seen by the bot's own (vision-capable) model.
+  title_generation:
+    model_upgrade_enabled: false
+  background_review:
+    provider: openrouter
+    model: google/gemini-3-flash-preview
+    max_input_tokens: 48000

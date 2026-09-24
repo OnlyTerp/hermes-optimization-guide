@@ -1,71 +1,96 @@
-name: CLI drift guard
+name: Drift guard
 
-# Verifies every `hermes <subcommand>`, `/<slash-command>`, and config key
-# referenced anywhere in the guide actually exists in the upstream Hermes
-# Agent surface — pinned to the SAME tag the README claims to be synced with.
+# Checks every hermes command, flag, slash command, config key, env var and
+# official-docs link in the guide against the Hermes Agent release the guide
+# is pinned to. Also runs weekly so an upstream release that renames
+# something shows up here before readers hit it.
 #
-# Three surfaces, all AST/regex-parsed from upstream source (no install):
-#   commands.txt       _BUILTIN_SUBCOMMANDS + plugin-registered CLI commands
-#   slash-commands.txt COMMAND_REGISTRY in hermes_cli/commands.py (+ aliases)
-#   config-keys.txt    DEFAULT_CONFIG paths + _EXTRA_KNOWN_ROOT_KEYS wildcards
-#
-# When upstream removes/renames anything the guide names, CI turns red
-# instead of readers hitting a wall. When you bump UPSTREAM_TAG, bump the
-# README badge in the same commit. See docs/evidence/README.md.
+# Bumping the pin: change HERMES_TAG below AND the "Verified against" line in
+# README.md in the same commit, then fix whatever this job reports.
 
 on:
   push:
     branches: [main]
-    paths:
-      - "part*.md"
-      - "README.md"
-      - "templates/**"
-      - "scripts/audit-cli-surface.py"
-      - "scripts/extract-upstream-surface.py"
-      - ".github/workflows/drift-guard.yml"
   pull_request:
   schedule:
-    # Re-check weekly even when the guide hasn't moved
-    - cron: "0 9 * * 1"
+    - cron: "0 9 * * 1"   # Mondays 09:00 UTC
   workflow_dispatch:
 
 env:
-  # The baseline this guide claims. Bump in lockstep with the README badge.
-  UPSTREAM_TAG: "v2026.8.19"
+  HERMES_TAG: "v2026.9.21"   # Hermes Agent v0.21.4
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   drift-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - name: Shallow-clone upstream Hermes Agent at the pinned tag
+      - name: Install the pinned Hermes Agent release
         run: |
-          git clone --depth 1 --branch "$UPSTREAM_TAG" \
-            https://github.com/NousResearch/hermes-agent.git /tmp/hermes-upstream
+          git clone --depth 1 --branch "$HERMES_TAG" \
+            https://github.com/NousResearch/hermes-agent.git /tmp/hermes-agent
+          python -m pip install --quiet uv
+          uv venv /tmp/venv --python 3.11
+          uv pip install --python /tmp/venv/bin/python --quiet -e /tmp/hermes-agent pyyaml
 
-      - name: Extract the real command + config surface from upstream source
+      - name: Extract the real surface (CLI tree, slash commands, config schema, docs)
+        env:
+          HERMES_HOME: /tmp/hermes-home
         run: |
-          python scripts/extract-upstream-surface.py /tmp/hermes-upstream --out-dir /tmp/surface
-          echo "=== real surface ==="
-          wc -l /tmp/surface/commands.txt /tmp/surface/slash-commands.txt /tmp/surface/config-keys.txt
+          mkdir -p "$HERMES_HOME"
+          /tmp/venv/bin/python scripts/drift_guard.py extract \
+            --upstream /tmp/hermes-agent --out /tmp/surface.json
 
-      - name: Audit guide references against the real surface
+      - name: Check the guide against it
+        run: /tmp/venv/bin/python scripts/drift_guard.py check --surface /tmp/surface.json
+
+      - name: Lint skills with upstream's own skill linter
+        env:
+          HERMES_HOME: /tmp/hermes-home
+        run: /tmp/venv/bin/python scripts/drift_guard.py lint-skills --upstream /tmp/hermes-agent
+
+  upstream-watch:
+    # Scheduled runs only: open an issue when Hermes ships a release newer than the pin.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare the pin with the latest upstream release
+        id: latest
         run: |
-          python scripts/audit-cli-surface.py \
-            --commands-file /tmp/surface/commands.txt \
-            --slash-file /tmp/surface/slash-commands.txt \
-            --config-file /tmp/surface/config-keys.txt \
-            --exit-on-drift
+          latest=$(git ls-remote --tags --refs https://github.com/NousResearch/hermes-agent.git 'v20*' \
+            | awk -F/ '{print $3}' | sort -V | tail -1)
+          echo "pinned=$HERMES_TAG latest=$latest"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ "$latest" != "$HERMES_TAG" ]; then echo "behind=true" >> "$GITHUB_OUTPUT"; fi
 
-      - name: Publish evidence artifact
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Open (or reuse) a refresh issue
+        if: steps.latest.outputs.behind == 'true'
+        uses: actions/github-script@v8
         with:
-          name: drift-guard-receipts
-          path: /tmp/surface/
-          if-no-files-found: ignore
+          script: |
+            const latest = "${{ steps.latest.outputs.latest }}";
+            const pinned = process.env.HERMES_TAG;
+            const title = `Hermes ${latest} is out — guide is pinned to ${pinned}`;
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100,
+            });
+            if (open.data.some(i => i.title === title)) return;
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo, title,
+              body: [
+                `Upstream released **${latest}**; the guide is verified against **${pinned}**.`,
+                "",
+                "To refresh:",
+                "1. Read the release notes: https://github.com/NousResearch/hermes-agent/releases/tag/" + latest,
+                "2. Bump `HERMES_TAG` in `.github/workflows/drift-guard.yml` and the \"Verified against\" line in `README.md`.",
+                "3. Fix whatever the drift guard reports, then review chapters touched by the release notes.",
+              ].join("\n"),
+            });

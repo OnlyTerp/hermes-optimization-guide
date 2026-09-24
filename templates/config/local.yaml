@@ -1,0 +1,64 @@
+# Hermes Agent — local model (your own GPU or Mac)
+# Verified against Hermes Agent v0.21.4 (tag v2026.9.21).
+# Explained in: guide/04-local-models.md
+#
+# For a main model served by Ollama, llama.cpp, vLLM or SGLang on this machine.
+# LM Studio: choose "LM Studio" in `hermes model` instead of using the model: block.
+# Desktop app: the managed runtime (`hermes desktop --local`) writes its own model: block.
+#
+# First make the SERVER serve at least 64K of context with tool calling on
+# (guide/04, "Set up the server"). Hermes refuses anything smaller, and nothing
+# in this file can make the server allocate more.
+#
+# What it does:
+#   * points Hermes at a local OpenAI-compatible server (Ollama shown)
+#   * trims the fixed prefix a small model must prefill on every call.
+#     Measured on v0.21.4 with this model block: tool schemas drop from
+#     43,062 bytes (25 tools) to 24,642 bytes (15 tools), about 4,300 fewer
+#     tokens on every call (o200k tokenizer)
+#   * halves tool-output caps that were sized for 128K+ windows
+#   * stops side jobs from queuing behind your chat on a single-slot server
+#
+# Best used as its own profile, so trimming never touches your main agent:
+#   hermes profile create local
+#   then merge this into ~/.hermes/profiles/local/config.yaml and run `hermes -p local`
+
+model:
+  provider: custom
+  base_url: http://localhost:11434/v1   # Ollama. llama.cpp :8080, vLLM :8000, SGLang :30000
+  default: gemma4:31b                    # the docs' pick for reliable local tool calling
+  ollama_num_ctx: 65536                  # Ollama only: the window the server REALLY serves
+  # context_length: 65536                # other servers, if they under-report their window
+
+agent:
+  # Leaves terminal, file, web, skills, memory, session_search, todo and clarify.
+  disabled_toolsets:
+    - browser
+    - tts
+    - image_gen
+    - computer_use
+    - delegation
+    - cronjob
+    - code_execution
+    - connections
+    - vision            # keep it if your model can see images
+  # A Llama or Mistral model that describes tool calls instead of making them:
+  # tool_use_enforcement: true
+
+tool_output:
+  max_bytes: 25000          # terminal output kept per call (default 50000)
+  max_lines: 1000           # read_file page size (default 2000)
+file_read_max_chars: 50000  # one read_file call (default 100000)
+
+auxiliary:
+  background_review:
+    # On a single-slot server the memory/skill review collides with your next
+    # prompt. Off here; run /refine when you want a review. (The desktop's
+    # managed runtime defers it until idle, so leave it on there.)
+    enabled: false
+
+# Optional safety net for outages. It fires on errors, not on weak answers,
+# and that turn's conversation goes to the cloud.
+# fallback_providers:
+#   - provider: openrouter
+#     model: moonshotai/kimi-k3
