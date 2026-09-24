@@ -269,7 +269,7 @@ The dashboard can read and write your keys and run the agent. Pick the least exp
   hermes dashboard --host 127.0.0.1 --no-open
   ```
 
-  The dashboard stays on loopback. The public `public_url` engages the auth gate, and a proxy connecting from loopback is trusted automatically. A proxy on another host or container must be listed in `dashboard.trusted_proxies` ([public URL override](https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard#public-url-override)). To keep it running, reuse the unit from the previous section as `hermes-dashboard.service`, with `hermes dashboard --host 127.0.0.1 --no-open` as the command (`hermes serve` has no web UI). That's the unit name Hermes looks for when it restarts a managed dashboard after an update. The desktop app can connect to this server too.
+  The dashboard stays on loopback. The public `public_url` engages the auth gate, and a proxy connecting from loopback is trusted automatically. A proxy on another host or container must be listed in `dashboard.trusted_proxies` ([public URL override](https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard#public-url-override)). To keep it running, reuse the unit from the previous section as `hermes-dashboard.service`, with `hermes dashboard --host 127.0.0.1 --no-open` as the command (`hermes serve` has no web UI). `hermes update` restarts a unit by that name in its dashboard cleanup step, after the gateways (`hermes_cli/main_dashboard.py`), and leaves it alone if the update's Node.js refresh failed. The desktop app can connect to this server too.
 
 Check the gate with `curl -s https://hermes.example.com/api/status | jq '.auth_required, .auth_providers'`.
 
@@ -405,7 +405,7 @@ No collector? A [zero-token watchdog](./16-recipes.md#2-zero-token-watchdogs) ca
 9. Docker installs pin a release tag rather than `:latest`, and use a named volume on Docker Desktop.
 10. Every profile has its own bot token, and `hermes gateway list` shows one gateway serving them all.
 11. The dashboard and `hermes serve` are loopback-only, on a tailnet with a password, or behind TLS with OAuth.
-12. Your own backend units are named `hermes-serve.service` or `hermes-dashboard.service`, the names updates look for.
+12. Your own units are named `hermes-serve.service` (or `hermes-serve-<name>.service`) for `hermes serve`, and `hermes-dashboard.service` for the dashboard. `hermes update` restarts both.
 13. Health export or another outside check alerts you when the gateway disappears.
 14. Maintenance commands (`hermes sessions optimize`, `set-journal-mode`) run only with every writer stopped.
 15. Updates go to one machine first, and you read `hermes update --plan` before touching a busy one.
