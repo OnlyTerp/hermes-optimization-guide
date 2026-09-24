@@ -11,6 +11,7 @@
 | `hermes -z "prompt"` | One-shot: prints only the answer (add `--usage-file f.json` for a cost report) |
 | `hermes chat -q "prompt" --format stream-json` | Scriptable run that emits JSONL events |
 | `hermes -w` | Start in an isolated git worktree |
+| `/rollback` · `hermes verify --save` | Undo the agent's file edits (with `checkpoints.enabled`) · detect and pin the project's build/test recipe |
 | `hermes -p <profile> …` | Run any command as another profile |
 | `hermes setup` · `hermes setup --portal` | Setup wizard · one-shot Nous Portal setup |
 | `hermes model` | Pick provider and model, and configure auxiliary models |
@@ -61,6 +62,17 @@
 | `/goal <text>` · `/goal gate add <cmd>` · `/subgoal <text>` | Standing goal · a shell check that must pass · extra criteria |
 | `/loop 30m <prompt>` · `/heartbeat every 1h <prompt>` · `/queue` · `/steer` | In-session repetition and redirection |
 
+## Tools, MCP, plugins, security
+
+| Command | Does |
+|---|---|
+| `hermes tools list --platform telegram` | What one surface really gets |
+| `hermes mcp catalog` · `hermes mcp install <name>` · `hermes mcp test <name>` | Reviewed MCP servers · install one · check it connects |
+| `hermes plugins search <term>` · `hermes plugins install <name>` · `hermes plugins enable <name>` | Catalog plugins are pinned to a reviewed commit; installed is not enabled |
+| `hermes security audit` | OSV check of the venv, plugin deps, and pinned MCP servers |
+| `hermes approvals test -- <command>` · `hermes approvals suggest` | What a command would hit · allowlist ideas from your own approvals |
+| `/platform pause <name>` · `/platform resume <name>` | Pause one adapter without restarting the gateway |
+
 ## Memory, skills, context files
 
 | Command | Does |
@@ -96,9 +108,11 @@
 | `sessions.auto_prune` / `retention_days` | `true` / `90` | Ended sessions older than this are deleted |
 | `approvals.mode` | `smart` | `manual` for shared agents. `off` only in disposable sandboxes. |
 | `approvals.cron_mode` · `unattended_mode` | `deny` · `deny` | Dangerous commands in unattended runs are refused |
+| `approvals.deny` | `[]` | Globs that never run, even under `/yolo` and in containers |
 | `security.redact_secrets` | `true` | Keep it on |
 | `security.protected_instruction_files` | `true` | Agent edits to project `AGENTS.md`/`CLAUDE.md`/`SOUL.md` need your approval. Your own `~/.hermes` files are exempt. |
 | `gateway.allow_all_users` | `false` | Never `true` on a bot with a shell |
+| `streaming.enabled` | `false` | Live-typed replies on every chat platform that can edit messages |
 | `terminal.backend` | `local` | `docker` for untrusted work |
 | `checkpoints.enabled` | `false` | `true` for coding: `/rollback` safety net |
 | `timezone` | server-local | Set it, so schedules and "today" mean what you think |

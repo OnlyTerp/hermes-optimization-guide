@@ -527,6 +527,8 @@ def check_hermes_cmd(toks, surf: Surface):
         if t in ("\\",):
             i += 1
             continue
+        if t == "--":
+            return None  # end of options: the rest is an argument (hermes approvals test -- cmd)
         if t.startswith("-") and t != "-":
             flag = t.split("=", 1)[0]
             if flag in surf.pre_flags:  # e.g. -p/--profile, parsed before argparse
@@ -562,6 +564,8 @@ def toolset_args(toks, surf: Surface) -> list:
     top = surf.cli["hermes"]
     while i < len(toks):
         t = toks[i]
+        if t == "--":
+            break
         if t.startswith("-") and t != "-":
             flag, _, inline = t.partition("=")
             if flag in surf.pre_flags:
