@@ -275,7 +275,7 @@ The job's own prompt, skills, model and delivery apply. The rendered template ar
 The official [walkthrough](https://hermes-agent.nousresearch.com/docs/guides/webhook-github-pr-review) plus [recipe 4](./16-recipes.md#4-pr-reviews-on-autopilot) cover the full build. The parts people get wrong:
 
 - **The payload has no diff.** The prompt has to tell the agent to run `gh pr diff`, and `gh` has to be authenticated on the gateway host.
-- **Webhook runs have no terminal by default.** The webhook toolset is web search, vision and clarify, because payload text is attacker-controlled. Grant `toolsets: [terminal]` on that one route in `config.yaml`. The CLI can't grant tools, so an agent can't give its own subscription a shell.
+- **Webhook runs have no terminal by default.** The webhook toolset is four tools (`web_search`, `web_extract`, `vision_analyze`, `clarify`), because payload text is attacker-controlled. Grant `toolsets: [terminal]` on that one route in `config.yaml`. The CLI can't grant tools, so an agent can't give its own subscription a shell.
 - **Filter before the model wakes.** A route `filters` entry on `action` (only `opened` and `synchronize`) is cheaper than a prompt that says "stop if the action is closed". The prompt approach still pays for a run.
 - **Contain it.** Run that gateway on a container terminal backend ([chapter 13](./13-security.md#put-the-shell-in-a-box)), use a `gh` token scoped to one repo, and keep `approvals.unattended_mode: deny`.
 - **No public URL?** The [cron-polling PR agent](https://hermes-agent.nousresearch.com/docs/guides/github-pr-review-agent) works behind NAT.
