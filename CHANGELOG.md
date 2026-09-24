@@ -8,7 +8,7 @@ The guide was rewritten from scratch and re-pinned from Hermes v0.20.5 (`v2026.8
 
 **What's new**
 
-- **16 topic-organized chapters plus a cheat sheet** in [`guide/`](./guide), in four sections: foundations, cost and smarts, capabilities, operations. One topic lives in one place.
+- **16 topic-organized chapters plus a cheat sheet** in [`guide/`](./guide), grouped as foundations, cost and smarts, capabilities, operations, and recipes. One topic lives in one place.
 - **Measured, not quoted.** Token and byte figures come from a real v0.21.4 install (`hermes prompt-size` and the same prompt builder counted with a real tokenizer). The defaults: about 13K tokens of fixed prefix per call, 77% of it tool schemas. Disabling `browser` and `tts` saves 2,311 tokens per call. A 32 KB `AGENTS.md` adds 8,609 per call.
 - **Findings from the upstream source** that the docs get wrong or leave out: compression effectively fires at **75%** for models under 512K context (not the 50% `hermes config show` prints); auxiliary tasks default to the **main** model; prompt-cache TTL defaults to `5m` and can be turned off; Hermes rejects models under **64K** context; `image_gen` and `computer_use` are already deferred behind tool search.
 - **A troubleshooting chapter built from confirmed fixes only.** Each fix is sourced from the official docs, merged PRs, or release notes. Known-unsolved problems are listed as unsolved.
@@ -32,6 +32,8 @@ The guide was rewritten from scratch and re-pinned from Hermes v0.20.5 (`v2026.8
 - `scripts/vps-bootstrap.sh` and its release/pin workflows. Upstream now does the risky parts itself (`hermes gateway install --system --run-as-user`). Chapter 14 walks through a VPS with official commands only.
 - `scripts/score-your-setup.py` (replaced by the `hermes-cost-audit` and `hermes-security-review` skills, which read the live install through Hermes' own commands)
 - `ECOSYSTEM.md`, `ROADMAP.md`, `diagrams/`, and SVG infographics tied to the v1 part structure
+- The v1 config templates (`minimum`, `telegram-bot`, `production`, `cost-optimized`, `security-hardened`), replaced by `lean`, `local`, `messaging-bot` and `hardened`. Three of the five set the dead `auxiliary.web_extract`, and several set an explicit `auxiliary.vision`, which silently turns off native vision.
+- `templates/systemd/` (the hand-written `hermes.service` matches upstream's legacy-unit detector, and its `kill -HUP` reload stopped the gateway without a drain or restart; use `hermes gateway install`), `templates/caddy/` (a dashboard behind a proxy also needs `dashboard.public_url` and an auth provider; see chapter 14), `templates/compose/` (a third-party Langfuse stack), and `templates/cron/` (folded into chapters 11 and 16)
 
 ### Where the v1 parts went
 
@@ -40,7 +42,8 @@ The guide was rewritten from scratch and re-pinned from Hermes v0.20.5 (`v2026.8
 | Part 1 Setup · docs/quickstart | [02 Install & First Run](./guide/02-install.md) |
 | SOUL.md section · Part 10 SOUL anti-patterns | [06 Personality & Context Files](./guide/06-personality-and-context.md) |
 | Part 2 OpenClaw migration | [02 Install](./guide/02-install.md#coming-from-another-agent) |
-| Part 3 LightRAG · Part 7 Memory | [07 Memory](./guide/07-memory.md) |
+| Part 7 Memory | [07 Memory](./guide/07-memory.md) |
+| Part 3 LightRAG | Dropped: Hermes has no LightRAG integration. [07](./guide/07-memory.md#knowledge-bases) covers the knowledge-base options that do ship. |
 | Part 4 Telegram · Part 15 New platforms | [10 Messaging](./guide/10-messaging.md) |
 | Part 5 Skills | [08 Skills](./guide/08-skills.md) |
 | Part 6 Context compression · Part 20 cost sections · Part 27 cost/cache secrets | [05 Cost & Speed](./guide/05-token-budget.md) |
