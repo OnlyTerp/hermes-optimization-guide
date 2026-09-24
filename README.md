@@ -36,10 +36,10 @@ Each one is a few minutes' work. Together they cover most of the gap between a d
 3. **Drop toolsets you don't use, per platform.** Disabling `browser` and `tts` alone saves about 2,300 tokens on every call. → [05](./guide/05-token-budget.md#lever-1-send-fewer-tool-schemas)
 4. **Protect the prompt cache.** Switching models mid-session re-reads the whole conversation at full price. Use `/btw`, `/bg`, or a subagent for side work instead. → [05](./guide/05-token-budget.md#lever-2-keep-the-prompt-cache-warm)
 5. **Keep always-on instructions short.** A 32 KB `AGENTS.md` measured **+8,600 tokens per call**. → [06](./guide/06-personality-and-context.md)
-6. **Lock down who can talk to your bot.** Use allowlists or DM pairing, and never allow everyone on an agent with a shell. → [10](./guide/10-messaging.md), [13](./guide/13-security.md)
-7. **Run the gateway as a service.** Cron only fires while the gateway runs, and a user service dies at logout unless lingering is on. → [14](./guide/14-production.md)
+6. **Lock down who can talk to your bot.** Use allowlists or DM pairing, and never allow everyone on an agent with a shell. → [10](./guide/10-messaging.md#access-control), [13](./guide/13-security.md#layer-1-who-can-talk-to-it)
+7. **Run the gateway as a service.** Cron only fires while the gateway runs, and a user service dies at logout unless lingering is on. → [14](./guide/14-production.md#what-the-native-service-gives-you)
 8. **Put subagents and cron jobs on cheaper models.** `delegation.model` and `cron.model`. → [05](./guide/05-token-budget.md#lever-6-cheaper-models-for-work-that-doesnt-need-the-best)
-9. **Give local models 64K context, set on the server.** Hermes refuses anything smaller, and Ollama's default is far below that. → [04](./guide/04-local-models.md)
+9. **Give local models 64K context, set on the server.** Hermes refuses anything smaller, and Ollama's default is far below that. → [04](./guide/04-local-models.md#the-64k-rule)
 10. **Update deliberately.** `hermes update --check` and `--plan` first. Anything older than v0.21.2 should update for `state.db` safety. → [02](./guide/02-install.md#updating-without-breaking-things)
 
 ## The guide
