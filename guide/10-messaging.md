@@ -7,8 +7,8 @@
 - **Start with Telegram:** a BotFather token plus your *numeric* user ID in `TELEGRAM_ALLOWED_USERS`. The dashboard and desktop app's **Create with QR** button sets up both.
 - **Access is deny-by-default.** Use allowlists or DM pairing (`hermes pairing approve`). Never turn on allow-all for an agent with a shell.
 - **In groups,** turn off BotFather privacy mode (then remove and re-add the bot), require mentions, and keep per-user sessions.
-- **Approve risky commands from your phone** by replying "yes" or `/approve`. Surfaces nobody watches deny them automatically.
-- **Tune each platform.** Trim its toolsets (Telegram drops from about 10,000 to 5,900 tool tokens per message in [chapter 09](./09-tools-mcp-plugins.md#turn-toolsets-on-and-off)), quiet the tool-progress chatter, and use `/handoff` and `/sethome` to move work between desk and phone.
+- **Approve risky commands from your phone:** tap **Allow Once**, reply "yes", or send `/approve`. Surfaces nobody watches deny them automatically.
+- **Tune each platform.** Trim its toolsets (Telegram's tool schemas drop from about 10,000 to 5,900 tokens per call in [chapter 09](./09-tools-mcp-plugins.md#turn-toolsets-on-and-off)), quiet the tool-progress chatter, and use `/handoff` and `/sethome` to move work between desk and phone.
 
 ## How the gateway works
 
@@ -108,11 +108,11 @@ Send a voice note and Hermes transcribes it and answers the text. Set up transcr
 |---|---|
 | Replies that type out live | `streaming.enabled: true` (off by default). Telegram DMs then use native draft streaming, and groups fall back to message edits. |
 | 👀 → 👍 reactions while it works | `telegram.reactions: true` |
-| Real tables, task lists, and math | `telegram.extra.rich_messages: true`. It's off by default because rich messages are harder to copy as plain text. |
+| Real tables, task lists, and math | `platforms.telegram.extra.rich_messages: true`. It's off by default because rich messages are harder to copy as plain text. |
 | Fewer phone buzzes | Already the default: only final replies, approval prompts, and command confirmations ring (`display.platforms.telegram.notifications: important`) |
-| A runtime footer (model, context %) on each final reply | `/footer on` |
+| A footer (model, context %, working directory) on each final reply | `/footer on` |
 
-**Streaming on one platform turns it on for all of them.** With `streaming.enabled: true`, every platform that can edit messages streams, Discord and Slack included, unless you pin them with `display.platforms.<platform>.streaming: false`. We checked this against the gateway's own decision code at v0.21.4. The configuration page says Discord and Slack stay off, but that only holds if your `config.yaml` spells those overrides out.
+**Streaming on one platform turns it on for all of them.** With `streaming.enabled: true`, every platform that can edit messages streams, Discord and Slack included, unless you pin them with `display.platforms.<platform>.streaming: false`. That's how the gateway decides at v0.21.4 (`gateway/run_turn_runner.py`, `gateway/display_config.py`). The configuration page says Discord and Slack stay off, but the gateway doesn't load those defaults, so they only hold if your `config.yaml` spells them out.
 
 Two Telegram extras: webhook mode for hosts that sleep between messages needs `TELEGRAM_WEBHOOK_URL` *and* `TELEGRAM_WEBHOOK_SECRET` (the gateway refuses to start without the secret). Files over 20 MB need a [local Bot API server](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram#large-files-20mb-via-local-bot-api-server).
 
@@ -122,7 +122,7 @@ Each one is a short setup plus the thing that most often goes wrong. Run `hermes
 
 ### Discord
 
-1. In the [Developer Portal](https://discord.com/developers/applications), create an application and its bot, then turn on **Message Content Intent**. Also enable **Server Members Intent** if you allowlist by role or username.
+1. In the [Developer Portal](https://discord.com/developers/applications), create an application and its bot, then turn on **Message Content Intent** and **Server Members Intent**. Without the first, the bot receives empty messages.
 2. Invite it from the **Installation** tab with scopes `bot` and `applications.commands`.
 3. Get your user ID: Settings → Advanced → Developer Mode, then right-click yourself → Copy User ID.
 
@@ -131,7 +131,7 @@ DISCORD_BOT_TOKEN=...
 DISCORD_ALLOWED_USERS=284102345871466496    # or DISCORD_ALLOWED_ROLES=<role id>
 ```
 
-In server channels the bot answers @mentions only (`discord.require_mention: true`), and each mention opens a thread (`discord.auto_thread`). List channels where it should answer everything in `discord.free_response_channels`. **#1 gotcha:** a bot that's online but silent has Message Content Intent turned off, or has no access policy. Discord fails closed and logs `No Discord access policy configured` ([Discord docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord)).
+In server channels the bot answers @mentions only (`discord.require_mention: true`), and each mention opens a thread (`discord.auto_thread`). List channels where it should answer everything in `discord.free_response_channels`. **#1 gotcha:** a bot that's online but silent has Message Content Intent turned off, or you aren't on its allowlist. Discord fails closed, and the gateway log shows `Unauthorized user: <id> (<name>) on discord` for each dropped message ([Discord docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord)).
 
 ### Slack
 
@@ -188,7 +188,7 @@ Unknown senders are ignored, and automated mail (noreply, bulk, mailing lists) i
 
 ### Matrix
 
-Use a bot account on any homeserver. Set `MATRIX_HOMESERVER` and `MATRIX_ACCESS_TOKEN` (Element → Settings → Help & About → Advanced), plus `MATRIX_ALLOWED_USERS=@you:example.org` **and** `MATRIX_ALLOWED_ROOMS` for anything private. The docs recommend both. The bot accepts room invites automatically and needs an @mention in rooms. If your client grabs `/`, use `!` for commands instead. Encrypted rooms need `MATRIX_E2EE_MODE=required` plus `libolm`. **#1 gotcha:** it connects, then silently drops every message. The host's clock is running ahead, and the log says `dropped N live events as 'too old'`. Fix the clock with NTP.
+Use a bot account on any homeserver. Set `MATRIX_HOMESERVER` and `MATRIX_ACCESS_TOKEN` (Element → Settings → Help & About → Advanced), plus `MATRIX_ALLOWED_USERS=@you:example.org` **and** `MATRIX_ALLOWED_ROOMS` for anything private. The docs recommend both. The bot accepts room invites automatically and needs an @mention in rooms. If your client grabs `/`, use `!` for commands instead. Encrypted rooms need `libolm` and `MATRIX_E2EE_MODE=required`, which fails closed instead of quietly falling back to unencrypted. **#1 gotcha:** it connects, then silently drops every message. The host's clock is running ahead, and the log says `dropped N live events as 'too old'`. Fix the clock with NTP.
 
 ### iMessage: BlueBubbles or Photon
 
@@ -214,9 +214,9 @@ All of these run in the same gateway, with the same allowlist and pairing model.
 | Google Chat | Google Workspace teams | [google_chat](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/google_chat) |
 | Mattermost | Self-hosted Slack alternative | [mattermost](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/mattermost) |
 | SMS (Twilio) | Plain text messages | [sms](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/sms) |
-| Home Assistant | Voice and automations at home | [homeassistant](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/homeassistant) |
+| Home Assistant | Smart-home events and device control | [homeassistant](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/homeassistant) |
 | Feishu / Lark, DingTalk, WeCom, WeCom callback, Weixin, QQ, Yuanbao | China and APAC workplace and consumer apps | [feishu](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/feishu) · [dingtalk](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/dingtalk) · [wecom](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom) · [wecom-callback](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom-callback) · [weixin](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin) · [qqbot](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/qqbot) · [yuanbao](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/yuanbao) |
-| LINE | Japan, Korea, Taiwan | [line](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line) |
+| LINE | Japan, Taiwan, Thailand | [line](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line) |
 | SimpleX | Private chat with no persistent user IDs | [simplex](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/simplex) |
 | ntfy | Lightweight push notifications | [ntfy](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/ntfy) |
 | IRC | Any IRC network; zero dependencies | [irc](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/irc) |
@@ -270,13 +270,12 @@ Set it explicitly when you want something else:
 
 ```yaml
 unauthorized_dm_behavior: decline                  # everywhere: "I can only chat with my owner"
-unauthorized_dm_decline_message: "Sorry, this assistant is private."
 platforms:
   telegram:
     unauthorized_dm_behavior: pair                 # keep pairing on Telegram even with an allowlist
 ```
 
-A global `pair` doesn't override the allowlist rule. Only a per-platform setting does.
+Change the refusal text with the top-level `unauthorized_dm_decline_message` key. A global `pair` doesn't override the allowlist rule. Only a per-platform setting does.
 
 ### When it answers in groups
 
@@ -289,13 +288,14 @@ A global `pair` doesn't override the allowlist rule. Only a per-platform setting
 When the agent wants to run something dangerous (recursive deletes, `curl | sh`, service restarts, and the rest of the approval list), it asks in the chat and waits. Reply **yes** (or `y`, `ok`, `go`, `approve`) or **no**, or use the commands:
 
 ```text
-/approve              # run it once
-/approve session      # allow this pattern for the rest of the session
-/approve always       # add it to the permanent allowlist
-/deny                 # refuse it
+/approve                    # run it once
+/approve session            # allow this pattern for the rest of the session
+/approve always             # add it to the permanent allowlist
+/deny                       # refuse it
+/deny use rsync instead     # refuse it and tell the agent why
 ```
 
-Teams, Feishu, and WhatsApp Cloud show buttons instead. An unanswered prompt is denied after 5 minutes (`approvals.timeout`). Surfaces nobody is watching (webhooks and the API server) deny dangerous commands at once (`approvals.unattended_mode: deny`), and so does cron. `/yolo` switches approvals off, and anyone allowed to run it can use it, which is one more reason to [split admins from users](./13-security.md#layer-1-who-can-talk-to-it). Approval modes are in [chapter 13](./13-security.md#layer-2-what-it-may-run).
+Telegram, Discord, Slack, Teams, and Feishu also show **Allow Once**, **Allow Session**, **Always Allow**, and **Deny** buttons. WhatsApp Cloud offers only Approve and Deny, and Matrix uses reactions. An unanswered prompt is denied after 5 minutes (`approvals.timeout`). Surfaces nobody is watching (webhooks and the API server) deny dangerous commands at once (`approvals.unattended_mode: deny`), and so does cron. `/yolo` switches approvals off, and anyone allowed to run it can use it, which is one more reason to [split admins from users](./13-security.md#layer-1-who-can-talk-to-it). Approval modes are in [chapter 13](./13-security.md#layer-2-what-it-may-run).
 
 ## Shape each platform
 
@@ -310,7 +310,7 @@ Teams, Feishu, and WhatsApp Cloud show buttons instead. An unanswered prompt is 
         show_reasoning: false
   ```
 
-- **Busy agent.** By default a new message interrupts the running turn and redirects it. `display.busy_input_mode: queue` runs follow-ups after the turn instead, and `steer` injects them after the next tool call. `/busy` switches modes per chat.
+- **Busy agent.** By default a new message interrupts the running turn and redirects it. `display.busy_input_mode: queue` runs follow-ups after the turn instead, and `steer` injects them after the next tool call. `/busy queue` (or `steer`, `interrupt`) changes it from chat and saves it to the profile's config, so it applies to every chat.
 - **Per-channel model and prompt.** Give a busy channel a cheap model and a specialist prompt without a second bot:
 
   ```yaml
@@ -329,7 +329,7 @@ Teams, Feishu, and WhatsApp Cloud show buttons instead. An unanswered prompt is 
 **Voice in:** voice notes are transcribed automatically (`stt.enabled`, on by default) and handed to the agent as text. The transcript is also posted back as 🎙️ "…" unless you set `stt.echo_transcripts: false`.
 
 - The provider defaults to local faster-whisper. Choose **Local Whisper** in `hermes tools` → Speech-to-Text to install it. Groq (`GROQ_API_KEY`, fast, with a free tier) and OpenAI (`VOICE_TOOLS_OPENAI_KEY`) are the hosted alternatives.
-- The language defaults to English (`stt.language: en`). Set your own language code, or `""` for auto-detect, or short clips get transcribed in the wrong language.
+- The language defaults to English (`stt.language: en`), because auto-detection often misreads short clips. If you speak something else, set your language code (`es`, `de`, …). Use `""` for auto-detection only if you switch languages.
 
 **Voice out:**
 
@@ -364,7 +364,7 @@ Restart the gateway, then point clients at `http://127.0.0.1:8642/v1` (`/v1/chat
 ## Several bots, several profiles
 
 - **Each profile needs its own bots.** `hermes profile create work --clone` copies settings but not bot tokens. `--clone-channels` copies them too, and two profiles sharing a token get the duplicate parked. Create a new bot for each profile instead.
-- **One shared bot, several profiles:** `gateway.profile_routes` sends specific Discord guilds, channels, or users of one bot to different profiles ([multi-profile docs](https://hermes-agent.nousresearch.com/docs/user-guide/multi-profile-gateways)).
+- **One shared bot, several profiles:** `gateway.profile_routes` sends specific servers, chats, threads, or users of one bot to different profiles, on any platform ([multi-profile docs](https://hermes-agent.nousresearch.com/docs/user-guide/multi-profile-gateways#routing-shared-bot-chats-to-profiles-profile_routes)).
 - **Bots in the same room:** bot-authored messages are ignored unless you allow them (`TELEGRAM_ALLOW_BOTS`, `DISCORD_ALLOW_BOTS`). If you do, keep the loop brakes on. Discord bots must type an inline `@mention` (`discord.bots_require_inline_mention`, on since v0.21.4). `telegram.bots_require_mention: true` does the same for Telegram, and `telegram.exclusive_bot_mentions` (on) makes only the mentioned bot answer. As a backstop, the bot-loop guard drops bot messages in a chat for 10 minutes after 20 of them arrive within 5 minutes:
 
   ```yaml
@@ -394,12 +394,12 @@ In chat: `/whoami` shows your access tier, `/status` the session and model, and 
 
 - **Telegram is silent in groups.** Privacy mode is on. Turn it off in BotFather *and* remove and re-add the bot, or make it an admin ([Telegram](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram#troubleshooting-works-in-dms-but-not-groups)).
 - **Telegram says "unauthorized" to you.** The allowlist holds your @username or a typo instead of your numeric ID. Check the log, which records the dropped sender's ID ([Telegram](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram#troubleshooting)).
-- **`409 Conflict`, or replies alternate between two personalities.** Two processes are polling one token: a leftover `hermes gateway run`, or both a user and a system service. One token, one process ([FAQ](https://hermes-agent.nousresearch.com/docs/reference/faq), [#2296](https://github.com/NousResearch/hermes-agent/issues/2296)).
+- **`409 Conflict`, or replies alternate between two personalities.** Two processes are polling one token: a leftover `hermes gateway run`, or both a user and a system service. One token, one process ([FAQ](https://hermes-agent.nousresearch.com/docs/reference/faq#can-two-profiles-share-the-same-bot-token), [#2296](https://github.com/NousResearch/hermes-agent/issues/2296)).
 - **The bot dies when you close SSH.** A user service without lingering. `hermes gateway install` tries to enable it; otherwise run `sudo loginctl enable-linger $USER`, or install the system service ([Messaging](https://hermes-agent.nousresearch.com/docs/user-guide/messaging#linux-systemd), [#1005](https://github.com/NousResearch/hermes-agent/issues/1005)).
-- **Restart loop after adding a systemd drop-in.** An `ExecStopPost=… kill -9` line kills every fresh start. Delete it and restart with `hermes gateway restart` ([Messaging](https://hermes-agent.nousresearch.com/docs/user-guide/messaging#linux-systemd)).
+- **Restart loop after adding a systemd drop-in.** An `ExecStopPost=… kill -9` line runs on every stop, including clean restarts, so it kills each fresh start. Remove it with `systemctl --user edit hermes-gateway`, then run `systemctl --user daemon-reload` ([Messaging](https://hermes-agent.nousresearch.com/docs/user-guide/messaging#linux-systemd)).
 - **Cron went quiet after `hermes update`.** The gateway kept running the old code. Run `hermes gateway restart`. v0.21.4's `hermes cron status` warns about this ([#117275](https://github.com/NousResearch/hermes-agent/issues/117275)).
 - **`hermes gateway restart --platform telegram` restarts everything.** `--platform` is a silently accepted leftover (`hermes_cli/subcommands/gateway.py`). Pause or resume one adapter with `/platform pause telegram` instead.
-- **`sudo` fails from chat.** The gateway has no terminal to prompt for a password. Use commands that don't need root, or specific passwordless sudoers entries. Don't put your password in chat ([FAQ](https://hermes-agent.nousresearch.com/docs/reference/faq)).
+- **`sudo` fails from chat.** The gateway has no terminal to prompt for a password. Use commands that don't need root, or specific passwordless sudoers entries. Don't put your password in chat ([FAQ](https://hermes-agent.nousresearch.com/docs/reference/faq#sudo-not-working-via-messaging-gateway)).
 - **Pairing approval in Docker is ignored.** `docker exec` defaults to root, and the gateway (uid 10000) can't read a root-owned file. Use `docker exec -u hermes …` ([Security](https://hermes-agent.nousresearch.com/docs/user-guide/security#dm-pairing-system)).
 - **Port 8645 collisions.** The BlueBubbles webhook, the WeCom callback server, and `hermes proxy` all default to 8645. Move one (`BLUEBUBBLES_WEBHOOK_PORT`, `WECOM_CALLBACK_PORT`) if you run two on one host.
 

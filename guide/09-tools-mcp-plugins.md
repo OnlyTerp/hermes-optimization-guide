@@ -4,7 +4,7 @@
 
 **TL;DR**
 - **Keep each surface's tool list short.** `hermes tools disable --platform <name> …` trims one surface, and `agent.disabled_toolsets` removes a toolset everywhere. Every enabled toolset is paid for on every call ([chapter 05](./05-token-budget.md#lever-1-send-fewer-tool-schemas)).
-- **Choose where commands run.** `local` is fine when you're at the keyboard. A bot other people can message belongs in `docker` or a cloud sandbox. Container backends skip the dangerous-command prompts because the container is the security boundary.
+- **Choose where commands run.** `local` is fine when you're at the keyboard. A bot other people can message belongs in `docker` or a cloud sandbox. Container backends skip the dangerous-command prompts (unless you mount host paths), because the container is the security boundary.
 - **Web search works with zero keys**, through a free keyless ring and a 20-minute result cache. Pick a keyed backend once you depend on it.
 - **Treat MCP servers and plugins as code you're installing.** Prefer the curated catalogs, filter each server down to the tools you use, pin package versions so `hermes security audit` can check them, and mark servers you don't control `trust: untrusted`.
 - **Turn on checkpoints before the agent edits a repo.** `/rollback` then undoes its file changes and keeps yours.
@@ -42,7 +42,7 @@ hermes tools enable --platform cli homeassistant
 hermes chat -t web,file,terminal                 # this session only
 ```
 
-Measured on a fresh v0.21.4 home with `hermes prompt-size --platform telegram`: that `disable` line takes Telegram from 24 tools and 42,199 bytes of schemas to 15 tools and 24,642 bytes. That's about 10,000 → 5,900 tokens on every message (o200k_base tokenizer). Chapter 05 has the full [cost method](./05-token-budget.md#lever-1-send-fewer-tool-schemas).
+Measured on a fresh v0.21.4 home with `hermes prompt-size --platform telegram`: that `disable` line takes Telegram from 24 tools and 42,199 bytes of schemas to 15 tools and 24,642 bytes. That's about 10,000 → 5,900 tokens on every call (o200k_base tokenizer). Chapter 05 has the full [cost method](./05-token-budget.md#lever-1-send-fewer-tool-schemas).
 
 For "off on every surface", one key beats editing each platform row:
 
@@ -67,7 +67,7 @@ The `terminal` tool, the file tools, and `execute_code` all run on one backend, 
 | `daytona` | A Daytona cloud workspace (disk capped at 10 GiB) | **Skipped** | A managed, persistent cloud dev box | `DAYTONA_API_KEY` |
 | `vercel_sandbox` | A Vercel Sandbox microVM | **Skipped** | Cloud execution with snapshot persistence | `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID`, plus the `vercel` extra |
 
-"Skipped" is deliberate. With a container backend, Hermes treats the container as the security boundary and doesn't ask before `rm -rf` inside it, so the container's settings *are* your policy. Two exceptions, both from `tools/approval.py`: your `approvals.deny` rules apply on every backend, and Docker keeps the prompts on when a host path is bind-mounted (any `docker_volumes` entry starting with `/`, `~`, or `./`, or `docker_mount_cwd_to_workspace: true`), because commands can then reach host files. For a bot that other people can reach:
+"Skipped" is deliberate. With a container backend, Hermes treats the container as the security boundary and doesn't ask before `rm -rf` inside it, so the container's settings *are* your policy. Two exceptions, both from `tools/approval.py`: your `approvals.deny` rules apply on every backend, and Docker keeps the prompts on when a host path is bind-mounted (a `docker_volumes` entry that starts with `/`, `~`, `./`, `../`, or a Windows drive letter, or `docker_mount_cwd_to_workspace: true`), because commands can then reach host files. For a bot that other people can reach:
 
 ```yaml
 terminal:
